@@ -1,0 +1,4 @@
+login
+pass
+admin id
+boss command
