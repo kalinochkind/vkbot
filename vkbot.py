@@ -74,6 +74,7 @@ class vk_bot:
             time.sleep(self.delay_on_reply)
         if self.sendMessage(self.getSender(message), answer) is None:
             self.banned_messages.add(message['id'])
+            log.write('bannedmsg', str(message['id']))
 
 
     def addFriends(self, gen_reply, is_good):
