@@ -208,6 +208,8 @@ def preprocessMessage(m, user=None):
 def preprocessReply(s, uid):
     if s == 'myname':
         return vk.getName(uid)[0]
+    if s == 'curtime':
+        return time.strftime("%H:%M", time.localtime())
 
 
 def test_friend(uid):
