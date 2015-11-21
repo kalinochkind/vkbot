@@ -1,7 +1,7 @@
 # vkbot
 Chat-bot for vk.com
 
-Does not work on Windows.
+Does not work on Windows. Tested with Python 3.4.
 
 ## How to run it
 
