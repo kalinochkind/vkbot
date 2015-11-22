@@ -270,7 +270,7 @@ void Load()
     fbl.imbue(loc);
     while(fbl.getline(buf1, 10000))
     {
-        blacklist.push_back(phash(buf1));
+        blacklist.push_back(stem(buf1));
     }
     fbl.close();
     wifstream fnm(filenames);
