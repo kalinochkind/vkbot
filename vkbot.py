@@ -16,6 +16,7 @@ class vk_bot:
         self.self_id = str(self.api.users.get()[0]['id'])
         self.last_viewed_comment = 0
         self.name_cache = {}
+        self.good_conf = set()
 
     def replyAll(self, gen_reply, include_read=0):
         try:
@@ -32,6 +33,9 @@ class vk_bot:
                 continue
             if cur['out']:
                 continue
+            if 'chat_id' in cur:
+                if not self.checkConf(cur['chat_id']):
+                    continue
             try:
                 ans = gen_reply(cur)
             except Exception as e:
@@ -76,6 +80,18 @@ class vk_bot:
             self.banned_messages.add(message['id'])
             log.write('bannedmsg', str(message['id']))
 
+    def checkConf(self, cid):
+        cid = str(cid)
+        if cid in self.good_conf:
+            return 1
+        messages = self.api.messages.getHistory(chat_id=cid)['items']
+        for i in messages:
+            if i.get('action') == 'chat_create':
+                print('Leaving conf', cid)
+                self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
+                return 0
+        self.good_conf.add(cid)
+        return 1
 
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)
