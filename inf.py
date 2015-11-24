@@ -47,6 +47,9 @@ def getBotReply(uid, message, is_conf):
             print('[ERROR] Unknown reply:', res)
             res = ''
         answer = res
+    elif '{' in answer:
+        answer, gender = applyGender(answer, uid)
+        print(message, ':', answer, '(female)' if gender == 1 else '(male)')
     else:
         print(message, ':', answer)
     return answer
@@ -207,10 +210,21 @@ def preprocessMessage(m, user=None):
 
 def preprocessReply(s, uid):
     if s == 'myname':
-        return vk.getName(uid)[0]
+        return vk.getUserInfo(uid)['first_name']
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
 
+def applyGender(msg, uid):
+    gender = vk.getUserInfo(uid)['sex'] or 2
+    male = re.compile(r'\{m([^\{\}]*)\}')
+    female = re.compile(r'\{f([^\{\}]*)\}')
+    if gender == 1:
+        msg = male.sub('', msg)
+        msg = female.sub('\\1', msg)
+    else:
+        msg = female.sub('', msg)
+        msg = male.sub('\\1', msg)
+    return msg, gender
 
 def test_friend(uid):
     try:

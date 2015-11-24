@@ -137,11 +137,11 @@ class vk_bot:
     def ensureLoggedIn(self):
         self.api.account.getCounters()
         
-    def getName(self, uid):
+    def getUserInfo(self, uid):
         uid = str(uid)
         if uid not in self.name_cache:    
-            r = self.api.users.get(user_ids=uid)[0]
-            self.name_cache[uid] = (r['first_name'], r['last_name'])
+            r = self.api.users.get(user_ids=uid, fields='sex')[0]
+            self.name_cache[uid] = r
         return self.name_cache[uid]
         
     def filterComments(self, test):

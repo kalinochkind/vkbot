@@ -8,3 +8,6 @@ FIRSTNAME|FIRSTNAMEC
 \myname
 сколько время|который час
 \curtime
+ты программа
+Сам{fа} так{mой}{fая}
+
