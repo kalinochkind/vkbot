@@ -17,7 +17,7 @@ vector<shared_ptr<vector<wstring> > > reply;
 vector<vector<long long> > tf;
 vector<pair<long long, long long> > fixedstem;
 vector<pair<long long, long long> > replaced;
-vector<long long> blacklist;
+vector<pair<long long, bool> > blacklist;
 vector<double> tfnorm;
 map<long long, int> df;
 map<int, userinfo> users;
@@ -81,9 +81,11 @@ wstring BestReply(wstring &line, int id, bool conf)
     }
     sort(words.begin(), words.end());
     words.resize(unique(words.begin(), words.end()) - words.begin());
-    for(long long &i : blacklist)
+    for(auto &i : blacklist)
     {
-        if(find(words.begin(), words.end(), i) != words.end())
+        if(i.second && id >= 0)
+            continue;
+        if(find(words.begin(), words.end(), i.first) != words.end())
         {
             wcerr << line << L" - blacklisted\n";
             return id >= 0 ? L"" : L"\\blacklisted";
@@ -270,7 +272,10 @@ void Load()
     fbl.imbue(loc);
     while(fbl.getline(buf1, 10000))
     {
-        blacklist.push_back(stem(buf1));
+        if(buf1[0] == '$')
+            blacklist.push_back({stem(buf1 + 1), 1});
+        else
+            blacklist.push_back({stem(buf1), 0});
     }
     fbl.close();
     wifstream fnm(filenames);
