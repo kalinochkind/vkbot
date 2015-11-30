@@ -171,7 +171,7 @@ def reply(m):
         if bot_msg.match(m['body'].strip()):
             print(m['body'], '- ignored (bot message)')
             return ('', 0)
-    if m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
+    if m['body'] and m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
         print(m['body'], '- ignored (caps)')
         return ('', 0)
     return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m), 0)
@@ -185,22 +185,22 @@ def preprocessMessage(m, user=None):
         if m['action'] == 'chat_create' or (m['action'] == 'chat_invite_user' and str(m['action_mid']) == vk.self_id):
             return 'q'
         if m['action'] == 'chat_title_update':
-            return m['action_text']
+            return m['action_text'].lower()
         return None
     if 'attachments' in m:
         for a in m['attachments']:
             if a['type'] == 'audio': 
-                m['body'] += ' ' + a['audio']['title']
+                m['body'] += ' ' + a['audio']['title'].lower()
             elif a['type'] == 'video':
-                m['body'] += ' ' + a['video']['title']
+                m['body'] += ' ' + a['video']['title'].lower()
             elif a['type'] == 'wall':
-                m['body'] += ' ' + a['wall']['text']
+                m['body'] += ' ' + a['wall']['text'].lower()
             elif a['type'] == 'doc':
-                m['body'] += ' ' + a['doc']['title']
+                m['body'] += ' ' + a['doc']['title'].lower()
             elif a['type'] == 'gift':
                 m['body'] += ' vkgift'
             elif a['type'] == 'link':
-                m['body'] += ' ' + a['link']['description']
+                m['body'] += ' ' + a['link']['description'].lower()
     
     if 'fwd_messages' in m:
         for i in m['fwd_messages']:
