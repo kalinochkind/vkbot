@@ -169,7 +169,11 @@ def reply(m):
             log.write('calc', '"{}" = {}'.format(m['body'], t))
             return (t, 0)
         if bot_msg.match(m['body'].strip()):
+            print(m['body'], '- ignored (bot message)')
             return ('', 0)
+    if m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
+        print(m['body'], '- ignored (caps)')
+        return ('', 0)
     return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m), 0)
 
 
