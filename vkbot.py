@@ -88,6 +88,7 @@ class vk_bot:
         for i in messages:
             if i.get('action') == 'chat_create':
                 print('Leaving conf', cid)
+                log.write('conf', cid)
                 self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
                 return 0
         self.good_conf.add(cid)
