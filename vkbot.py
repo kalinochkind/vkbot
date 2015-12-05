@@ -5,7 +5,8 @@ from thread_manager import thread_manager
 
 class vk_bot:
 
-    delay_on_reply = 5
+    delay_on_reply = 1
+    chars_per_second = 8
 
     def __init__(self, username, password, captcha_handler=None):
         self.api = vkapi.vk_api(username, password, 4)
@@ -81,7 +82,7 @@ class vk_bot:
         if fast == 0 or fast == 2:
             self.api.messages.setActivity.delayed(type='typing', user_id=sender)
             self.api.sync()
-            delayed = self.delay_on_reply
+            delayed = self.delay_on_reply + len(answer) / self.chars_per_second
         def _send():
             if self.sendMessage(sender, answer) is None:
                 self.banned_messages.add(message['id'])
