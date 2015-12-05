@@ -1,10 +1,11 @@
 import vkapi
 import time
 import log
+from thread_manager import thread_manager
 
 class vk_bot:
 
-    delay_on_reply = 1
+    delay_on_reply = 5
 
     def __init__(self, username, password, captcha_handler=None):
         self.api = vkapi.vk_api(username, password, 4)
@@ -17,6 +18,7 @@ class vk_bot:
         self.last_viewed_comment = 0
         self.name_cache = {}
         self.good_conf = set()
+        self.tm = thread_manager()
 
     def replyAll(self, gen_reply, include_read=0):
         try:
@@ -36,6 +38,8 @@ class vk_bot:
             if 'chat_id' in cur:
                 if not self.checkConf(cur['chat_id']):
                     continue
+            if self.tm.isBusy(self.getSender(cur)):
+                continue
             try:
                 ans = gen_reply(cur)
             except Exception as e:
@@ -51,8 +55,8 @@ class vk_bot:
 
     def getSender(self, message):
         if 'chat_id' in message:
-            return 2000000000 + int(message['chat_id'])
-        return message['user_id']
+            return str(2000000000 + int(message['chat_id']))
+        return str(message['user_id'])
 
     def sendMessage(self, to, msg):
         self.guid += 1
@@ -66,19 +70,23 @@ class vk_bot:
     # fast==1: no delay
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
+        sender = self.getSender(message)
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
             self.banned_messages.add(message['id'])
             self.api.sync()
             return
+        delayed = 0
         if fast == 0 or fast == 2:
-            self.api.messages.setActivity.delayed(type='typing', user_id=self.getSender(message))
+            self.api.messages.setActivity.delayed(type='typing', user_id=sender)
             self.api.sync()
-            time.sleep(self.delay_on_reply)
-        if self.sendMessage(self.getSender(message), answer) is None:
-            self.banned_messages.add(message['id'])
-            log.write('bannedmsg', str(message['id']))
+            delayed = self.delay_on_reply
+        def _send():
+            if self.sendMessage(sender, answer) is None:
+                self.banned_messages.add(message['id'])
+                log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
+        self.tm.run(sender, _send, delayed)
 
     def checkConf(self, cid):
         cid = str(cid)
@@ -171,3 +179,5 @@ class vk_bot:
                     else:
                         print('Deleting wall comment')
                         self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+                        
+    

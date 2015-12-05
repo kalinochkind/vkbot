@@ -1,5 +1,6 @@
 import ssl
 from functools import wraps
+import threading
 
 def sslwrap(func):
     @wraps(func)
@@ -35,6 +36,7 @@ class vk_api:
         self.delayed_list = []
         self.guid = int(time.time() * 5)
         self.timeout = timeout
+        self.api_lock = threading.RLock()
         self.getToken()
 
     def __getattr__(self, item):
@@ -91,61 +93,62 @@ class vk_api:
         self.delayed_list.clear()
 
     def apiCall(self, params):
-        last_get = time.time()
-        method = params['method']
-        del params['method']
-        params['v'] = '5.37'
-        url = self.path + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
-        try:
-            json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-        except timeout:
-            print('[ERROR] timeout')
-            time.sleep(1)
-            params['method'] = method
-            return self.apiCall(params)
-        data_array = json.loads(json_string.decode('utf-8'))
-        if self.logging:
-            with open('inf.log', 'a') as f:
-                print('method: %s, params: %s' % (method, json.dumps(params)), file=f)
-                print('response: %s\n' % json.dumps(data_array), file=f)
-        duration = round((time.time() - last_get), 2)
-        if duration > 2:
-            print('[WARNING] ' + method + ' fucks up. Ping is ' + str(duration) + ' seconds' )
-        time.sleep(0.35)
-        if 'response' in data_array:
-            self.captcha_delayed = 0
-            return data_array['response']
-        elif 'error' in data_array:
-            if data_array['error']['error_code'] == 14: #Captcha needed
+        with self.api_lock:
+            method = params['method']
+            del params['method']
+            params['v'] = '5.37'
+            url = self.path + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
+            last_get = time.time()
+            try:
+                json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
+            except timeout:
+                print('[ERROR] timeout')
+                time.sleep(1)
                 params['method'] = method
-                if self.captcha_delayed == self.checks_before_antigate and self.captcha_handler:
-                    print('Using antigate')
-                    ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
-                    if ans is None:
-                        time.sleep(self.sleep_on_captcha)
+                return self.apiCall(params)
+            data_array = json.loads(json_string.decode('utf-8'))
+            if self.logging:
+                with open('inf.log', 'a') as f:
+                    print('method: %s, params: %s' % (method, json.dumps(params)), file=f)
+                    print('response: %s\n' % json.dumps(data_array), file=f)
+            duration = round((time.time() - last_get), 2)
+            if duration > 2:
+                print('[WARNING] ' + method + ' fucks up. Ping is ' + str(duration) + ' seconds' )
+            time.sleep(0.35)
+            if 'response' in data_array:
+                self.captcha_delayed = 0
+                return data_array['response']
+            elif 'error' in data_array:
+                if data_array['error']['error_code'] == 14: #Captcha needed
+                    params['method'] = method
+                    if self.captcha_delayed == self.checks_before_antigate and self.captcha_handler:
+                        print('Using antigate')
+                        ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
+                        if ans is None:
+                            time.sleep(self.sleep_on_captcha)
+                        else:
+                            params['captcha_sid'] = data_array['error']['captcha_sid']
+                            params['captcha_key'] = ans
+                            self.captcha_delayed = 0
                     else:
-                        params['captcha_sid'] = data_array['error']['captcha_sid']
-                        params['captcha_key'] = ans
-                        self.captcha_delayed = 0
-                else:
-                    if not self.captcha_delayed:
-                        print('[ERROR] Captcha needed')
-                    time.sleep(self.captcha_check_interval)
-                    self.captcha_delayed += 1
-                return self.apiCall(params)
-            elif data_array['error']['error_code'] == 5: #Auth error
-                self.login()
+                        if not self.captcha_delayed:
+                            print('[ERROR] Captcha needed')
+                        time.sleep(self.captcha_check_interval)
+                        self.captcha_delayed += 1
+                    return self.apiCall(params)
+                elif data_array['error']['error_code'] == 5: #Auth error
+                    self.login()
+                    params['method'] = method
+                    return self.apiCall(params)
+                elif data_array['error']['error_code'] == 7: #Black list
+                    print('[ERROR] Banned')
+                    return None
+                elif data_array['error']['error_code'] == 10:
+                    print('[ERROR] Unable to reply')
+                    return None
+            else:
                 params['method'] = method
                 return self.apiCall(params)
-            elif data_array['error']['error_code'] == 7: #Black list
-                print('[ERROR] Banned')
-                return None
-            elif data_array['error']['error_code'] == 10:
-                print('[ERROR] Unable to reply')
-                return None
-        else:
-            params['method'] = method
-            return self.apiCall(params)
 
     def login(self):
         print('Fetching new token')
