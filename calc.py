@@ -47,6 +47,8 @@ def evalExpression(s):
         return None
     try:
         res = str(eval(s, {'__builtins__':{}}))
+        if set(s) <= set('0123456789-') and s.count('-') == 1 and int(res) <= 0:
+            return None
     except Exception:
         s = s.replace('(', '').replace(')', '')
         if not s or s[0] == '+' or isnum(s) or isnum(s.replace('(', '').replace(')', '').strip('+')):
