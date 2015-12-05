@@ -7,6 +7,7 @@ class vk_bot:
 
     delay_on_reply = 1
     chars_per_second = 8
+    same_user_interval = 15
 
     def __init__(self, username, password, captcha_handler=None):
         self.api = vkapi.vk_api(username, password, 4)
@@ -20,6 +21,7 @@ class vk_bot:
         self.name_cache = {}
         self.good_conf = set()
         self.tm = thread_manager()
+        self.last_message = {}
 
     def replyAll(self, gen_reply, include_read=0):
         try:
@@ -73,21 +75,19 @@ class vk_bot:
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
         if fast == 0:
-            self.api.messages.markAsRead.delayed(message_ids=message['id'])
+            self.api.messages.markAsRead(message_ids=message['id'])
         if not answer:
             self.banned_messages.add(message['id'])
-            self.api.sync()
             return
         delayed = 0
         if fast == 0 or fast == 2:
-            self.api.messages.setActivity.delayed(type='typing', user_id=sender)
-            self.api.sync()
             delayed = self.delay_on_reply + len(answer) / self.chars_per_second
         def _send():
             if self.sendMessage(sender, answer) is None:
                 self.banned_messages.add(message['id'])
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
-        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender))
+            self.last_message[sender] = time.time()
+        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + self.same_user_interval)  # AAAAAAAA
 
     def checkConf(self, cid):
         cid = str(cid)
