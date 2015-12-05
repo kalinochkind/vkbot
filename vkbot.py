@@ -87,7 +87,7 @@ class vk_bot:
             if self.sendMessage(sender, answer) is None:
                 self.banned_messages.add(message['id'])
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
-        self.tm.run(sender, _send, delayed)
+        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender))
 
     def checkConf(self, cid):
         cid = str(cid)
