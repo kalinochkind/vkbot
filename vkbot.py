@@ -8,6 +8,7 @@ class vk_bot:
     delay_on_reply = 1
     chars_per_second = 8
     same_user_interval = 15
+    same_conf_interval = 25
 
     def __init__(self, username, password, captcha_handler=None):
         self.api = vkapi.vk_api(username, password, 4)
@@ -87,7 +88,7 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
             self.last_message[sender] = time.time()
-        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + self.same_user_interval)  # AAAAAAAA
+        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA
 
     def checkConf(self, cid):
         cid = str(cid)
