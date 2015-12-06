@@ -37,6 +37,9 @@ class thread_manager:  # not thread-safe, should be used only from main thread
         return key in self.threads and self.threads[key].is_alive()
     
     def gc(self):
+        to_del = []
         for i in self.threads:
             if not self.threads[i].is_alive():
-                del self.threads[i]
+                to_del.append(i)
+        for i in to_del:
+            del self.threads[i]
