@@ -34,27 +34,29 @@ class vk_bot:
             print('Include read')
         t = 0
         self.tm.gc()
-        for i in messages:
-            cur = i['message']
-            if cur['id'] in self.banned_messages:
-                continue
-            if cur['out']:
-                continue
-            if 'chat_id' in cur:
-                if not self.checkConf(cur['chat_id']):
+        with self.api.api_lock:
+            for i in messages:
+                cur = i['message']
+                if cur['id'] in self.banned_messages:
                     continue
-            if self.tm.isBusy(self.getSender(cur)):
-                continue
-            try:
-                ans = gen_reply(cur)
-            except Exception as e:
-                ans = None
-                print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
-                time.sleep(1)
-            if not ans:
-                continue
-            t = 1
-            self.replyMessage(cur, ans[0], ans[1])
+                if cur['out']:
+                    continue
+                if 'chat_id' in cur:
+                    if not self.checkConf(cur['chat_id']):
+                        continue
+                if self.tm.isBusy(self.getSender(cur)):
+                    continue
+                try:
+                    ans = gen_reply(cur)
+                except Exception as e:
+                    ans = None
+                    print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
+                    time.sleep(1)
+                if not ans:
+                    continue
+                t = 1
+                self.replyMessage(cur, ans[0], ans[1])
+            self.api.sync()
         if not t:
             print('Doing nothing...')
 
@@ -77,7 +79,7 @@ class vk_bot:
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
         if fast == 0:
-            self.api.messages.markAsRead(message_ids=message['id'])
+            self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
             self.banned_messages.add(message['id'])
             return
@@ -86,8 +88,8 @@ class vk_bot:
             delayed = self.delay_on_reply + len(answer) / self.chars_per_second
         def _send():
             if self.sendMessage(sender, answer) is None:
-                self.banned_messages.add(message['id'])
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
+            self.banned_messages.add(message['id'])
             self.last_message[sender] = time.time()
         self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA
 
