@@ -91,7 +91,10 @@ class vk_bot:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
             self.banned_messages.add(message['id'])
             self.last_message[sender] = time.time()
-        self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA
+        if answer.startswith('&#'):
+            self.tm.run(sender, _send, delayed, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+        else:
+            self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
 
     def checkConf(self, cid):
         cid = str(cid)
