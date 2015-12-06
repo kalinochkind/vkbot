@@ -23,6 +23,7 @@ class vk_bot:
         self.good_conf = set()
         self.tm = thread_manager()
         self.last_message = {}
+        self.left_confs = set()
 
     def replyAll(self, gen_reply, include_read=0):
         try:
@@ -66,6 +67,8 @@ class vk_bot:
         return str(message['user_id'])
 
     def sendMessage(self, to, msg):
+        if int(to) in self.left_confs:
+            return
         self.guid += 1
         to = int(to)
         if to > 2000000000:
@@ -103,12 +106,16 @@ class vk_bot:
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
             if i.get('action') == 'chat_create':
-                print('Leaving conf', cid)
+                self.leaveConf(cid)
                 log.write('conf', cid)
-                self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
                 return 0
         self.good_conf.add(cid)
         return 1
+    
+    def leaveConf(self, cid):
+        print('Leaving conf', cid)
+        self.left_confs.add(2000000000 + int(cid))
+        return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)

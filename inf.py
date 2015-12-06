@@ -128,6 +128,14 @@ def processCommand(cmd, *p):
         writeBannedIgnored()
         print('User %s unignored' % user)
         return 'User %s unignored' % user
+    elif cmd == 'leave':
+        if not p:
+            return 'Not enough parameters'
+        cid = p[-1]
+        if vk.leaveConf(cid):
+            return 'Ok'
+        else:
+            return 'Fail'
     else:
         return 'Unknown command'
 
