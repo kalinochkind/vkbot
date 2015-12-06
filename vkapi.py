@@ -49,7 +49,7 @@ class vk_api:
                     def __init__(self, method):
                         self.method = method
                     def __call__(self, **dp):
-                        return handler.apiCall(dict(method=self.method, **dp))
+                        return handler.apiCall(self.method, dp)
                     def delayed(self, **dp):
                         if len(handler.delayed_list) >= handler.max_delayed:
                             handler.sync()
@@ -67,7 +67,7 @@ class vk_api:
         self.callback = callback
 
     def execute(self, code):
-        return self.apiCall({"method": "execute", "code": code})
+        return self.apiCall('execute', {"code": code})
 
     def encodeApiCall(self, s):
         return "API." + s[0] + '(' + str(s[1]).replace('"', '\\"').replace("'", '"') + ')'
@@ -76,7 +76,7 @@ class vk_api:
         if not self.delayed_list:
             return
         if len(self.delayed_list) == 1:
-            response = self.apiCall(dict(method=self.delayed_list[0][0], **self.delayed_list[0][1]))
+            response = self.apiCall(*self.delayed_list[0])
             if self.callback:
                 self.callback(self.delayed_list[0], response)
             self.delayed_list.clear()
@@ -92,10 +92,8 @@ class vk_api:
                 self.callback(*i)
         self.delayed_list.clear()
 
-    def apiCall(self, params):
+    def apiCall(self, method, params):
         with self.api_lock:
-            method = params['method']
-            del params['method']
             params['v'] = '5.37'
             url = self.path + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
             last_get = time.time()
@@ -104,8 +102,7 @@ class vk_api:
             except timeout:
                 print('[ERROR] timeout')
                 time.sleep(1)
-                params['method'] = method
-                return self.apiCall(params)
+                return self.apiCall(method, params)
             data_array = json.loads(json_string.decode('utf-8'))
             if self.logging:
                 with open('inf.log', 'a') as f:
@@ -120,7 +117,6 @@ class vk_api:
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
-                    params['method'] = method
                     if self.captcha_delayed == self.checks_before_antigate and self.captcha_handler:
                         print('Using antigate')
                         ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
@@ -135,11 +131,10 @@ class vk_api:
                             print('[ERROR] Captcha needed')
                         time.sleep(self.captcha_check_interval)
                         self.captcha_delayed += 1
-                    return self.apiCall(params)
+                    return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 5: #Auth error
                     self.login()
-                    params['method'] = method
-                    return self.apiCall(params)
+                    return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 7: #Black list
                     print('[ERROR] Banned')
                     return None
@@ -147,8 +142,7 @@ class vk_api:
                     print('[ERROR] Unable to reply')
                     return None
             else:
-                params['method'] = method
-                return self.apiCall(params)
+                return self.apiCall(method, params)
 
     def login(self):
         print('Fetching new token')
