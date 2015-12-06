@@ -33,6 +33,7 @@ class vk_bot:
         if include_read:
             print('Include read')
         t = 0
+        self.tm.gc()
         for i in messages:
             cur = i['message']
             if cur['id'] in self.banned_messages:
