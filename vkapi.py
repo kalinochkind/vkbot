@@ -111,7 +111,7 @@ class vk_api:
             duration = round((time.time() - last_get), 2)
             if duration > 2:
                 print('[WARNING] ' + method + ' fucks up. Ping is ' + str(duration) + ' seconds' )
-            time.sleep(0.35)
+            time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
                 self.captcha_delayed = 0
                 return data_array['response']
