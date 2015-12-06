@@ -14,6 +14,8 @@ def isnum(s):
 
 def evalExpression(s):
     s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ')
+    if '/' in s:
+        return None
     s = ''.join(i if i in allowed else ' ' for i in s.lower()).split()
     ans = []
     for i in s:
