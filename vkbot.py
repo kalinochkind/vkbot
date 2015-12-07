@@ -24,6 +24,7 @@ class vk_bot:
         self.tm = thread_manager()
         self.last_message = {}
         self.left_confs = set()
+        self.last_message_id = {}
 
     def replyAll(self, gen_reply, include_read=0):
         try:
@@ -81,6 +82,8 @@ class vk_bot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
+        if int(message['id']) < self.last_message_id.get(sender, 0):
+            return
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
@@ -90,10 +93,13 @@ class vk_bot:
         if fast == 0 or fast == 2:
             delayed = self.delay_on_reply + len(answer) / self.chars_per_second
         def _send():
-            if self.sendMessage(sender, answer) is None:
+            res = self.sendMessage(sender, answer)
+            if res is None:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
-            self.banned_messages.add(message['id'])
+                self.banned_messages.add(message['id'])
+                return
             self.last_message[sender] = time.time()
+            self.last_message_id[sender] = int(res)
         if answer.startswith('&#'):
             self.tm.run(sender, _send, delayed, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
