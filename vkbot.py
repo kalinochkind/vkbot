@@ -170,7 +170,7 @@ class vk_bot:
     def getUserInfo(self, uid):
         uid = str(uid)
         if uid not in self.name_cache:    
-            r = self.api.users.get(user_ids=uid, fields='sex')[0]
+            r = self.api.users.get(user_ids=uid, fields='sex,photo_id')[0]
             self.name_cache[uid] = r
         return self.name_cache[uid]
         
@@ -201,4 +201,7 @@ class vk_bot:
                         print('Deleting wall comment')
                         self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
                         
-    
+    def likeAva(self, uid):
+        photo = self.getUserInfo(uid)['photo_id'].split('_')
+        log.write('likeava', str(uid))
+        self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])

@@ -225,6 +225,10 @@ def preprocessReply(s, uid):
         return vk.getUserInfo(uid)['first_name']
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
+    if s.startswith('likeava'):
+        vk.likeAva(uid)
+        return s.split(maxsplit=1)[1]
+        
 
 def applyGender(msg, uid):
     gender = vk.getUserInfo(uid)['sex'] or 2
