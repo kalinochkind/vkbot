@@ -190,7 +190,7 @@ class vk_bot:
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
                 if test(txt):
-                    log.write('comments', txt)
+                    log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
                     if rep['type'].endswith('photo'):
                         print('Deleting photo comment')
                         self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
