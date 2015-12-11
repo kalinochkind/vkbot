@@ -1,22 +1,10 @@
-import ssl
-from functools import wraps
 import threading
-
-def sslwrap(func):
-    @wraps(func)
-    def bar(*args, **kw):
-        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
-        return func(*args, **kw)
-    return bar
-
-ssl.wrap_socket = sslwrap(ssl.wrap_socket)
-
 import urllib.request
 import urllib.parse
 import json
 import time
 import sys
-from socket import timeout
+import socket
 
 class vk_api:
     path = 'https://api.vk.com/method/'
@@ -99,7 +87,7 @@ class vk_api:
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-            except timeout:
+            except socket.timeout:
                 print('[ERROR] timeout')
                 time.sleep(1)
                 return self.apiCall(method, params)
