@@ -71,11 +71,7 @@ class vk_bot:
         if int(to) in self.left_confs:
             return
         self.guid += 1
-        to = int(to)
-        if to > 2000000000:
-            return self.api.messages.send(chat_id=to-2000000000, message=msg, guid=self.guid)
-        else:
-            return self.api.messages.send(user_id=to, message=msg, guid=self.guid)
+        return self.api.messages.send(peer_id=to, message=msg, guid=self.guid)
 
     # message==None: special conf messages, don't need to reply
     # fast==1: no delay

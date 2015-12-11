@@ -94,7 +94,7 @@ class vk_api:
 
     def apiCall(self, method, params):
         with self.api_lock:
-            params['v'] = '5.37'
+            params['v'] = '5.40'
             url = self.path + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
             last_get = time.time()
             try:
