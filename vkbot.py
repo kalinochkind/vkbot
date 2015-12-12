@@ -2,16 +2,17 @@ import vkapi
 import time
 import log
 from thread_manager import thread_manager
+import config
 
 class vk_bot:
 
-    delay_on_reply = 1
-    chars_per_second = 8
-    same_user_interval = 15
-    same_conf_interval = 25
+    delay_on_reply = config.get('vkbot.delay_on_reply')
+    chars_per_second = config.get('vkbot.chars_per_second')
+    same_user_interval = config.get('vkbot.same_user_interval')
+    same_conf_interval = config.get('vkbot.same_conf_interval')
 
     def __init__(self, username, password, captcha_handler=None):
-        self.api = vkapi.vk_api(username, password, 4)
+        self.api = vkapi.vk_api(username, password)
         self.api.captcha_handler = captcha_handler
         self.api.getToken()
         self.banned_messages = set()

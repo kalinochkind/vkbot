@@ -5,24 +5,22 @@ import json
 import time
 import sys
 import socket
+import config
 
 class vk_api:
-    path = 'https://api.vk.com/method/'
-    logging = 0
-    captcha_delayed = 0
-    captcha_handler = None
-    checks_before_antigate = 6
-    captcha_check_interval = 5
-    token = None
-    max_delayed = 25
-    callback = None
-    delayed_list = None
+    logging = config.get('vkapi.logging')
+    checks_before_antigate = config.get('vkapi.checks_before_antigate')
+    captcha_check_interval = config.get('vkapi.captcha_check_interval')
 
-    def __init__(self, username, password, timeout=5):
+    def __init__(self, username, password, timeout=config.get('vkapi.default_timeout')):
         self.username = username
         self.password = password
+        self.captcha_delayed = 0
+        self.captcha_handler = None
+        self.token = None
+        self.callback = None
         self.delayed_list = []
-        self.guid = int(time.time() * 5)
+        self.max_delayed = 25
         self.timeout = timeout
         self.longpoll_server = ''
         self.longpoll_key = ''
@@ -86,7 +84,7 @@ class vk_api:
     def apiCall(self, method, params):
         with self.api_lock:
             params['v'] = '5.40'
-            url = self.path + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
+            url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()

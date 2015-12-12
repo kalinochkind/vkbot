@@ -9,6 +9,7 @@ import re
 import check_friend
 from calc import evalExpression
 import log
+import config
 
 bot_msg = re.compile(r'^\(.+\)')
 friend_cache = {}
@@ -258,11 +259,11 @@ def timeto(name, interval):
     return 0
 
 bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
-config = list(map(str.strip, open('data.txt').read().strip().splitlines()))
-vk = vk_bot(config[0], config[1], captcha_handler=captcha.solve) # login, pass
+cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
+vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
 print('My id:', vk.self_id)
-admin = config[2] if len(config) > 2 else ''
-reset_command = config[3] if len(config) > 3 else ''
+admin = cfg[2] if len(cfg) > 2 else ''
+reset_command = cfg[3] if len(cfg) > 3 else ''
 
 banign = open('banned.txt').read().split()
 banned = set(i[1:] for i in banign if i.startswith('$'))
@@ -274,18 +275,24 @@ reply_all = 0
 print('Bot started')
 
 ts = 0
+
+addfriends_interval = config.get('inf.addfriends_interval')
+setonline_interval = config.get('inf.setonline_interval')
+unfollow_interval = config.get('inf.unfollow_interval')
+filtercomments_interval = config.get('inf.filtercomments_interval')
+
 while 1:
     try:
         vk.replyAll(reply, reply_all)
         reply_all = 0
-        if timeto('addfriends', 20):
+        if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, test_friend)
             reply_all = 1
-        if timeto('setonline', 60):
+        if timeto('setonline', setonline_interval):
             vk.setOnline()
-        if timeto('unfollow', 50):
+        if timeto('unfollow', unfollow_interval):
             vk.unfollow(banned)
-        if timeto('filtercomments', 40):
+        if timeto('filtercomments', filtercomments_interval):
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
         print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))

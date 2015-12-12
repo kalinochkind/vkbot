@@ -1,0 +1,20 @@
+vkbot.delay_on_reply 1
+vkbot.chars_per_second 8
+vkbot.same_user_interval 15
+vkbot.same_conf_interval 25 
+
+vkapi.logging 0
+vkapi.checks_before_antigate 6
+vkapi.captcha_check_interval 5
+vkapi.default_timeout 4
+
+inf.addfriends_interval 20
+inf.setonline_interval 60
+inf.unfollow_interval 50
+inf.filtercomments_interval 40
+
+birthday.age 15
+
+check_friend.offline_allowed 14
+
+log.datetime_format %d.%m.%Y %H:%M:%S
