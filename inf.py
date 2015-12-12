@@ -248,7 +248,14 @@ def test_friend(uid):
     except KeyError:
         return 0
     return check_friend.is_good(fr)
-    
+
+
+_timeto = {}
+def timeto(name, interval):
+    if time.time() > _timeto.get(name, 0) + interval:
+        _timeto[name] = time.time()
+        return 1
+    return 0
 
 bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
 config = list(map(str.strip, open('data.txt').read().strip().splitlines()))
@@ -260,31 +267,25 @@ reset_command = config[3] if len(config) > 3 else ''
 banign = open('banned.txt').read().split()
 banned = set(i[1:] for i in banign if i.startswith('$'))
 ignored = set(i for i in banign if not i.startswith('$'))
-c = -1
-got_reply_cmd = 0
 
 # whether to reply to messages that are already read
 reply_all = 0
 
 print('Bot started')
 
-
+ts = 0
 while 1:
     try:
         vk.replyAll(reply, reply_all)
         reply_all = 0
-        if got_reply_cmd:
-            got_reply_cmd = 0
-            reply_all = 1
-        c += 1
-        if c % 5 == 0:
+        if timeto('addfriends', 20):
             vk.addFriends(reply, test_friend)
             reply_all = 1
-        if c % 11 == 0:
+        if timeto('setonline', 60):
             vk.setOnline()
-        if c % 16 == 0:    
+        if timeto('unfollow', 50):
             vk.unfollow(banned)
-        if c % 17 == 0:
+        if timeto('filtercomments', 40):
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
         print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
