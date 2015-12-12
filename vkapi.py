@@ -165,7 +165,7 @@ class vk_api:
     def getLongpoll(self, mode=2):
         if not self.longpoll_server:
             self.initLongpoll()
-        url = 'http://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
+        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except socket.timeout:
@@ -173,9 +173,10 @@ class vk_api:
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
-        try:
+        if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
+        if 'updates' in data_array:
             return data_array['updates']
-        except KeyError:
-            print('[ERROR] longpoll failed')
+        elif data_array['failed'] != 1:
+            self.initLongpoll()
             return []
