@@ -24,6 +24,9 @@ class vk_api:
         self.delayed_list = []
         self.guid = int(time.time() * 5)
         self.timeout = timeout
+        self.longpoll_server = ''
+        self.longpoll_key = ''
+        self.longpoll_ts = 0
         self.api_lock = threading.RLock()
         self.getToken()
 
@@ -152,3 +155,27 @@ class vk_api:
             except FileNotFoundError:
                 self.token = ''
         return self.token
+
+    def initLongpoll(self):
+        r = self.messages.getLongPollServer()
+        self.longpoll_server = r['server']
+        self.longpoll_key = r['key']
+        self.longpoll_ts = self.longpoll_ts or r['ts']
+
+    def getLongpoll(self, mode=2):
+        if not self.longpoll_server:
+            self.initLongpoll()
+        url = 'http://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
+        try:
+            json_string = urllib.request.urlopen(url, timeout=30).read()
+        except socket.timeout:
+            print('[ERROR] longpoll timeout')
+            time.sleep(1)
+            return []
+        data_array = json.loads(json_string.decode('utf-8'))
+        try:
+            self.longpoll_ts = data_array['ts']
+            return data_array['updates']
+        except KeyError:
+            print('[ERROR] longpoll failed')
+            return []
