@@ -213,6 +213,8 @@ def preprocessMessage(m, user=None):
     
     if 'fwd_messages' in m:
         for i in m['fwd_messages']:
+            if str(i.get('user_id')) == vk.self_id:
+                return None
             m['body'] += ' ' + str(preprocessMessage(i, m.get('user_id')))
     if user is None and 'attachments' not in m and not m['body'].strip():
         return None
