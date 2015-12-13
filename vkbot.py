@@ -25,43 +25,51 @@ class vk_bot:
         self.tm = thread_manager()
         self.last_message = {}
         self.left_confs = set()
-        self.last_message_id = {}
+        self.last_message_id = 0
+        self.api.initLongpoll()
 
     def replyAll(self, gen_reply, include_read=0):
-        try:
-            messages = self.api.messages.getDialogs(unread=1-include_read)['items'][::-1]
-        except KeyError:
-            # may sometimes happen because of friendship requests
-            return
+        self.tm.gc()
         if include_read:
             print('Include read')
-        t = 0
-        self.tm.gc()
-        with self.api.api_lock:
-            for i in messages:
-                cur = i['message']
-                if cur['id'] in self.banned_messages:
-                    continue
-                if cur['out']:
-                    continue
-                if 'chat_id' in cur:
-                    if not self.checkConf(cur['chat_id']):
+            try:
+                messages = self.api.messages.getDialogs(unread=1)['items'][::-1]
+            except KeyError:
+                # may sometimes happen because of friendship requests
+                return
+            with self.api.api_lock:
+                for i in messages:
+                    cur = i['message']
+                    if cur['id'] > self.last_message_id:
                         continue
-                if self.tm.isBusy(self.getSender(cur)):
-                    continue
-                try:
-                    ans = gen_reply(cur)
-                except Exception as e:
-                    ans = None
-                    print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
-                    time.sleep(1)
-                if not ans:
-                    continue
-                t = 1
-                self.replyMessage(cur, ans[0], ans[1])
-            self.api.sync()
-        if not t:
-            print('Doing nothing...')
+                    if 'chat_id' in cur:
+                        if not self.checkConf(cur['chat_id']):
+                            continue
+                    if self.tm.isBusy(self.getSender(cur)):
+                        continue
+                    try:
+                        ans = gen_reply(cur)
+                    except Exception as e:
+                        ans = None
+                        print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
+                        time.sleep(1)
+                    if not ans:
+                        continue
+                    self.replyMessage(cur, ans[0], ans[1])
+                self.api.sync()
+            return
+        
+    def longpollMessages(self):
+        arr = self.api.getLongpoll()
+        for i in arr:
+            if i[0] == 51:  # conf params changed
+                pass  # TODO
+            if i[0] == 4:  # new message
+                mid = i[1]
+                sender = i[3]
+                ts = i[4]
+                text = i[6]
+                opt = i[7]
 
     def getSender(self, message):
         if 'chat_id' in message:
