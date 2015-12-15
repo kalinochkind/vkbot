@@ -199,6 +199,9 @@ class vk_bot:
                         self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
                         
     def likeAva(self, uid):
-        photo = self.getUserInfo(uid)['photo_id'].split('_')
-        log.write('likeava', str(uid))
-        self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
+        try:
+            photo = self.getUserInfo(uid)['photo_id'].split('_')
+            log.write('likeava', str(uid))
+            self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
+        except Exception:
+            log.write('likeava', str(uid) + ' failed')
