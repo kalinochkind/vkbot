@@ -33,7 +33,7 @@ class vk_bot:
         if include_read:
             print('Include read')
             try:
-                messages = self.api.messages.getDialogs(unread=1)['items'][::-1]
+                messages = self.api.messages.getDialogs(unread=1, count=200)['items'][::-1]
             except KeyError:
                 # may sometimes happen because of friendship requests
                 return

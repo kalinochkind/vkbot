@@ -279,6 +279,7 @@ print('Bot started')
 ts = 0
 
 addfriends_interval = config.get('inf.addfriends_interval')
+includeread_interval = config.get('inf.includeread_interval')
 setonline_interval = config.get('inf.setonline_interval')
 unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
@@ -289,6 +290,7 @@ while 1:
         reply_all = 0
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, test_friend)
+        if timeto('includeread', includeread_interval):
             reply_all = 1
         if timeto('setonline', setonline_interval):
             vk.setOnline()

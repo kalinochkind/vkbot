@@ -8,7 +8,8 @@ vkapi.checks_before_antigate 6
 vkapi.captcha_check_interval 5
 vkapi.default_timeout 4
 
-inf.addfriends_interval 25
+inf.addfriends_interval 30
+inf.includeread_interval 120
 inf.setonline_interval 90
 inf.unfollow_interval 50
 inf.filtercomments_interval 40
