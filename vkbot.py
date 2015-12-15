@@ -40,7 +40,7 @@ class vk_bot:
             with self.api.api_lock:
                 for i in messages:
                     cur = i['message']
-                    if cur['id'] > self.last_message_id:
+                    if self.last_message_id and cur['id'] > self.last_message_id:
                         continue
                     if 'chat_id' in cur:
                         if not self.checkConf(cur['chat_id']):
@@ -57,10 +57,31 @@ class vk_bot:
                         continue
                     self.replyMessage(cur, ans[0], ans[1])
                 self.api.sync()
-            return
+        else:
+            messages = self.longpollMessages()
+            with self.api.api_lock:
+                for cur in messages:
+                    self.last_message_id = max(self.last_message_id, cur['id'])
+                    if 'chat_id' in cur:
+                        if not self.checkConf(cur['chat_id']):
+                            continue
+                    if self.tm.isBusy(self.getSender(cur)):
+                        continue
+                    try:
+                        ans = gen_reply(cur)
+                    except Exception as e:
+                        ans = None
+                        print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
+                        time.sleep(1)
+                    if not ans:
+                        continue
+                    self.replyMessage(cur, ans[0], ans[1])
+                self.api.sync()
+            
         
     def longpollMessages(self):
         arr = self.api.getLongpoll()
+        need_extra = []
         for i in arr:
             if i[0] == 51:  # conf params changed
                 pass  # TODO
@@ -70,6 +91,24 @@ class vk_bot:
                 ts = i[4]
                 text = i[6]
                 opt = i[7]
+                flags = i[2]
+                if flags & 2:  # out
+                    continue
+                if  not (set(opt) <= {'from', 'emoji'}):
+                    need_extra.append(str(mid))
+                    continue
+                msg = {'id': mid, 'date': ts, 'body': text, 'out': 0}
+                if 'from' in opt:
+                    msg['chat_id'] = sender - 2000000000
+                    msg['user_id'] = opt['from']
+                else:
+                    msg['user_id'] = sender
+                yield msg
+        if need_extra:
+            need_extra = ','.join(need_extra)
+            for i in self.api.messages.getById(message_ids=need_extra)['items']:
+                yield i
+                
 
     def getSender(self, message):
         if 'chat_id' in message:
@@ -87,8 +126,8 @@ class vk_bot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
-        if int(message['id']) < self.last_message_id.get(sender, 0):
-            return
+#        if int(message['id']) < self.last_message_id.get(sender, 0):
+#            return
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
@@ -104,7 +143,7 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 return
             self.last_message[sender] = time.time()
-            self.last_message_id[sender] = int(res)
+#            self.last_message_id[sender] = int(res)
         if answer.startswith('&#'):
             self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:

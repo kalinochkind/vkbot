@@ -178,3 +178,5 @@ class vk_api:
         elif data_array['failed'] != 1:
             self.initLongpoll()
             return []
+        else:
+            return self.getLongpoll(mode)
