@@ -88,7 +88,7 @@ class vk_bot:
             return
         delayed = 0
         if fast == 0 or fast == 2:
-            delayed = self.delay_on_reply + len(answer) / self.chars_per_second
+            delayed = len(answer) / self.chars_per_second
         def _send():
             res = self.sendMessage(sender, answer)
             if res is None:
@@ -98,9 +98,9 @@ class vk_bot:
             self.last_message[sender] = time.time()
             self.last_message_id[sender] = int(res)
         if answer.startswith('&#'):
-            self.tm.run(sender, _send, delayed, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+            self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
-            self.tm.run(sender, _send, delayed, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
+            self.tm.run(sender, _send, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
 
     def checkConf(self, cid):
         cid = str(cid)
