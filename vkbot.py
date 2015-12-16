@@ -38,7 +38,7 @@ class vk_bot:
                 # may sometimes happen because of friendship requests
                 return
             with self.api.api_lock:
-                for i in messages:
+                for i in sorted(messages, key=lambda x:x['message']['id']):
                     cur = i['message']
                     if self.last_message_id and cur['id'] > self.last_message_id:
                         continue
@@ -61,7 +61,7 @@ class vk_bot:
         else:
             messages = self.longpollMessages()
             with self.api.api_lock:
-                for cur in messages:
+                for cur in sorted(messages, key=lambda x:x['id']):
                     self.last_message_id = max(self.last_message_id, cur['id'])
                     if 'chat_id' in cur:
                         if not self.checkConf(cur['chat_id']):
@@ -128,8 +128,8 @@ class vk_bot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
-#        if int(message['id']) < self.last_message_id.get(sender, 0):
-#            return
+        if int(message['id']) <= self.last_message.get(sender, (0, 0))[0]:
+            return
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
@@ -144,12 +144,12 @@ class vk_bot:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
                 self.banned_messages.add(message['id'])
                 return
-            self.last_message[sender] = time.time()
+            self.last_message[sender] = (int(res), time.time())
 #            self.last_message_id[sender] = int(res)
         if answer.startswith('&#'):
-            self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+            self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
-            self.tm.run(sender, _send, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, 0) - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
+            self.tm.run(sender, _send, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
 
     def checkConf(self, cid):
         cid = str(cid)
