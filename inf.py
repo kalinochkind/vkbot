@@ -25,7 +25,7 @@ def sendToBot(msg):
     answer = bot.stdout.readline().rstrip().replace(b'\a', b'\n')
     return answer.decode().strip()
 
-def getBotReply(uid, message, is_conf):
+def getBotReply(uid, message, is_conf, method=''):
     uid = str(uid)
     # special conf messages
     # don't need to reply
@@ -43,16 +43,17 @@ def getBotReply(uid, message, is_conf):
         return bl
     if answer.startswith('\\'):
         res = preprocessReply(answer[1:], uid)
-        print(message, ':', answer, '(' + str(res) + ')')
+        print(message, ':', answer, '(' + str(res) + ')', end=' ')
         if res is None:
             print('[ERROR] Unknown reply:', res)
             res = ''
         answer = res
     elif '{' in answer:
         answer, gender = applyGender(answer, uid)
-        print(message, ':', answer, '(female)' if gender == 1 else '(male)')
+        print(message, ':', answer, '(female)' if gender == 1 else '(male)', end=' ')
     else:
-        print(message, ':', answer)
+        print(message, ':', answer, end=' ')
+    print('({})'.format(method) if method else '')
     return answer
 
 def isFriend(uid):
@@ -183,7 +184,7 @@ def reply(m):
     if m['body'] and m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
         print(m['body'], '- ignored (caps)')
         return ('', 0)
-    return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m), 0)
+    return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m, m.get('_method', '')), 0)
 
 
 

@@ -47,6 +47,7 @@ class vk_bot:
                             continue
                     if self.tm.isBusy(self.getSender(cur)):
                         continue
+                    cur['_method'] = 'getDialogs'
                     try:
                         ans = gen_reply(cur)
                     except Exception as e:
@@ -97,7 +98,7 @@ class vk_bot:
                 if  not (set(opt) <= {'from', 'emoji'}):
                     need_extra.append(str(mid))
                     continue
-                msg = {'id': mid, 'date': ts, 'body': text, 'out': 0}
+                msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if 'from' in opt:
                     msg['chat_id'] = sender - 2000000000
                     msg['user_id'] = opt['from']
@@ -107,6 +108,7 @@ class vk_bot:
         if need_extra:
             need_extra = ','.join(need_extra)
             for i in self.api.messages.getById(message_ids=need_extra)['items']:
+                i['_method'] = 'getById'
                 yield i
                 
 
