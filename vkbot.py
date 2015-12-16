@@ -95,10 +95,12 @@ class vk_bot:
                 flags = i[2]
                 if flags & 2:  # out
                     continue
-                if  not (set(opt) <= {'from', 'emoji'}):
+                if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker'):
                     need_extra.append(str(mid))
                     continue
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
+                if opt.get('attach1_type') == 'sticker':
+                    msg['body'] = '...'
                 if 'from' in opt:
                     msg['chat_id'] = sender - 2000000000
                     msg['user_id'] = opt['from']
