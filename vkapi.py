@@ -81,7 +81,7 @@ class vk_api:
                 self.callback(*i)
         self.delayed_list.clear()
 
-    def apiCall(self, method, params):
+    def apiCall(self, method, params, retry=0):
         with self.api_lock:
             params['v'] = '5.40'
             url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
@@ -110,7 +110,7 @@ class vk_api:
                         print('Using antigate')
                         ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
                         if ans is None:
-                            time.sleep(self.sleep_on_captcha)
+                            time.sleep(1)
                         else:
                             params['captcha_sid'] = data_array['error']['captcha_sid']
                             params['captcha_key'] = ans
@@ -124,11 +124,27 @@ class vk_api:
                 elif data_array['error']['error_code'] == 5: #Auth error
                     self.login()
                     return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 7: #Black list
+                elif data_array['error']['error_code'] == 900: #Black list
                     print('[ERROR] Banned')
                     return None
+                elif data_array['error']['error_code'] == 7:
+                    if retry:
+                        print('[ERROR] Banned')
+                        return None
+                    else:
+                        print('[ERROR] Banned, retrying')
+                        time.sleep(3)
+                        return self.apiCall(method, params, 1)
                 elif data_array['error']['error_code'] == 10:
-                    print('[ERROR] Unable to reply')
+                    if retry:
+                        print('[ERROR] Unable to reply')
+                        return None
+                    else:
+                        print('[ERROR] Unable to reply, retrying')
+                        time.sleep(3)
+                        return self.apiCall(method, params, 1)
+                else:
+                    print('[ERROR] Code {}: {}'.format(data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
             else:
                 return self.apiCall(method, params)
