@@ -190,7 +190,7 @@ def reply(m):
 
 def preprocessMessage(m, user=None):
     if user is not None and str(m.get('user_id')) != str(user):
-        return ''
+        return None
     if 'action' in m:
         if m['action'] == 'chat_create' or (m['action'] == 'chat_invite_user' and str(m['action_mid']) == vk.self_id):
             return 'q'
@@ -214,9 +214,12 @@ def preprocessMessage(m, user=None):
     
     if 'fwd_messages' in m:
         for i in m['fwd_messages']:
-            if str(i.get('user_id')) == vk.self_id:
+            if len(m['fwd_messages']) == 1 and str(i.get('user_id')) == vk.self_id and m['body']:
+                break
+            r = preprocessMessage(i, m.get('user_id'))
+            if r is None:
                 return None
-            m['body'] += ' ' + str(preprocessMessage(i, m.get('user_id')))
+            m['body'] += ' ' + str(r)
     if user is None and 'attachments' not in m and not m['body'].strip():
         return None
     if m['body']:
