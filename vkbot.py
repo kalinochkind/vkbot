@@ -98,6 +98,7 @@ class vk_bot:
                     if opt.get('attach{}_type'.format(i)) == 'photo':
                         del opt['attach{}_type'.format(i)]
                         del opt['attach{}'.format(i)]
+                        text += '.. '
                 if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker'):
                     need_extra.append(str(mid))
                     continue
