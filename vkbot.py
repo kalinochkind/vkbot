@@ -94,6 +94,10 @@ class vk_bot:
                 flags = i[2]
                 if flags & 2:  # out
                     continue
+                for i in range(1, 11):
+                    if opt.get('attach{}_type'.format(i)) == 'photo':
+                        del opt['attach{}_type'.format(i)]
+                        del opt['attach{}'.format(i)]
                 if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker'):
                     need_extra.append(str(mid))
                     continue
