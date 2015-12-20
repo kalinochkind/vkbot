@@ -17,7 +17,7 @@ class vk_bot:
         self.api.getToken()
         self.banned_messages = set()
         self.guid = int(time.time() * 5)
-        self.ensureLoggedIn()
+        self.api.initLongpoll()
         self.self_id = str(self.api.users.get()[0]['id'])
         self.last_viewed_comment = 0
         self.name_cache = {}
@@ -26,7 +26,6 @@ class vk_bot:
         self.last_message = {}
         self.left_confs = set()
         self.last_message_id = 0
-        self.api.initLongpoll()
 
     def replyAll(self, gen_reply, include_read=0):
         self.tm.gc()
@@ -212,9 +211,6 @@ class vk_bot:
         except TypeError:
             return None
     
-    def ensureLoggedIn(self):
-        self.api.account.getCounters()
-        
     def getUserInfo(self, uid):
         uid = str(uid)
         if uid not in self.name_cache:    
