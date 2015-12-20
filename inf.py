@@ -200,17 +200,17 @@ def preprocessMessage(m, user=None):
     if 'attachments' in m:
         for a in m['attachments']:
             if a['type'] == 'audio': 
-                m['body'] += ' ' + a['audio']['title'].lower()
+                m['body'] += ' [' + a['audio']['title'].lower() + ']'
             elif a['type'] == 'video':
-                m['body'] += ' ' + a['video']['title'].lower()
+                m['body'] += ' [' + a['video']['title'].lower() + ']'
             elif a['type'] == 'wall':
-                m['body'] += ' ' + a['wall']['text'].lower()
+                m['body'] += ' [' + a['wall']['text'].lower() + ']'
             elif a['type'] == 'doc':
-                m['body'] += ' ' + a['doc']['title'].lower()
+                m['body'] += ' [' + a['doc']['title'].lower() + ']'
             elif a['type'] == 'gift':
                 m['body'] += ' vkgift'
             elif a['type'] == 'link':
-                m['body'] += ' ' + a['link']['description'].lower()
+                m['body'] += ' [' + a['link']['description'].lower() + ']'
     
     if 'fwd_messages' in m:
         for i in m['fwd_messages']:
@@ -219,7 +219,7 @@ def preprocessMessage(m, user=None):
             r = preprocessMessage(i, m.get('user_id'))
             if r is None:
                 return None
-            m['body'] += ' ' + str(r)
+            m['body'] += ' {' + str(r) + '}'
     if user is None and 'attachments' not in m and not m['body'].strip():
         return None
     if m['body']:
