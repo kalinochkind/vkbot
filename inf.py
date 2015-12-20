@@ -235,6 +235,9 @@ def preprocessReply(s, uid):
     if s.startswith('likeava'):
         vk.likeAva(uid)
         return s.split(maxsplit=1)[1]
+    if s.startswith('gosp'):
+        vk.setRelation(uid)
+        return s.split(maxsplit=1)[1]
         
 
 def applyGender(msg, uid):

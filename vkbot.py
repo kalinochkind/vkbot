@@ -256,3 +256,10 @@ class vk_bot:
             self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
         except Exception:
             log.write('likeava', str(uid) + ' failed')
+
+    def setRelation(self, uid):
+        try:
+            self.api.account.saveProfileInfo(relation_partner_id=uid)
+            log.write('relation', uid)
+        except Exception:
+            log.write('relation', str(uid) + ' failed')
