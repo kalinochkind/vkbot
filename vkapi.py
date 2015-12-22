@@ -89,9 +89,17 @@ class vk_api:
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except socket.timeout:
-                print('[ERROR] timeout')
+                print('[WARNING] timeout')
                 time.sleep(1)
                 return self.apiCall(method, params)
+            except Exception as e:
+                if retry:
+                    print('[ERROR] (%s) %s: %s' % (method, e.__class__.__name__, str(e)))
+                    return None
+                else:
+                    time.sleep(1)
+                    print('[WARNING] (%s) %s: %s, retrying' % (method, e.__class__.__name__, str(e)))
+                    return self.apiCall(method, params, 1)
             data_array = json.loads(json_string.decode('utf-8'))
             if self.logging:
                 with open('inf.log', 'a') as f:
