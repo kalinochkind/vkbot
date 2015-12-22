@@ -207,6 +207,7 @@ class vk_bot:
         self.api.account.setOnline(voip=0)
 
     def getUserId(self, uid):
+        uid = uid.rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
         if uid.isdigit():
             return uid
         if '=' in uid:
