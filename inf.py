@@ -230,6 +230,8 @@ def preprocessMessage(m, user=None):
 def preprocessReply(s, uid):
     if s == 'myname':
         return vk.getUserInfo(uid)['first_name']
+    if s == 'mylastname':
+        return vk.getUserInfo(uid)['last_name']
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
     if s.startswith('likeava'):
