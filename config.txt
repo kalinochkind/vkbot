@@ -3,7 +3,6 @@ vkbot.chars_per_second 6
 vkbot.same_user_interval 20
 vkbot.same_conf_interval 25 
 
-vkapi.logging 0
 vkapi.checks_before_antigate 6
 vkapi.captcha_check_interval 5
 vkapi.default_timeout 4

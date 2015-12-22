@@ -8,7 +8,7 @@ import socket
 import config
 
 class vk_api:
-    logging = config.get('vkapi.logging')
+    logging = 0
     checks_before_antigate = config.get('vkapi.checks_before_antigate')
     captcha_check_interval = config.get('vkapi.captcha_check_interval')
 

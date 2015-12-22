@@ -4,6 +4,7 @@ import time
 import sys
 from subprocess import Popen, PIPE
 from vkbot import vk_bot
+import vkapi
 import captcha
 import re
 import check_friend
@@ -281,12 +282,16 @@ def timeto(name, interval):
         return 1
     return 0
 
+if sys.argv[-1] == '-l':
+    vkapi.vk_api.logging = 1
+    print('Logging enabled')
 bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
 print('My id:', vk.self_id)
 admin = cfg[2] if len(cfg) > 2 else ''
 reset_command = cfg[3] if len(cfg) > 3 else ''
+
 
 banign = open('banned.txt').read().split()
 banned = set(i[1:] for i in banign if i.startswith('$'))
