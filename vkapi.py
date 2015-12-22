@@ -195,6 +195,10 @@ class vk_api:
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
+        if self.logging:
+            with open('inf.log', 'a') as f:
+                print('longpoll request: ' + url, file=f)
+                print('response: %s\n' % json.dumps(data_array), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
         if 'updates' in data_array:
