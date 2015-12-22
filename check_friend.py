@@ -10,6 +10,10 @@ s = s[1].split()
 
 offline_allowed = config.get('check_friend.offline_allowed')
 
+def writeNoadd():
+    with open('noadd.txt', 'w') as f:
+        f.write('\n'.join(sorted(noadd, key=int)))
+
 def check_char(c):
     return c in allowed
 

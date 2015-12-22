@@ -8,7 +8,6 @@ a = vk_api(login, password, 10)
 a.delayedReset()
 friends = []
 print('Fetching friends')
-noadd = check_friend.noadd
 for i in range(1000000):
     print('page', i)
     fr = a.friends.get(fields=check_friend.fields+',can_write_private_message', count=1000, offset=i*1000)
@@ -19,15 +18,14 @@ for i in range(1000000):
 print('Starting to delete')
 for i in friends:
     if not i['can_write_private_message']:
-        noadd.add(str(i['id']))
+        check_friend.noadd.add(str(i['id']))
     if not check_friend.is_good(i):
         a.friends.delete.delayed(user_id=i['id'])
         print('deleted', i['id'])
 a.sync()
 print()
 
-with open('noadd.txt', 'w') as f:
-    f.write('\n'.join(noadd))
+check_friend.writeNoadd()
 
 print('Fetching followers')
 foll = []

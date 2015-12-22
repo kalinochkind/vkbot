@@ -200,6 +200,9 @@ class vk_bot:
         self.api.sync()
         return len(requests)
 
+    def deleteFriend(self, uid):
+        self.api.friends.delete(user_id=uid)
+
     def setOnline(self):
         self.api.account.setOnline(voip=0)
 
