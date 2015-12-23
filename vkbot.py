@@ -201,22 +201,35 @@ class vk_bot:
         return len(requests)
 
     def deleteFriend(self, uid):
-        self.api.friends.delete(user_id=uid)
+        if type(uid) == str:
+            self.api.friends.delete(user_id=uid)
+        else:
+            self.api.delayedReset()
+            for i in uid:
+                self.api.friends.delete.delayed(user_id=i)
+            self.api.sync()
 
     def setOnline(self):
         self.api.account.setOnline(voip=0)
 
     def getUserId(self, uid):
-        uid = uid.rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
-        if uid.isdigit():
-            return uid
-        if '=' in uid:
-            uid = uid.split('=')[-1]
-        if '/' in uid:
-            uid = uid.split('/')[-1]
-        data = self.api.users.get(user_ids=uid)
+        multiple = type(uid) != str
+        if not multiple:
+            uid = [uid]
+        req = []
+        for i in uid:
+            i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
+            if '=' in i:
+                i = i.split('=')[-1]
+            if '/' in i:
+                i = i.split('/')[-1]
+            req.append(i)
+        data = self.api.users.get(user_ids=','.join(req))
         try:
-            return str(data[0]['id'])
+            if multiple:
+                return [str(i['id']) for i in data]
+            else:
+                return str(data[0]['id'])
         except TypeError:
             return None
     

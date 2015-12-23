@@ -142,15 +142,15 @@ def processCommand(cmd, *p):
     elif cmd == 'noadd':
         if not p:
             return 'Not enough parameters'
-        user = vk.getUserId(p[-1])
-        if user is None:
-            return 'No such user'
-        if user == admin:
+        users = vk.getUserId(p)
+        if not users:
+            return 'No such users'
+        if admin in users:
             return 'Cannot delete admin!'
-        check_friend.noadd.add(str(user))
+        check_friend.noadd.update(users)
+        vk.deleteFriend(users)
         check_friend.writeNoadd()
-        vk.deleteFriend(user)
-        return 'Noadd %s' % user
+        return 'Noadd %s' % str(users)
     else:
         return 'Unknown command'
 
