@@ -72,14 +72,14 @@ def processCommand(cmd, *p):
     elif cmd == 'banned':
         if banned:
             result = sorted(map(int, banned))
-            result = [('conf %d' if j < 5000 else 'https://vk.com/id%d') % j for j in result]
+            result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
     elif cmd == 'ignored':
         if ignored:
             result = sorted(map(int, ignored))
-            result = [('conf %d' if j < 5000 else 'https://vk.com/id%d') % j for j in result]
+            result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
             return '\n'.join(result)
         else:
             return 'No one ignored!'
@@ -159,7 +159,7 @@ def reply(m):
     m['user_id'] = str(m['user_id'])
     if 'chat_id' in m:
         m['chat_id'] = str(m['chat_id'])
-        if m['chat_id'] in banned:
+        if str(int(m['chat_id']) + 2000000000) in banned:
             return None
     elif m['user_id'] in banned:
         return None
@@ -171,7 +171,7 @@ def reply(m):
         return ('', 0)
     if 'chat_id' in m:
         m['chat_id'] = str(m['chat_id'])
-        if m['chat_id'] in ignored:
+        if str(int(m['chat_id']) + 2000000000) in ignored:
             return ('', 0)
     if 'id' not in m:
         return (getBotReply(m['user_id'], m['message'], 0), 2)

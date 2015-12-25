@@ -3,6 +3,7 @@ import time
 import log
 from thread_manager import thread_manager
 import config
+import re
 
 class vk_bot:
 
@@ -219,17 +220,26 @@ class vk_bot:
         req = []
         for i in uid:
             i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
-            if '=' in i:
-                i = i.split('=')[-1]
-            if '/' in i:
-                i = i.split('/')[-1]
-            req.append(i)
-        data = self.api.users.get(user_ids=','.join(req))
+            conf = re.search('sel=c(\\d+)', i) or re.search('^c(\\d+)$', i) or re.search('chat=(\\d+)', i) or re.search('peer=2(\\d{9})', i)
+            if conf is not None:
+                req.append(int(conf.group(1)) + 2000000000)
+            else:
+                if '=' in i:
+                    i = i.split('=')[-1]
+                if '/' in i:
+                    i = i.split('/')[-1]
+                req.append(int(i) if i.isdigit() else i)
+
+        data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str))
+        for i in range(len(req)):
+            if type(req[i]) == str:
+                req[i] = data[0]['id']
+                data = data[1:]
         try:
             if multiple:
-                return [str(i['id']) for i in data]
+                return [str(i) for i in req]
             else:
-                return str(data[0]['id'])
+                return str(req[0])
         except TypeError:
             return None
     
