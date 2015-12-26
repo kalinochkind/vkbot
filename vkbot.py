@@ -4,6 +4,7 @@ import log
 from thread_manager import thread_manager
 import config
 import re
+import random
 
 class vk_bot:
 
@@ -11,6 +12,7 @@ class vk_bot:
     chars_per_second = config.get('vkbot.chars_per_second')
     same_user_interval = config.get('vkbot.same_user_interval')
     same_conf_interval = config.get('vkbot.same_conf_interval')
+    noans = open('noans.txt').read().split()
 
     def __init__(self, username, password, captcha_handler=None):
         self.api = vkapi.vk_api(username, password)
@@ -137,6 +139,15 @@ class vk_bot:
         sender = self.getSender(message)
         if int(message['id']) <= self.last_message.get(sender, (0, 0))[0]:
             return
+
+        if answer == '$noans':
+            if int(sender) > 2000000000:
+                answer = ''
+            else:
+                answer = random.choice(self.noans)
+        elif answer == '$blacklisted':
+            answer = ''
+
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:

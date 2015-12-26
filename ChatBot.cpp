@@ -12,7 +12,7 @@ struct userinfo
     int lastReply;
 };
 
-vector<wstring> request, noans;
+vector<wstring> request;
 vector<shared_ptr<vector<wstring> > > reply;
 vector<vector<long long> > tf;
 vector<pair<long long, long long> > fixedstem;
@@ -88,7 +88,7 @@ wstring BestReply(wstring &line, int id, bool conf)
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
             wcerr << line << L" - blacklisted\n";
-            return id >= 0 ? L"" : L"\\blacklisted";
+            return L"$blacklisted";
         }
     }
     double mx = 0;
@@ -128,7 +128,7 @@ wstring BestReply(wstring &line, int id, bool conf)
             return L"";
         }
         users[id].smiles++;
-        return conf ? L"" : RandReply(noans);
+        return L"$noans";
     }
     wcerr << line << L" == " << request[imx] << L" (" << mx / norm(words) << L")";
     if(reply[imx]->size() > 1)
@@ -206,7 +206,6 @@ void AddReply(const wstring &req, const wstring &rep)
 
 wchar_t buf1[12000], buf2[12000];
 const string file = "bot.txt";
-const string filena = "noans.txt";
 const string filebl = "blacklist.txt";
 const string filestem = "fixedstem.txt";
 const string filenames = "names.txt";
@@ -225,7 +224,6 @@ void Load()
     tf.clear();
     tfnorm.clear();
     df.clear();
-    noans.clear();
     blacklist.clear();
     fixedstem.clear();
     names.clear();
@@ -262,12 +260,6 @@ void Load()
         tfnorm.push_back(norm(i));
     }
     fin.close();
-    wifstream fna(filena);
-    fna.imbue(loc);
-    while(fna.getline(buf1, 10000))
-    {
-        noans.push_back(buf1);
-    }
     wifstream fbl(filebl);
     fbl.imbue(loc);
     while(fbl.getline(buf1, 10000))

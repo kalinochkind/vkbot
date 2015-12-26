@@ -39,7 +39,7 @@ def getBotReply(uid, message, is_conf, method=''):
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
     answer = sendToBot(('flat' if is_conf == 2 else 'conf ' if is_conf else 'user ') + ('' if is_conf == 2 else uid) + ' ' + message)
     if is_conf == 2:
-        bl = answer == '\\blacklisted'
+        bl = answer == '$blacklisted'
         print('Comment', message, '-', 'bad' if bl else 'good')
         return bl
     if answer.startswith('\\'):
