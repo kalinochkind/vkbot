@@ -137,7 +137,7 @@ class vk_bot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
-        if int(message['id']) <= self.last_message.get(sender, (0, 0))[0]:
+        if 'id' in message and int(message['id']) <= self.last_message.get(sender, (0, 0))[0]:
             return
 
         if answer == '$noans':
@@ -151,7 +151,8 @@ class vk_bot:
         if fast == 0:
             self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
-            self.banned_messages.add(message['id'])
+            if 'id' in message:
+                self.banned_messages.add(message['id'])
             return
         delayed = 0
         if fast == 0 or fast == 2:
