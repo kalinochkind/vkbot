@@ -71,7 +71,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     line += L' ';
     if(id >= 0 && users[id].lastReply && reply[abs(users[id].lastReply) - 1]->size() == 1 && line == L' ' + (*reply[abs(users[id].lastReply) - 1])[0] + L' ')
     {
-        wcerr << line << L" - my reply\n";
+        wcerr << line << L"- my reply\n";
         return L"";
     }
     vector<long long> words = splitWords(line, fixedstem, replaced, names);
@@ -87,7 +87,7 @@ wstring BestReply(wstring &line, int id, bool conf)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
-            wcerr << line << L" - blacklisted\n";
+            wcerr << line << L"- blacklisted\n";
             return L"$blacklisted";
         }
     }
@@ -112,7 +112,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     }
     if(mx == 0)
     {
-        wcerr << line << L" - no match\n";
+        wcerr << line << L"- no match\n";
         while(line.length() && line[0] == L' ')
         {
             line = line.substr(1);
@@ -130,7 +130,7 @@ wstring BestReply(wstring &line, int id, bool conf)
         users[id].smiles++;
         return L"$noans";
     }
-    wcerr << line << L" == " << request[imx] << L" (" << mx / norm(words) << L")";
+    wcerr << line << L"== " << request[imx] << L" (" << mx / norm(words) << L")";
     if(reply[imx]->size() > 1)
     {
         wcerr << L", " << reply[imx]->size() << L" replies";
