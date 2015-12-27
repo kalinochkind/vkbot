@@ -177,7 +177,7 @@ class vk_bot:
         for i in messages:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
-                log.write('conf', cid)
+                log.write('conf', str(i.get('user_id')) + ' ' + cid)
                 return 0
         self.good_conf.add(cid)
         return 1
