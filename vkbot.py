@@ -24,7 +24,7 @@ class vk_bot:
         self.self_id = str(self.api.users.get()[0]['id'])
         self.last_viewed_comment = 0
         self.name_cache = {}
-        self.good_conf = set()
+        self.good_conf = {}
         self.tm = thread_manager()
         self.last_message = {}
         self.left_confs = set()
@@ -172,14 +172,15 @@ class vk_bot:
     def checkConf(self, cid):
         cid = str(cid)
         if cid in self.good_conf:
-            return 1
+            return self.good_conf[cid]
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
                 log.write('conf', str(i.get('user_id')) + ' ' + cid)
+                self.good_conf[cid] = 0
                 return 0
-        self.good_conf.add(cid)
+        self.good_conf[cid] = 1
         return 1
     
     def leaveConf(self, cid):
