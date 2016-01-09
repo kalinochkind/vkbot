@@ -67,6 +67,7 @@ def processCommand(cmd, *p):
     global ignored
     if cmd == 'reload':
         sendToBot('reld')
+        vk.initSelf()
         print('Reloaded!')
         return 'Reloaded!'
     elif cmd == 'banned':
@@ -253,6 +254,8 @@ def preprocessReply(s, uid):
     if s.startswith('gosp'):
         vk.setRelation(uid)
         return s.split(maxsplit=1)[1]
+    if s == 'phone':
+        return vk.phone
         
 
 def applyGender(msg, uid):

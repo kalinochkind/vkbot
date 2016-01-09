@@ -21,7 +21,7 @@ class vk_bot:
         self.banned_messages = set()
         self.guid = int(time.time() * 5)
         self.api.initLongpoll()
-        self.self_id = str(self.api.users.get()[0]['id'])
+        self.initSelf()
         self.last_viewed_comment = 0
         self.name_cache = {}
         self.good_conf = {}
@@ -29,6 +29,13 @@ class vk_bot:
         self.last_message = {}
         self.left_confs = set()
         self.last_message_id = 0
+
+    def initSelf(self):
+        res = self.api.users.get(fields='contacts')[0]
+        self.self_id = str(res['id'])
+        self.phone = res.get('mobile_phone', '')
+        print('My phone:', self.phone)
+
 
     def replyAll(self, gen_reply, include_read=0):
         self.tm.gc()
