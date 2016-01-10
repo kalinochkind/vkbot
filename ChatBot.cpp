@@ -122,7 +122,7 @@ wstring BestReply(wstring &line, int id, bool conf)
             misslog << line << endl;
             misslog.flush();
         }*/
-        if(id >= 0 && users[id].smiles >= 2)
+        if(id >= 0 && users[id].smiles >= MAX_SMILES)
         {
             wcerr << "Too many smiles\n";
             return L"";
