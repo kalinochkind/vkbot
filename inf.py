@@ -44,6 +44,7 @@ def getBotReply(uid, message, is_conf, method=''):
         return bl
     if answer.startswith('\\'):
         res = preprocessReply(answer[1:], uid)
+        log.write('preprocess', '{}: {} ({} -> {})'.format(uid, answer, message, res))
         print(message, ':', answer, '(' + str(res) + ')', end=' ')
         if res is None:
             print('[ERROR] Unknown reply:', res)
