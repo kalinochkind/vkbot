@@ -170,8 +170,7 @@ class vk_bot:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
                 self.banned_messages.add(message['id'])
                 return
-            self.last_message[sender] = (int(res), time.time())
-#            self.last_message_id[sender] = int(res)
+            self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
         if answer.startswith('&#'):
             self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
