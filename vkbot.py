@@ -155,11 +155,10 @@ class vk_bot:
         elif answer == '$blacklisted':
             answer = ''
 
-        if fast == 0:
-            self.api.messages.markAsRead.delayed(message_ids=message['id'])
         if not answer:
             if 'id' in message:
                 self.banned_messages.add(message['id'])
+                self.api.messages.markAsRead.delayed(message_ids=message['id'])
             return
         delayed = 0
         if fast == 0 or fast == 2:
@@ -171,10 +170,11 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 return
             self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
+        pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead.delayed(message_ids=mid)) if fast == 0 else (lambda:None)
         if answer.startswith('&#'):
-            self.tm.run(sender, _send, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+            self.tm.run(sender, _send, pre_proc, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
-            self.tm.run(sender, _send, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
+            self.tm.run(sender, _send, pre_proc, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
 
     def checkConf(self, cid):
         cid = str(cid)
