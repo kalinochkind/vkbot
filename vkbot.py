@@ -12,6 +12,7 @@ class vk_bot:
     chars_per_second = config.get('vkbot.chars_per_second')
     same_user_interval = config.get('vkbot.same_user_interval')
     same_conf_interval = config.get('vkbot.same_conf_interval')
+    typing_interval = config.get('vkbot.typing_interval')
     noans = open('noans.txt').read().split()
 
     def __init__(self, username, password, captcha_handler=None):
@@ -170,11 +171,12 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 return
             self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
-        pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead.delayed(message_ids=mid)) if fast == 0 else (lambda:None)
+        pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead(message_ids=mid)) if fast == 0 else (lambda:None)
+        instant_pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead.delayed(message_ids=mid)) if fast == 0 else (lambda:None)
         if answer.startswith('&#'):
-            self.tm.run(sender, _send, pre_proc, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+            self.tm.run(sender, _send, pre_proc, instant_pre_proc, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
-            self.tm.run(sender, _send, pre_proc, delayed, self.delay_on_reply, 8, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA 
+            self.tm.run(sender, _send, pre_proc, instant_pre_proc, delayed, self.delay_on_reply, self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA
 
     def checkConf(self, cid):
         cid = str(cid)
@@ -207,9 +209,9 @@ class vk_bot:
                     to_rep.append((i, ans))
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
-        self.api.sync()
         for i in to_rep:
             self.replyMessage(i[0], i[1][0], i[1][1])
+        self.api.sync()
 
     def unfollow(self, banned):
         requests = self.api.friends.getRequests(out=1)['items']

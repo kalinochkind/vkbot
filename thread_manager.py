@@ -6,9 +6,12 @@ class thread_manager:  # not thread-safe, should be used only from main thread
     def __init__(self):
         self.threads = {}
    
-    def run(self, key, proc, pre_proc, delay=0, pre_delay=0, pending_interval=0, pending_proc=None, min_delay=0):  # too many params
+    def run(self, key, proc, pre_proc, instant_pre_proc, delay=0, pre_delay=0, pending_interval=0, pending_proc=None, min_delay=0):  # too many params
         if delay:
             if pending_proc:
+                if min_delay <= delay + pre_delay:
+                    instant_pre_proc()
+                    pre_proc = lambda:None
                 def _delay(proc, delay, pre_delay, pending_interval, pending_proc, min_delay):
                     def _f():
                         if min_delay > delay + pre_delay:
@@ -25,6 +28,9 @@ class thread_manager:  # not thread-safe, should be used only from main thread
                     return _f 
                 proc = _delay(proc, delay, pre_delay, pending_interval, pending_proc, min_delay)
             else:
+                if max(delay, min_delay) <= pre_delay:
+                    instant_pre_proc()
+                    pre_proc = lambda:None
                 def _delay(proc, delay):
                     def _f():
                         time.sleep(max(0, delay - pre_delay))
