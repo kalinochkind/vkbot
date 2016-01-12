@@ -50,11 +50,14 @@ def getBotReply(uid, message, is_conf, method=''):
             print('[ERROR] Unknown reply:', res)
             res = ''
         answer = res
-    elif '{' in answer:
-        answer, gender = applyGender(answer, uid)
-        print(message, ':', answer, '(female)' if gender == 1 else '(male)', end=' ')
     else:
-        print(message, ':', answer, end=' ')
+        if message == message.lower() and message != message.upper():
+            answer = answer.lower()
+        if '{' in answer:
+            answer, gender = applyGender(answer, uid)
+            print(message, ':', answer, '(female)' if gender == 1 else '(male)', end=' ')
+        else:
+            print(message, ':', answer, end=' ')
     print('({})'.format(method) if method else '')
     return answer
 
