@@ -12,7 +12,7 @@ class vk_api:
     checks_before_antigate = config.get('vkapi.checks_before_antigate')
     captcha_check_interval = config.get('vkapi.captcha_check_interval')
 
-    def __init__(self, username, password, timeout=config.get('vkapi.default_timeout')):
+    def __init__(self, username='', password='', timeout=config.get('vkapi.default_timeout')):
         self.username = username
         self.password = password
         self.captcha_delayed = 0
