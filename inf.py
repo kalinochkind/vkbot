@@ -174,6 +174,8 @@ def reply(m):
         m['body'] = ''
     if m['user_id'] in ignored:
         return ('', 0)
+    if vk.users[m['user_id']]['blacklisted'] or vk.users[m['user_id']]['blacklisted_by_me']:
+        return ('', 0)
     if 'chat_id' in m:
         m['chat_id'] = str(m['chat_id'])
         if str(int(m['chat_id']) + 2000000000) in ignored:
@@ -247,9 +249,9 @@ def preprocessMessage(m, user=None):
 
 def preprocessReply(s, uid):
     if s == 'myname':
-        return vk.getUserInfo(uid)['first_name']
+        return vk.users[uid]['first_name']
     if s == 'mylastname':
-        return vk.getUserInfo(uid)['last_name']
+        return vk.users[uid]['last_name']
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
     if s.startswith('likeava'):
@@ -263,7 +265,7 @@ def preprocessReply(s, uid):
         
 
 def applyGender(msg, uid):
-    gender = vk.getUserInfo(uid)['sex'] or 2
+    gender = vk.users[uid]['sex'] or 2
     male = re.compile(r'\{m([^\{\}]*)\}')
     female = re.compile(r'\{f([^\{\}]*)\}')
     if gender == 1:

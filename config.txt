@@ -19,3 +19,5 @@ birthday.age 15
 check_friend.offline_allowed 14
 
 log.datetime_format %d.%m.%Y %H:%M:%S
+
+user_cache.invalidate_interval 600

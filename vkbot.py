@@ -2,6 +2,7 @@ import vkapi
 import time
 import log
 from thread_manager import thread_manager
+from user_cache import user_cache
 import config
 import re
 import random
@@ -22,9 +23,9 @@ class vk_bot:
         self.banned_messages = set()
         self.guid = int(time.time() * 5)
         self.api.initLongpoll()
+        self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
         self.initSelf()
         self.last_viewed_comment = 0
-        self.name_cache = {}
         self.good_conf = {}
         self.tm = thread_manager()
         self.last_message = {}
@@ -32,6 +33,7 @@ class vk_bot:
         self.last_message_id = 0
 
     def initSelf(self):
+        self.users.clear()
         res = self.api.users.get(fields='contacts')[0]
         self.self_id = str(res['id'])
         self.phone = res.get('mobile_phone', '')
@@ -263,13 +265,6 @@ class vk_bot:
                 return str(req[0])
         except TypeError:
             return None
-    
-    def getUserInfo(self, uid):
-        uid = str(uid)
-        if uid not in self.name_cache:    
-            r = self.api.users.get(user_ids=uid, fields='sex,photo_id')[0]
-            self.name_cache[uid] = r
-        return self.name_cache[uid]
         
     def filterComments(self, test):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
@@ -300,7 +295,7 @@ class vk_bot:
                         
     def likeAva(self, uid):
         try:
-            photo = self.getUserInfo(uid)['photo_id'].split('_')
+            photo = self.users[uid]['photo_id'].split('_')
             log.write('likeava', str(uid))
             self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
         except Exception:
