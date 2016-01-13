@@ -161,7 +161,7 @@ class vk_bot:
         if not answer:
             if 'id' in message:
                 self.banned_messages.add(message['id'])
-                self.api.messages.markAsRead.delayed(message_ids=message['id'])
+                self.api.messages.markAsRead.delayed(peer_id=sender)
             return
         delayed = 0
         if fast == 0 or fast == 2:
@@ -173,8 +173,8 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 return
             self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
-        pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead(message_ids=mid)) if fast == 0 else (lambda:None)
-        instant_pre_proc = (lambda mid=message['id']:self.api.messages.markAsRead.delayed(message_ids=mid)) if fast == 0 else (lambda:None)
+        pre_proc = (lambda pid=sender:self.api.messages.markAsRead(peer_id=pid)) if fast == 0 else (lambda:None)
+        instant_pre_proc = (lambda pid=sender:self.api.messages.markAsRead.delayed(peer_id=pid)) if fast == 0 else (lambda:None)
         if answer.startswith('&#'):
             self.tm.run(sender, _send, pre_proc, instant_pre_proc, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
         else:
