@@ -219,7 +219,7 @@ def preprocessMessage(m, user=None):
         return None
     if 'attachments' in m:
         for a in m['attachments']:
-            if a['type'] == 'audio': 
+            if a['type'] == 'audio':
                 m['body'] += ' [' + a['audio']['title'].lower() + ']'
             elif a['type'] == 'video':
                 m['body'] += ' [' + a['video']['title'].lower() + ']'

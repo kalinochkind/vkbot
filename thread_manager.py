@@ -53,3 +53,40 @@ class thread_manager:  # not thread-safe, should be used only from main thread
                 to_del.append(i)
         for i in to_del:
             del self.threads[i]
+
+class timeline:
+
+    def __init__(self, duration=0):
+        self.events = []
+        self.duration = duration
+        self.endtime = 0
+
+    def do(self, func):
+        self.events.append(func)
+        return self
+
+    def sleep(self, seconds):
+        return self.do(lambda: time.sleep(seconds))
+
+    def sleep_until(self, seconds=0):
+        def _f():
+            rem = self.endtime - time.time() - seconds
+            if rem > 0:
+                time.sleep(rem)
+        return self.do(_f)
+
+    def do_every_until(self, interval, func, seconds=0, do_at_start=True):
+        if do_at_start:
+            self.do(func)
+        def _f():
+            end = self.endtime - seconds
+            while time.time() + interval < end:
+                time.sleep(interval)
+                func()
+            time.sleep(max(0, end - time.time()))
+        return self.do(_f)
+
+    def __call__(self):
+        self.endtime = time.time() + self.duration
+        for func in self.events:
+            func()
