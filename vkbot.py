@@ -1,7 +1,7 @@
 import vkapi
 import time
 import log
-from thread_manager import thread_manager
+from thread_manager import thread_manager, timeline
 from user_cache import user_cache
 import config
 import re
@@ -163,9 +163,10 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             return
-        delayed = 0
-        if fast == 0 or fast == 2:
-            delayed = len(answer) / self.chars_per_second
+        typing_time = 0
+        if (fast == 0 or fast == 2) and not answer.startswith('&#'):
+            typing_time = len(answer) / self.chars_per_second
+
         def _send():
             res = self.sendMessage(sender, answer)
             if res is None:
@@ -173,12 +174,29 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 return
             self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
-        pre_proc = (lambda pid=sender:self.api.messages.markAsRead(peer_id=pid)) if fast == 0 else (lambda:None)
-        instant_pre_proc = (lambda pid=sender:self.api.messages.markAsRead.delayed(peer_id=pid)) if fast == 0 else (lambda:None)
-        if answer.startswith('&#'):
-            self.tm.run(sender, _send, pre_proc, instant_pre_proc, delayed, self.delay_on_reply, 0, None, self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))
+
+        if fast == 0:
+            pre_proc = lambda:self.api.messages.markAsRead(peer_id=sender))
         else:
-            self.tm.run(sender, _send, pre_proc, instant_pre_proc, delayed, self.delay_on_reply, self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), self.last_message.get(sender, (0, 0))[1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval))  # AAAAAAAA
+            pre_proc = lambda:None
+        typing_proc = lambda:self.api.messages.setActivity(type='typing', user_id=sender)
+
+        send_time = self.delay_on_reply + typing_time
+        user_delay = 0
+        if sender in self.last_message:
+            user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval)  # can be negative
+
+        tl = timeline(max(send_time, user_delay))
+        if tl.duration == send_time:
+            if fast == 0:
+                self.api.messages.markAsRead.delayed(peer_id=pid)
+        else:
+            tl.sleep_until(send_time).do(pre_proc)
+        tl.sleep(self.delay_on_reply)
+        if typing_time:
+            tl.do_every_for(self.typing_interval, typing_proc, typing_time)
+        tl.do(_send)
+        self.tm.run(sender, tl)
 
     def checkConf(self, cid):
         cid = str(cid)
