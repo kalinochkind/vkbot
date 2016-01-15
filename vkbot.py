@@ -176,7 +176,7 @@ class vk_bot:
             self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
 
         if fast == 0:
-            pre_proc = lambda:self.api.messages.markAsRead(peer_id=sender))
+            pre_proc = lambda:self.api.messages.markAsRead(peer_id=sender)
         else:
             pre_proc = lambda:None
         typing_proc = lambda:self.api.messages.setActivity(type='typing', user_id=sender)
@@ -189,7 +189,7 @@ class vk_bot:
         tl = timeline(max(send_time, user_delay))
         if tl.duration == send_time:
             if fast == 0:
-                self.api.messages.markAsRead.delayed(peer_id=pid)
+                self.api.messages.markAsRead.delayed(peer_id=sender)
         else:
             tl.sleep_until(send_time).do(pre_proc)
         tl.sleep(self.delay_on_reply)
