@@ -12,13 +12,29 @@ from calc import evalExpression
 import log
 import config
 
-bot_msg = re.compile(r'^\(.+\)')
-friend_cache = {}
+
+def isBotMessage(msg):
+    return isBotMessage.bot_msg.match(msg.strip())
+
+isBotMessage.bot_msg = re.compile(r'^\(.+\)')
+
+
+class cpp_bot:
+    def __init__(self):
+        self.bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
+
+    def interact(self, msg):
+        self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
+        self.bot.stdin.flush()
+        answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
+        return answer.decode().strip()
+
+bot = cpp_bot()
 
 def writeBannedIgnored():
     s = ['$' + i for i in sorted(banned, key=int)] + sorted(ignored, key=int)
     with open('banned.txt', 'w') as f:
-        f.write('\n'.join(s))        
+        f.write('\n'.join(s))
 
 def sendToBot(msg):
     bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
@@ -37,7 +53,7 @@ def getBotReply(uid, message, is_conf, method=''):
     message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
-    answer = sendToBot(('flat' if is_conf == 2 else 'conf ' if is_conf else 'user ') + ('' if is_conf == 2 else uid) + ' ' + message)
+    answer = bot.interact(('flat' if is_conf == 2 else 'conf ' if is_conf else 'user ') + ('' if is_conf == 2 else uid) + ' ' + message)
     if is_conf == 2:
         bl = answer == '$blacklisted'
         print('Comment', message, '-', 'bad' if bl else 'good')
@@ -61,16 +77,11 @@ def getBotReply(uid, message, is_conf, method=''):
     print('({})'.format(method) if method else '')
     return answer
 
-def isFriend(uid):
-    if uid not in friend_cache:
-        friend_cache[uid] = vk.isFriend(uid)
-    return friend_cache[uid]
-
 def processCommand(cmd, *p):
     global banned
     global ignored
     if cmd == 'reload':
-        sendToBot('reld')
+        bot.interact('reld')
         vk.initSelf()
         print('Reloaded!')
         return 'Reloaded!'
@@ -168,8 +179,6 @@ def reply(m):
             return None
     elif m['user_id'] in banned:
         return None
-  #  elif not isFriend(m['user_id']):
-  #      return ('', 0)
     if 'body' not in m:
         m['body'] = ''
     if m['user_id'] in ignored:
@@ -198,7 +207,7 @@ def reply(m):
             print(m['body'], '=', t, '(calculated)')
             log.write('calc', '"{}" = {}'.format(m['body'], t))
             return (t, 0)
-        if bot_msg.match(m['body'].strip()):
+        if isBotMessage(m['body']):
             print(m['body'], '- ignored (bot message)')
             return ('', 0)
     if m['body'] and m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
@@ -294,7 +303,7 @@ def timeto(name, interval):
 if sys.argv[-1] == '-l':
     vkapi.vk_api.logging = 1
     print('Logging enabled')
-bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
+
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
 print('My id:', vk.self_id)
