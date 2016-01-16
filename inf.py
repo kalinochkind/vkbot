@@ -13,15 +13,14 @@ import log
 import config
 
 
+_bot_message = re.compile(r'^\(.+\)')
 def isBotMessage(msg):
-    return isBotMessage.bot_msg.match(msg.strip())
-
-isBotMessage.bot_msg = re.compile(r'^\(.+\)')
+    return _bot_message.match(msg.strip())
 
 
 class cpp_bot:
-    def __init__(self):
-        self.bot = Popen(['./chat.exe'], stdout=PIPE, stdin=PIPE)
+    def __init__(self, filename):
+        self.bot = Popen([filename], stdout=PIPE, stdin=PIPE)
 
     def interact(self, msg):
         self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
@@ -29,18 +28,80 @@ class cpp_bot:
         answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
         return answer.decode().strip()
 
-bot = cpp_bot()
+bot = cpp_bot('./chat.exe')
 
-def writeBannedIgnored():
-    s = ['$' + i for i in sorted(banned, key=int)] + sorted(ignored, key=int)
-    with open('banned.txt', 'w') as f:
-        f.write('\n'.join(s))
 
-def sendToBot(msg):
-    bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
-    bot.stdin.flush()
-    answer = bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-    return answer.decode().strip()
+class ban_manager:
+    def __init__(self, filename):
+        self.filename = filename
+        banign = open(filename).read().split()
+        self.banned = set(i[1:] for i in banign if i.startswith('$'))
+        self.ignored = set(i for i in banign if not i.startswith('$'))
+
+    def write(self):
+        s = ['$' + i for i in sorted(self.banned, key=int)] + sorted(self.ignored, key=int)
+        with open(self.filename, 'w') as f:
+            f.write('\n'.join(s))
+
+    def printableName(self, pid):
+        pid = int(pid)
+        if pid > 2000000000:
+            return 'Conf ' + str(pid - 2000000000)
+        else:
+            return 'User ' + str(pid)
+
+    def ban(self, pid):
+        pid = str(pid)
+        if pid in self.banned:
+            return 'Already banned!'
+        self.banned.add(pid)
+        self.write()
+        return self.printableName(pid) + ' banned'
+
+    def ignore(self, pid):
+        pid = str(pid)
+        if pid in self.ignored:
+            return 'Already ignored!'
+        self.ignored.add(pid)
+        self.write()
+        return self.printableName(pid) + 'ignored'
+
+    def unban(self, pid):
+        pid = str(pid)
+        if pid == '*':
+            ret = '{} unbanned'.format(', '.join(self.banned))
+            self.banned = set()
+        elif pid not in self.banned:
+            return 'Not banned!'
+        else:
+            self.banned.discard(pid)
+            ret = self.printableName(pid) + ' unbanned'
+        self.write()
+        return ret
+
+    def unban(self, pid):
+        pid = str(pid)
+        if pid == '*':
+            ret = '{} unignored'.format(', '.join(self.ignored))
+            self.ignored = set()
+        elif pid not in self.ignored:
+            return 'Not ignored!'
+        else:
+            self.ignored.discard(pid)
+            ret = self.printableName(pid) + ' unignored'
+        self.write()
+        return ret
+
+banign = ban_manager('banned.txt')
+
+
+_timeto = {}
+def timeto(name, interval):
+    if time.time() > _timeto.get(name, 0) + interval:
+        _timeto[name] = time.time()
+        return 1
+    return 0
+
 
 def getBotReply(uid, message, is_conf, method=''):
     uid = str(uid)
@@ -78,23 +139,21 @@ def getBotReply(uid, message, is_conf, method=''):
     return answer
 
 def processCommand(cmd, *p):
-    global banned
-    global ignored
     if cmd == 'reload':
         bot.interact('reld')
         vk.initSelf()
         print('Reloaded!')
         return 'Reloaded!'
     elif cmd == 'banned':
-        if banned:
-            result = sorted(map(int, banned))
+        if banign.banned:
+            result = sorted(map(int, banign.banned))
             result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
     elif cmd == 'ignored':
-        if ignored:
-            result = sorted(map(int, ignored))
+        if banign.ignored:
+            result = sorted(map(int, banign.ignored))
             result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
             return '\n'.join(result)
         else:
@@ -107,22 +166,14 @@ def processCommand(cmd, *p):
             return 'No such user'
         if user == admin:
             return 'Cannot ban admin!'
-        banned.add(user)
-        writeBannedIgnored()
-        print('User %s banned' % user)
-        return 'User %s banned' % user
+        return banign.ban(user)
     elif cmd == 'unban':
         if not p:
             return 'Not enough parameters'
         user = p[-1]
-        if user == '*':
-            banned = set()
-        else:
+        if user != '*':
             user = vk.getUserId(user)
-            banned.discard(user)
-        writeBannedIgnored()
-        print('User %s unbanned' % user)
-        return 'User %s unbanned' % user
+        return banign.unban(user)
     elif cmd == 'ignore':
         if not p:
             return 'Not enough parameters'
@@ -131,22 +182,14 @@ def processCommand(cmd, *p):
             return 'No such user'
         if user == admin:
             return 'Cannot ignore admin!'
-        ignored.add(user)
-        writeBannedIgnored()
-        print('User %s ignored' % user)
-        return 'User %s ignored' % user
+        return banign.ignore(user)
     elif cmd == 'unignore':
         if not p:
             return 'Not enough parameters'
         user = p[-1]
-        if user == '*':
-            ignored = set()
-        else:
+        if user != '*':
             user = vk.getUserId(user)
-            ignored.discard(user)
-        writeBannedIgnored()
-        print('User %s unignored' % user)
-        return 'User %s unignored' % user
+        return banign.unignore(user)
     elif cmd == 'leave':
         if not p:
             return 'Not enough parameters'
@@ -175,19 +218,19 @@ def reply(m):
     m['user_id'] = str(m['user_id'])
     if 'chat_id' in m:
         m['chat_id'] = str(m['chat_id'])
-        if str(int(m['chat_id']) + 2000000000) in banned:
+        if str(int(m['chat_id']) + 2000000000) in banign.banned:
             return None
-    elif m['user_id'] in banned:
+    elif m['user_id'] in banign.banned:
         return None
     if 'body' not in m:
         m['body'] = ''
-    if m['user_id'] in ignored:
+    if m['user_id'] in banign.ignored:
         return ('', 0)
     if vk.users[m['user_id']]['blacklisted'] or vk.users[m['user_id']]['blacklisted_by_me']:
         return ('', 0)
     if 'chat_id' in m:
         m['chat_id'] = str(m['chat_id'])
-        if str(int(m['chat_id']) + 2000000000) in ignored:
+        if str(int(m['chat_id']) + 2000000000) in banign.ignored:
             return ('', 0)
     if 'id' not in m:
         return (getBotReply(m['user_id'], m['message'], 0), 2)
@@ -293,12 +336,6 @@ def test_friend(uid):
     return check_friend.is_good(fr)
 
 
-_timeto = {}
-def timeto(name, interval):
-    if time.time() > _timeto.get(name, 0) + interval:
-        _timeto[name] = time.time()
-        return 1
-    return 0
 
 if sys.argv[-1] == '-l':
     vkapi.vk_api.logging = 1
@@ -310,10 +347,6 @@ print('My id:', vk.self_id)
 admin = cfg[2] if len(cfg) > 2 else ''
 reset_command = cfg[3] if len(cfg) > 3 else ''
 
-
-banign = open('banned.txt').read().split()
-banned = set(i[1:] for i in banign if i.startswith('$'))
-ignored = set(i for i in banign if not i.startswith('$'))
 
 # whether to reply to messages that are already read
 reply_all = 0
@@ -339,7 +372,7 @@ while 1:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('unfollow', unfollow_interval):
-            vk.unfollow(banned)
+            vk.unfollow(banign.banned)
         if timeto('filtercomments', filtercomments_interval):
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
