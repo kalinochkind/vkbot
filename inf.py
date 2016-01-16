@@ -79,7 +79,7 @@ class ban_manager:
         self.write()
         return ret
 
-    def unban(self, pid):
+    def unignore(self, pid):
         pid = str(pid)
         if pid == '*':
             ret = '{} unignored'.format(', '.join(self.ignored))
