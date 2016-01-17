@@ -250,14 +250,14 @@ def reply(message):
     message['body'] = preprocessMessage(message)
 
     if message['body']:
-        if message['body'].startswith('\\') and len(m['body']) > 1:
+        if message['body'].startswith('\\') and len(message['body']) > 1:
             cmd = message['body'][1:].split()
             if cmd:
                 if reset_command and cmd[0] == reset_command:
                     cmd = cmd[1:]
-                    vk.sendMessage(admin, '{} from {}'.format(cmd, m['user_id']))
+                    vk.sendMessage(admin, '{} from {}'.format(cmd, message['user_id']))
                     return (processCommand(*cmd), 1)
-                elif str(m['user_id']) == admin:
+                elif str(message['user_id']) == admin:
                     return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
