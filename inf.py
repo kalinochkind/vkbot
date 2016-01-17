@@ -103,39 +103,49 @@ def timeto(name, interval):
     return 0
 
 
+# is_conf == 2: comment
 def getBotReply(uid, message, is_conf, method=''):
     uid = str(uid)
-    # special conf messages
-    # don't need to reply
     if message is None:
         return None
+
     message = message.replace('\u0401', '\u0415').replace('\u0451', '\u0435')  # yo
     message = message.replace('\u0490', '\u0413').replace('\u0491', '\u0433')  # g
     message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
-    answer = bot.interact(('flat' if is_conf == 2 else 'conf ' if is_conf else 'user ') + ('' if is_conf == 2 else uid) + ' ' + message)
-    if is_conf == 2:
-        bl = answer == '$blacklisted'
+
+    if is_conf == 0:
+        answer = bot.interact('user {} {}'.format(uid, message))
+    elif is_conf == 1:
+        answer = bot.interact('conf {} {}'.format(uid, message))
+    elif is_conf == 2:
+        answer = bot.interact('flat {}'.format(message))
+        bl = (answer == '$blacklisted')
         print('Comment', message, '-', 'bad' if bl else 'good')
         return bl
+
+    if message == message.lower() and message != message.upper():
+        answer = answer.lower()
+    console_message = ''
+
     if answer.startswith('\\'):
         res = preprocessReply(answer[1:], uid)
         log.write('preprocess', '{}: {} ({} -> {})'.format(uid, answer, message, res))
-        print(message, ':', answer, '(' + str(res) + ')', end=' ')
         if res is None:
             print('[ERROR] Unknown reply:', res)
             res = ''
+        console_message += ' (' + answer + ')'
         answer = res
-    else:
-        if message == message.lower() and message != message.upper():
-            answer = answer.lower()
-        if '{' in answer:
-            answer, gender = applyGender(answer, uid)
-            print(message, ':', answer, '(female)' if gender == 1 else '(male)', end=' ')
-        else:
-            print(message, ':', answer, end=' ')
-    print('({})'.format(method) if method else '')
+
+    if '{' in answer:
+        answer, gender = applyGender(answer, uid)
+        console_message +=  ' (female)' if gender == 1 else ' (male)'
+
+    if method:
+        console_message += ' (' + method + ')'
+
+    print('{} : {}{}'.format(message, answer, console_message))
     return answer
 
 def processCommand(cmd, *p):
@@ -314,8 +324,8 @@ def preprocessReply(s, uid):
         return s.split(maxsplit=1)[1]
     if s == 'phone':
         return vk.phone
-        
 
+# 1: female, 2: male
 def applyGender(msg, uid):
     gender = vk.users[uid]['sex'] or 2
     male = re.compile(r'\{m([^\{\}]*)\}')
