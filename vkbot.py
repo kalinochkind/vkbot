@@ -7,6 +7,8 @@ import config
 import re
 import random
 
+CONF_START = 2000000000
+
 class vk_bot:
 
     delay_on_reply = config.get('vkbot.delay_on_reply')

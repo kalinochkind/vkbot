@@ -3,7 +3,7 @@
 import time
 import sys
 from subprocess import Popen, PIPE
-from vkbot import vk_bot
+from vkbot import vk_bot, CONF_START
 import vkapi
 import captcha
 import re
@@ -30,7 +30,6 @@ class cpp_bot:
 
 bot = cpp_bot('./chat.exe')
 
-
 class ban_manager:
     def __init__(self, filename):
         self.filename = filename
@@ -43,12 +42,12 @@ class ban_manager:
         with open(self.filename, 'w') as f:
             f.write('\n'.join(s))
 
-    def printableName(self, pid):
+    def printableName(self, pid, user_fmt = 'User {}', conf_fmt = 'Conf {}'):
         pid = int(pid)
-        if pid > 2000000000:
-            return 'Conf ' + str(pid - 2000000000)
+        if pid > CONF_START:
+            return conf_fmt.format(pid - CONF_START)
         else:
-            return 'User ' + str(pid)
+            return user_fmt.format(pid)
 
     def ban(self, pid):
         pid = str(pid)
@@ -154,20 +153,23 @@ def processCommand(cmd, *p):
         vk.initSelf()
         print('Reloaded!')
         return 'Reloaded!'
+
     elif cmd == 'banned':
         if banign.banned:
             result = sorted(map(int, banign.banned))
-            result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
+            result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
+
     elif cmd == 'ignored':
         if banign.ignored:
             result = sorted(map(int, banign.ignored))
-            result = [('conf %d' if j > 2000000000 else 'https://vk.com/id%d') % (j % 2000000000) for j in result]
+            result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
             return '\n'.join(result)
         else:
             return 'No one ignored!'
+
     elif cmd == 'ban':
         if not p:
             return 'Not enough parameters'
@@ -177,6 +179,7 @@ def processCommand(cmd, *p):
         if user == admin:
             return 'Cannot ban admin!'
         return banign.ban(user)
+
     elif cmd == 'unban':
         if not p:
             return 'Not enough parameters'
@@ -184,6 +187,7 @@ def processCommand(cmd, *p):
         if user != '*':
             user = vk.getUserId(user)
         return banign.unban(user)
+
     elif cmd == 'ignore':
         if not p:
             return 'Not enough parameters'
@@ -193,6 +197,7 @@ def processCommand(cmd, *p):
         if user == admin:
             return 'Cannot ignore admin!'
         return banign.ignore(user)
+
     elif cmd == 'unignore':
         if not p:
             return 'Not enough parameters'
@@ -200,6 +205,7 @@ def processCommand(cmd, *p):
         if user != '*':
             user = vk.getUserId(user)
         return banign.unignore(user)
+
     elif cmd == 'leave':
         if not p:
             return 'Not enough parameters'
@@ -208,6 +214,7 @@ def processCommand(cmd, *p):
             return 'Ok'
         else:
             return 'Fail'
+
     elif cmd == 'noadd':
         if not p:
             return 'Not enough parameters'
@@ -219,53 +226,54 @@ def processCommand(cmd, *p):
         check_friend.noadd.update(users)
         vk.deleteFriend(users)
         check_friend.writeNoadd()
-        return 'Noadd %s' % str(users)
+        return 'Noadd ' +  str(users)
+
     else:
         return 'Unknown command'
 
-def reply(m):
-    #friendship request
-    m['user_id'] = str(m['user_id'])
-    if 'chat_id' in m:
-        m['chat_id'] = str(m['chat_id'])
-        if str(int(m['chat_id']) + 2000000000) in banign.banned:
-            return None
-    elif m['user_id'] in banign.banned:
+
+# returns (text, mode)
+# mode=0: default, mode=1: no delay, mode=2: friendship request
+def reply(message):
+    if vk.getSender(message) in banned:
         return None
-    if 'body' not in m:
-        m['body'] = ''
-    if m['user_id'] in banign.ignored:
+    if vk.getSender(message) in ignored or str(message['user_id']) in ignored:
         return ('', 0)
-    if vk.users[m['user_id']]['blacklisted'] or vk.users[m['user_id']]['blacklisted_by_me']:
+    if vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
         return ('', 0)
-    if 'chat_id' in m:
-        m['chat_id'] = str(m['chat_id'])
-        if str(int(m['chat_id']) + 2000000000) in banign.ignored:
-            return ('', 0)
-    if 'id' not in m:
-        return (getBotReply(m['user_id'], m['message'], 0), 2)
-    m['body'] = preprocessMessage(m)
-    if m['body']:
-        if m['body'].startswith('\\') and len(m['body']) > 1:
-            cmd = m['body'][1:].split()
+
+    if 'body' not in message:
+        message['body'] = ''
+
+    if 'id' not in message:  # friendship request
+        return (getBotReply(message['user_id'], message['message'], 0), 2)
+    message['body'] = preprocessMessage(message)
+
+    if message['body']:
+        if message['body'].startswith('\\') and len(m['body']) > 1:
+            cmd = message['body'][1:].split()
             if cmd:
                 if reset_command and cmd[0] == reset_command:
                     cmd = cmd[1:]
-                    vk.sendMessage(admin, '%s from %s' % (cmd, m['user_id']))
+                    vk.sendMessage(admin, '{} from {}'.format(cmd, m['user_id']))
                     return (processCommand(*cmd), 1)
-                elif m['user_id'] == admin:
+                elif str(m['user_id']) == admin:
                     return (processCommand(*cmd), 1)
+
+        if isBotMessage(m['body']):
+            print(m['body'], '- ignored (bot message)')
+            return ('', 0)
+
         t = evalExpression(m['body'])
         if t:
             print(m['body'], '=', t, '(calculated)')
             log.write('calc', '"{}" = {}'.format(m['body'], t))
             return (t, 0)
-        if isBotMessage(m['body']):
-            print(m['body'], '- ignored (bot message)')
-            return ('', 0)
+
     if m['body'] and m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
         print(m['body'], '- ignored (caps)')
         return ('', 0)
+
     return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m, m.get('_method', '')), 0)
 
 
