@@ -235,9 +235,9 @@ def processCommand(cmd, *p):
 # returns (text, mode)
 # mode=0: default, mode=1: no delay, mode=2: friendship request
 def reply(message):
-    if vk.getSender(message) in banned:
+    if vk.getSender(message) in banign.banned:
         return None
-    if vk.getSender(message) in ignored or str(message['user_id']) in ignored:
+    if vk.getSender(message) in banign.ignored or str(message['user_id']) in banign.ignored:
         return ('', 0)
     if vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
         return ('', 0)
