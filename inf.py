@@ -139,7 +139,7 @@ def getBotReply(uid, message, is_conf, method=''):
 
     if '{' in answer:
         answer, gender = applyGender(answer, uid)
-        console_message +=  ' (female)' if gender == 1 else ' (male)'
+        console_message += ' (' + gender + ')'
 
     if method:
         console_message += ' (' + method + ')'
@@ -277,44 +277,42 @@ def reply(message):
     return (getBotReply(message['user_id'], message['body'] , 'chat_id' in message, message.get('_method', '')), 0)
 
 
+def preprocessMessage(message, user=None):
+    if user is not None and str(message.get('user_id')) != str(user):
+        return None
 
-def preprocessMessage(m, user=None):
-    if user is not None and str(m.get('user_id')) != str(user):
+    if 'action' in message:
         return None
-    if 'action' in m:
-        if m['action'] == 'chat_create' or (m['action'] == 'chat_invite_user' and str(m['action_mid']) == vk.self_id):
-            return 'q'
-        if m['action'] == 'chat_title_update':
-            return m['action_text'].lower()
+
+    result = message['body']
+    att = []
+    for a in message.get('attachments', []):
+        if a['type'] == 'audio':
+            att.append(a['audio']['title'])
+        elif a['type'] == 'video':
+            att.append(a['video']['title'])
+        elif a['type'] == 'wall':
+            att.append(a['wall']['text'])
+        elif a['type'] == 'doc':
+            att.append(a['doc']['title'])
+        elif a['type'] == 'gift':
+            att.append('vkgift')
+        elif a['type'] == 'link':
+            att.append(a['link']['description'])
+    for a in att:
+        result += ' [' + a.lower() + ']'
+
+    for fwd in message.get('fwd_messages', []):
+        if len(message['fwd_messages']) == 1 and str(fwd.get('user_id')) == vk.self_id and result:
+            continue
+        r = preprocessMessage(fwd, message.get('user_id'))
+        if r is None:
+            return None
+        result  += ' {' + str(r) + '}'
+
+    if user is None and 'attachments' not in message and not result:
         return None
-    if 'attachments' in m:
-        for a in m['attachments']:
-            if a['type'] == 'audio':
-                m['body'] += ' [' + a['audio']['title'].lower() + ']'
-            elif a['type'] == 'video':
-                m['body'] += ' [' + a['video']['title'].lower() + ']'
-            elif a['type'] == 'wall':
-                m['body'] += ' [' + a['wall']['text'].lower() + ']'
-            elif a['type'] == 'doc':
-                m['body'] += ' [' + a['doc']['title'].lower() + ']'
-            elif a['type'] == 'gift':
-                m['body'] += ' vkgift'
-            elif a['type'] == 'link':
-                m['body'] += ' [' + a['link']['description'].lower() + ']'
-    
-    if 'fwd_messages' in m:
-        for i in m['fwd_messages']:
-            if len(m['fwd_messages']) == 1 and str(i.get('user_id')) == vk.self_id and m['body']:
-                break
-            r = preprocessMessage(i, m.get('user_id'))
-            if r is None:
-                return None
-            m['body'] += ' {' + str(r) + '}'
-    if user is None and 'attachments' not in m and not m['body'].strip():
-        return None
-    if m['body']:
-        return m['body'].strip()
-    return m['body']
+    return result.strip()
 
 
 def preprocessReply(s, uid):
@@ -333,17 +331,19 @@ def preprocessReply(s, uid):
     if s == 'phone':
         return vk.phone
 
+
+_male_re = re.compile(r'\{m([^\{\}]*)\}')
+_female_re = re.compile(r'\{f([^\{\}]*)\}')
+
 # 1: female, 2: male
 def applyGender(msg, uid):
-    gender = vk.users[uid]['sex'] or 2
-    male = re.compile(r'\{m([^\{\}]*)\}')
-    female = re.compile(r'\{f([^\{\}]*)\}')
-    if gender == 1:
-        msg = male.sub('', msg)
-        msg = female.sub('\\1', msg)
+    gender = ['male', 'female', 'male'][vk.users[uid]['sex']]
+    if gender == 'female':
+        msg = _male_re.sub('', msg)
+        msg = _female_re.sub('\\1', msg)
     else:
-        msg = female.sub('', msg)
-        msg = male.sub('\\1', msg)
+        msg = _female_re.sub('', msg)
+        msg = _male_re.sub('\\1', msg)
     return msg, gender
 
 def test_friend(uid):
@@ -360,18 +360,11 @@ if sys.argv[-1] == '-l':
     print('Logging enabled')
 
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
-vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
-print('My id:', vk.self_id)
 admin = cfg[2] if len(cfg) > 2 else ''
 reset_command = cfg[3] if len(cfg) > 3 else ''
 
-
-# whether to reply to messages that are already read
-reply_all = 0
-
-print('Bot started')
-
-ts = 0
+vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
+print('My id:', vk.self_id)
 
 addfriends_interval = config.get('inf.addfriends_interval')
 includeread_interval = config.get('inf.includeread_interval')
@@ -379,6 +372,7 @@ setonline_interval = config.get('inf.setonline_interval')
 unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
 
+reply_all = 0
 while 1:
     try:
         vk.replyAll(reply, reply_all)
@@ -394,6 +388,6 @@ while 1:
         if timeto('filtercomments', filtercomments_interval):
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
-        print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
+        print('[ERROR] {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = 1
-        time.sleep(1)
+        time.sleep(2)
