@@ -260,21 +260,21 @@ def reply(message):
                 elif str(m['user_id']) == admin:
                     return (processCommand(*cmd), 1)
 
-        if isBotMessage(m['body']):
-            print(m['body'], '- ignored (bot message)')
+        if isBotMessage(message['body']):
+            print(message['body'], '- ignored (bot message)')
             return ('', 0)
 
-        t = evalExpression(m['body'])
+        t = evalExpression(message['body'])
         if t:
-            print(m['body'], '=', t, '(calculated)')
-            log.write('calc', '"{}" = {}'.format(m['body'], t))
+            print(message['body'], '=', t, '(calculated)')
+            log.write('calc', '"{}" = {}'.format(message['body'], t))
             return (t, 0)
 
-    if m['body'] and m['body'].upper() == m['body'] and len([i for i in m['body'] if i.isalpha()]) > 1:
-        print(m['body'], '- ignored (caps)')
+    if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
+        print(message['body'], '- ignored (caps)')
         return ('', 0)
 
-    return (getBotReply(m['user_id'], m['body'] , 'chat_id' in m, m.get('_method', '')), 0)
+    return (getBotReply(message['user_id'], message['body'] , 'chat_id' in message, message.get('_method', '')), 0)
 
 
 
