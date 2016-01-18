@@ -24,7 +24,6 @@ class vk_bot:
         self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
         self.initSelf()
         self.guid = int(time.time() * 5)
-
         self.last_viewed_comment = 0
         self.banned_messages = set()
         self.good_conf = {}
@@ -39,8 +38,30 @@ class vk_bot:
         self.phone = res.get('mobile_phone', '')
         print('My phone:', self.phone)
 
+    def getSender(self, message):
+        if 'chat_id' in message:
+            return 2000000000 + message['chat_id']
+        return message['user_id']
 
-    def replyAll(self, gen_reply, include_read=0):
+    def replyOne(self, message, gen_reply, method=None):
+        if 'chat_id' in message:
+            if not self.checkConf(message['chat_id']):
+                return
+        if self.tm.isBusy(self.getSender(message)):
+            return
+
+        message['_method'] = method
+        try:
+            ans = gen_reply(message)
+        except Exception as e:
+            ans = None
+            print('[ERROR] local {}: {}'.format(e.__class__.__name__, str(e)))
+            time.sleep(1)
+        if ans:
+            self.replyMessage(message, ans[0], ans[1])
+
+
+    def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
         if include_read:
             print('Include read')
@@ -49,56 +70,30 @@ class vk_bot:
             except KeyError:
                 # may sometimes happen because of friendship requests
                 return
+
             with self.api.api_lock:
-                for i in sorted(messages, key=lambda x:x['message']['id']):
-                    cur = i['message']
+                for msg in sorted(messages, key=lambda msg:msg['message']['id']):
+                    cur = msg['message']
                     if self.last_message_id and cur['id'] > self.last_message_id:
                         continue
-                    if 'chat_id' in cur:
-                        if not self.checkConf(cur['chat_id']):
-                            continue
-                    if self.tm.isBusy(self.getSender(cur)):
-                        continue
-                    cur['_method'] = 'getDialogs'
-                    try:
-                        ans = gen_reply(cur)
-                    except Exception as e:
-                        ans = None
-                        print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
-                        time.sleep(1)
-                    if not ans:
-                        continue
-                    self.replyMessage(cur, ans[0], ans[1])
+                    self.replyOne(cur, gen_reply, 'getDialogs')
                 self.api.sync()
+
         else:
             messages = self.longpollMessages()
             with self.api.api_lock:
-                for cur in sorted(messages, key=lambda x:x['id']):
+                for cur in sorted(messages, key=lambda msg:msg['id']):
                     self.last_message_id = max(self.last_message_id, cur['id'])
-                    if 'chat_id' in cur:
-                        if not self.checkConf(cur['chat_id']):
-                            continue
-                    if self.tm.isBusy(self.getSender(cur)):
-                        continue
-                    try:
-                        ans = gen_reply(cur)
-                    except Exception as e:
-                        ans = None
-                        print('[ERROR] %s: %s' % (e.__class__.__name__, str(e)))
-                        time.sleep(1)
-                    if not ans:
-                        continue
-                    self.replyMessage(cur, ans[0], ans[1])
+                    self.replyOne(cur, gen_reply)
                 self.api.sync()
-            
-        
+
     def longpollMessages(self):
         arr = self.api.getLongpoll()
         need_extra = []
         for i in arr:
             if i[0] == 51:  # conf params changed
                 pass  # TODO
-            if i[0] == 4:  # new message
+            elif i[0] == 4:  # new message
                 mid = i[1]
                 sender = i[3]
                 ts = i[4]
@@ -107,6 +102,7 @@ class vk_bot:
                 flags = i[2]
                 if flags & 2:  # out
                     continue
+
                 for i in range(1, 11):
                     if opt.get('attach{}_type'.format(i)) == 'photo':
                         del opt['attach{}_type'.format(i)]
@@ -118,23 +114,19 @@ class vk_bot:
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if opt.get('attach1_type') == 'sticker':
                     msg['body'] = '...'
+
                 if 'from' in opt:
-                    msg['chat_id'] = sender - 2000000000
+                    msg['chat_id'] = sender - CONF_START
                     msg['user_id'] = opt['from']
                 else:
                     msg['user_id'] = sender
                 yield msg
+
         if need_extra:
             need_extra = ','.join(need_extra)
             for i in self.api.messages.getById(message_ids=need_extra)['items']:
                 i['_method'] = 'getById'
                 yield i
-                
-
-    def getSender(self, message):
-        if 'chat_id' in message:
-            return 2000000000 + message['chat_id']
-        return message['user_id']
 
     def sendMessage(self, to, msg):
         if not self.good_conf.get(to, 1):
@@ -151,7 +143,7 @@ class vk_bot:
             return
 
         if answer == '$noans':
-            if sender > 2000000000:
+            if sender > CONF_START:
                 answer = ''
             else:
                 answer = random.choice(self.noans)
@@ -163,6 +155,7 @@ class vk_bot:
                 self.banned_messages.add(message['id'])
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             return
+
         typing_time = 0
         if (fast == 0 or fast == 2) and not answer.startswith('&#'):
             typing_time = len(answer) / self.chars_per_second
@@ -175,26 +168,23 @@ class vk_bot:
                 return
             self.last_message[sender] = (res, 0 if fast == 1 else time.time())
 
-        if fast == 0:
-            pre_proc = lambda:self.api.messages.markAsRead(peer_id=sender)
-        else:
-            pre_proc = lambda:None
-        typing_proc = lambda:self.api.messages.setActivity(type='typing', user_id=sender)
-
         send_time = self.delay_on_reply + typing_time
         user_delay = 0
         if sender in self.last_message:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
 
         tl = timeline(max(send_time, user_delay))
-        if tl.duration == send_time:
+        if send_time > user_delay:
             if fast == 0:
                 self.api.messages.markAsRead.delayed(peer_id=sender)
         else:
-            tl.sleep_until(send_time).do(pre_proc)
+            tl.sleep_until(send_time)
+            if fast == 0:
+                tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
+
         tl.sleep(self.delay_on_reply)
         if typing_time:
-            tl.do_every_for(self.typing_interval, typing_proc, typing_time)
+            tl.do_every_for(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
         self.tm.run(sender, tl)
 
@@ -210,7 +200,7 @@ class vk_bot:
                 return 0
         self.good_conf[cid + CONF_START] = 1
         return 1
-    
+
     def leaveConf(self, cid):
         print('Leaving conf', cid)
         self.good_conf[cid + CONF_START] = 0
@@ -262,7 +252,7 @@ class vk_bot:
             i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
             conf = re.search('sel=c(\\d+)', i) or re.search('^c(\\d+)$', i) or re.search('chat=(\\d+)', i) or re.search('peer=2(\\d{9})', i)
             if conf is not None:
-                req.append(int(conf.group(1)) + 2000000000)
+                req.append(int(conf.group(1)) + CONF_START)
             else:
                 if '=' in i:
                     i = i.split('=')[-1]
@@ -282,12 +272,12 @@ class vk_bot:
                 return str(req[0])
         except TypeError:
             return None
-        
+
     def filterComments(self, test):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
         for rep in data:
             self.last_viewed_comment = max(self.last_viewed_comment, rep['date'])
-            
+
             def _check(s):
                 if 'photo' in s:
                     return s['photo']['owner_id'] == self.self_id
@@ -295,7 +285,7 @@ class vk_bot:
                     return s['video']['owner_id'] == self.self_id
                 if 'post' in s:
                     return s['post']['to_id'] == self.self_id
-            
+
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
                 if test(txt):
@@ -309,7 +299,7 @@ class vk_bot:
                     else:
                         print('Deleting wall comment')
                         self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
-                        
+
     def likeAva(self, uid):
         try:
             photo = self.users[uid]['photo_id'].split('_')

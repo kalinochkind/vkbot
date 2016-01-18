@@ -384,6 +384,6 @@ while 1:
         if timeto('filtercomments', filtercomments_interval):
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
-        print('[ERROR] {}: {}'.format(e.__class__.__name__, str(e)))
+        print('[ERROR] global {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = True
         time.sleep(2)
