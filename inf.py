@@ -34,23 +34,21 @@ class ban_manager:
     def __init__(self, filename):
         self.filename = filename
         banign = open(filename).read().split()
-        self.banned = set(i[1:] for i in banign if i.startswith('$'))
-        self.ignored = set(i for i in banign if not i.startswith('$'))
+        self.banned = set(int(i[1:]) for i in banign if i.startswith('$'))
+        self.ignored = set(int(i) for i in banign if not i.startswith('$'))
 
     def write(self):
-        s = ['$' + i for i in sorted(self.banned, key=int)] + sorted(self.ignored, key=int)
+        s = ['$' + str(i) for i in sorted(self.banned)] + list(map(str, sorted(self.ignored)))
         with open(self.filename, 'w') as f:
             f.write('\n'.join(s))
 
     def printableName(self, pid, user_fmt = 'User {}', conf_fmt = 'Conf {}'):
-        pid = int(pid)
         if pid > CONF_START:
             return conf_fmt.format(pid - CONF_START)
         else:
             return user_fmt.format(pid)
 
     def ban(self, pid):
-        pid = str(pid)
         if pid in self.banned:
             return 'Already banned!'
         self.banned.add(pid)
@@ -58,7 +56,6 @@ class ban_manager:
         return self.printableName(pid) + ' banned'
 
     def ignore(self, pid):
-        pid = str(pid)
         if pid in self.ignored:
             return 'Already ignored!'
         self.ignored.add(pid)
@@ -66,7 +63,6 @@ class ban_manager:
         return self.printableName(pid) + 'ignored'
 
     def unban(self, pid):
-        pid = str(pid)
         if pid == '*':
             ret = '{} unbanned'.format(', '.join(self.banned))
             self.banned = set()
@@ -79,7 +75,6 @@ class ban_manager:
         return ret
 
     def unignore(self, pid):
-        pid = str(pid)
         if pid == '*':
             ret = '{} unignored'.format(', '.join(self.ignored))
             self.ignored = set()
@@ -104,7 +99,6 @@ def timeto(name, interval):
 
 # is_conf == 2: comment
 def getBotReply(uid, message, is_conf, method=''):
-    uid = str(uid)
     if message is None:
         return None
 
@@ -156,7 +150,7 @@ def processCommand(cmd, *p):
 
     elif cmd == 'banned':
         if banign.banned:
-            result = sorted(map(int, banign.banned))
+            result = sorted(banign.banned)
             result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
             return '\n'.join(result)
         else:
@@ -164,7 +158,7 @@ def processCommand(cmd, *p):
 
     elif cmd == 'ignored':
         if banign.ignored:
-            result = sorted(map(int, banign.ignored))
+            result = sorted(banign.ignored)
             result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
             return '\n'.join(result)
         else:
@@ -209,7 +203,9 @@ def processCommand(cmd, *p):
     elif cmd == 'leave':
         if not p:
             return 'Not enough parameters'
-        cid = p[-1]
+        if not p[-1].isdigit():
+            return 'Invalid conf id'
+        cid = int(p[-1])
         if vk.leaveConf(cid):
             return 'Ok'
         else:
@@ -237,7 +233,7 @@ def processCommand(cmd, *p):
 def reply(message):
     if vk.getSender(message) in banign.banned:
         return None
-    if vk.getSender(message) in banign.ignored or str(message['user_id']) in banign.ignored:
+    if vk.getSender(message) in banign.ignored or message['user_id'] in banign.ignored:
         return ('', 0)
     if vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
         return ('', 0)
@@ -257,7 +253,7 @@ def reply(message):
                     cmd = cmd[1:]
                     vk.sendMessage(admin, '{} from {}'.format(cmd, message['user_id']))
                     return (processCommand(*cmd), 1)
-                elif str(message['user_id']) == admin:
+                elif message['user_id'] == admin:
                     return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
@@ -278,7 +274,7 @@ def reply(message):
 
 
 def preprocessMessage(message, user=None):
-    if user is not None and str(message.get('user_id')) != str(user):
+    if user is not None and message.get('user_id') != user:
         return None
 
     if 'action' in message:
@@ -303,7 +299,7 @@ def preprocessMessage(message, user=None):
         result += ' [' + a.lower() + ']'
 
     for fwd in message.get('fwd_messages', []):
-        if len(message['fwd_messages']) == 1 and str(fwd.get('user_id')) == vk.self_id and result:
+        if len(message['fwd_messages']) == 1 and fwd.get('user_id') == vk.self_id and result:
             continue
         r = preprocessMessage(fwd, message.get('user_id'))
         if r is None:
@@ -360,7 +356,7 @@ if sys.argv[-1] == '-l':
     print('Logging enabled')
 
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
-admin = cfg[2] if len(cfg) > 2 else ''
+admin = int(cfg[2]) if len(cfg) > 2 else -1
 reset_command = cfg[3] if len(cfg) > 3 else ''
 
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
@@ -372,15 +368,15 @@ setonline_interval = config.get('inf.setonline_interval')
 unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
 
-reply_all = 0
+reply_all = False
 while 1:
     try:
         vk.replyAll(reply, reply_all)
-        reply_all = 0
+        reply_all = False
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, test_friend)
         if timeto('includeread', includeread_interval):
-            reply_all = 1
+            reply_all = True
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('unfollow', unfollow_interval):
@@ -389,5 +385,5 @@ while 1:
             vk.filterComments(lambda s:getBotReply(None, s, 2))
     except Exception as e:
         print('[ERROR] {}: {}'.format(e.__class__.__name__, str(e)))
-        reply_all = 1
+        reply_all = True
         time.sleep(2)

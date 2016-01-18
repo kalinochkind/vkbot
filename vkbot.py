@@ -19,25 +19,23 @@ class vk_bot:
     noans = open('noans.txt').read().split()
 
     def __init__(self, username, password, captcha_handler=None):
-        self.api = vkapi.vk_api(username, password)
-        self.api.captcha_handler = captcha_handler
-        self.api.getToken()
-        self.banned_messages = set()
-        self.guid = int(time.time() * 5)
+        self.api = vkapi.vk_api(username, password, captcha_handler=captcha_handler)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
         self.initSelf()
+        self.guid = int(time.time() * 5)
+
         self.last_viewed_comment = 0
+        self.banned_messages = set()
         self.good_conf = {}
         self.tm = thread_manager()
         self.last_message = {}
-        self.left_confs = set()
         self.last_message_id = 0
 
     def initSelf(self):
         self.users.clear()
         res = self.api.users.get(fields='contacts')[0]
-        self.self_id = str(res['id'])
+        self.self_id = res['id']
         self.phone = res.get('mobile_phone', '')
         print('My phone:', self.phone)
 
@@ -135,11 +133,11 @@ class vk_bot:
 
     def getSender(self, message):
         if 'chat_id' in message:
-            return str(2000000000 + int(message['chat_id']))
-        return str(message['user_id'])
+            return 2000000000 + message['chat_id']
+        return message['user_id']
 
     def sendMessage(self, to, msg):
-        if int(to) in self.left_confs:
+        if not self.good_conf.get(to, 1):
             return
         self.guid += 1
         return self.api.messages.send(peer_id=to, message=msg, guid=self.guid)
@@ -149,11 +147,11 @@ class vk_bot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
-        if 'id' in message and int(message['id']) <= self.last_message.get(sender, (0, 0))[0]:
+        if 'id' in message and message['id'] <= self.last_message.get(sender, (0, 0))[0]:
             return
 
         if answer == '$noans':
-            if int(sender) > 2000000000:
+            if sender > 2000000000:
                 answer = ''
             else:
                 answer = random.choice(self.noans)
@@ -175,7 +173,7 @@ class vk_bot:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
                 self.banned_messages.add(message['id'])
                 return
-            self.last_message[sender] = (int(res), 0 if fast == 1 else time.time())
+            self.last_message[sender] = (res, 0 if fast == 1 else time.time())
 
         if fast == 0:
             pre_proc = lambda:self.api.messages.markAsRead(peer_id=sender)
@@ -186,7 +184,7 @@ class vk_bot:
         send_time = self.delay_on_reply + typing_time
         user_delay = 0
         if sender in self.last_message:
-            user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if int(sender) < 2000000000 else self.same_conf_interval)  # can be negative
+            user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
 
         tl = timeline(max(send_time, user_delay))
         if tl.duration == send_time:
@@ -201,22 +199,21 @@ class vk_bot:
         self.tm.run(sender, tl)
 
     def checkConf(self, cid):
-        cid = str(cid)
-        if cid in self.good_conf:
-            return self.good_conf[cid]
+        if cid + CONF_START in self.good_conf:
+            return self.good_conf[cid + CONF_START]
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
-                log.write('conf', str(i.get('user_id')) + ' ' + cid)
-                self.good_conf[cid] = 0
+                log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
+                self.good_conf[cid + CONF_START] = 0
                 return 0
-        self.good_conf[cid] = 1
+        self.good_conf[cid + CONF_START] = 1
         return 1
     
     def leaveConf(self, cid):
         print('Leaving conf', cid)
-        self.left_confs.add(2000000000 + int(cid))
+        self.good_conf[cid + CONF_START] = 0
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
     def addFriends(self, gen_reply, is_good):
@@ -239,13 +236,13 @@ class vk_bot:
         requests = self.api.friends.getRequests(out=1)['items']
         self.api.delayedReset()
         for i in requests:
-            if str(i) not in banned:
+            if i not in banned:
                 self.api.friends.delete.delayed(user_id=i)
         self.api.sync()
         return len(requests)
 
     def deleteFriend(self, uid):
-        if type(uid) == str:
+        if type(uid) == int:
             self.api.friends.delete(user_id=uid)
         else:
             self.api.delayedReset()
@@ -256,12 +253,12 @@ class vk_bot:
     def setOnline(self):
         self.api.account.setOnline(voip=0)
 
-    def getUserId(self, uid):
-        multiple = type(uid) != str
+    def getUserId(self, domain):
+        multiple = type(domain) != str
         if not multiple:
-            uid = [uid]
+            domain = [domain]
         req = []
-        for i in uid:
+        for i in domain:
             i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
             conf = re.search('sel=c(\\d+)', i) or re.search('^c(\\d+)$', i) or re.search('chat=(\\d+)', i) or re.search('peer=2(\\d{9})', i)
             if conf is not None:
@@ -293,11 +290,11 @@ class vk_bot:
             
             def _check(s):
                 if 'photo' in s:
-                    return str(s['photo']['owner_id']) == self.self_id
+                    return s['photo']['owner_id'] == self.self_id
                 if 'video' in s:
-                    return str(s['video']['owner_id']) == self.self_id
+                    return s['video']['owner_id'] == self.self_id
                 if 'post' in s:
-                    return str(s['post']['to_id']) == self.self_id
+                    return s['post']['to_id'] == self.self_id
             
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
