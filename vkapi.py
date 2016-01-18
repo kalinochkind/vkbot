@@ -11,21 +11,21 @@ class vk_api:
     logging = 0
     checks_before_antigate = config.get('vkapi.checks_before_antigate')
     captcha_check_interval = config.get('vkapi.captcha_check_interval')
+    api_version = '5.44'
 
     def __init__(self, username='', password='', timeout=config.get('vkapi.default_timeout'), captcha_handler=None):
         self.username = username
         self.password = password
         self.captcha_delayed = 0
         self.captcha_handler = captcha_handler
-        self.token = None
-        self.callback = None
         self.delayed_list = []
-        self.max_delayed = 25
+        self.delayedReset()
         self.timeout = timeout
         self.longpoll_server = ''
         self.longpoll_key = ''
         self.longpoll_ts = 0
         self.api_lock = threading.RLock()
+        self.token = None
         self.getToken()
 
     def __getattr__(self, item):
@@ -46,7 +46,7 @@ class vk_api:
                 return _method_wrapper(self.group + '.' + item)
         if item not in ['users', 'auth', 'wall', 'photos', 'friends', 'widgets', 'storage', 'status', 'audio', 'pages',
                     'groups', 'board', 'video', 'notes', 'places', 'account', 'messages', 'newsfeed', 'likes', 'polls',
-                    'docs', 'fave', 'notifications', 'stats', 'search', 'apps', 'utils', 'database', 'gifts']:
+                    'docs', 'fave', 'notifications', 'stats', 'search', 'apps', 'utils', 'database', 'gifts', 'market']:
             raise AttributeError(item)
         return _group_wrapper(item)
 
@@ -70,6 +70,7 @@ class vk_api:
                 self.callback(self.delayed_list[0], response)
             self.delayed_list.clear()
             return
+
         query = ['return[']
         for num, i in enumerate(self.delayed_list):
             query.append(self.encodeApiCall(i) + ',')
@@ -83,7 +84,7 @@ class vk_api:
 
     def apiCall(self, method, params, retry=0):
         with self.api_lock:
-            params['v'] = '5.40'
+            params['v'] = self.api_version
             url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
             last_get = time.time()
             try:
@@ -94,20 +95,22 @@ class vk_api:
                 return self.apiCall(method, params)
             except Exception as e:
                 if retry:
-                    print('[ERROR] (%s) %s: %s' % (method, e.__class__.__name__, str(e)))
+                    print('[ERROR] ({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
                     return None
                 else:
                     time.sleep(1)
-                    print('[WARNING] (%s) %s: %s, retrying' % (method, e.__class__.__name__, str(e)))
+                    print('[WARNING] ({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
                     return self.apiCall(method, params, 1)
+
             data_array = json.loads(json_string.decode('utf-8'))
             if self.logging:
                 with open('inf.log', 'a') as f:
-                    print('method: %s, params: %s' % (method, json.dumps(params)), file=f)
+                    print('method: {}, params: {}\nresponse: {}\n'.format(method, json.dumps(params), json.dumps(data_array)), file=f)
                     print('response: %s\n' % json.dumps(data_array), file=f)
             duration = round((time.time() - last_get), 2)
-            if duration > 2:
-                print('[WARNING] ' + method + ' fucks up. Ping is ' + str(duration) + ' seconds' )
+            if duration > self.timeout:
+                print('[WARNING] {} timeout'.format(method))
+
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
                 self.captcha_delayed = 0
@@ -197,10 +200,10 @@ class vk_api:
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:
             with open('inf.log', 'a') as f:
-                print('longpoll request: ' + url, file=f)
-                print('response: %s\n' % json.dumps(data_array), file=f)
+                print('longpoll request: {}\nresponse: {}\n'.format(url, json.dumps(data_array)), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
+
         if 'updates' in data_array:
             return data_array['updates']
         elif data_array['failed'] != 1:
