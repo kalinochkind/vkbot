@@ -18,6 +18,11 @@ class user_cache:
             return self.users[uid][1]
         except Exception:
             return None
-    
+
+    def __delitem__(self, uid):
+        uid = int(uid)
+        if uid in self.users:
+            del self.users[uid]
+
     def clear(self):
         self.users = {}

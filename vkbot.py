@@ -165,6 +165,7 @@ class vk_bot:
             if res is None:
                 log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
                 self.banned_messages.add(message['id'])
+                del self.users[sender]
                 return
             self.last_message[sender] = (res, 0 if fast == 1 else time.time())
 
