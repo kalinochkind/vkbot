@@ -31,8 +31,9 @@ class cpp_bot:
 bot = cpp_bot('./chat.exe')
 
 class ban_manager:
-    def __init__(self, filename):
+    def __init__(self, filename, user_cache):
         self.filename = filename
+        self.users = user_cache
         banign = open(filename).read().split()
         self.banned = set(int(i[1:]) for i in banign if i.startswith('$'))
         self.ignored = set(int(i) for i in banign if not i.startswith('$'))
@@ -42,11 +43,13 @@ class ban_manager:
         with open(self.filename, 'w') as f:
             f.write('\n'.join(s))
 
-    def printableName(self, pid, user_fmt = 'User {}', conf_fmt = 'Conf {}'):
+    # {name} - first_name last_name
+    # {id} - id
+    def printableName(self, pid, user_fmt = '{name}', conf_fmt = 'Conf {id}'):
         if pid > CONF_START:
-            return conf_fmt.format(pid - CONF_START)
+            return conf_fmt.format(id=(pid - CONF_START))
         else:
-            return user_fmt.format(pid)
+            return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
 
     def ban(self, pid):
         if pid in self.banned:
@@ -86,8 +89,6 @@ class ban_manager:
         self.write()
         return ret
 
-banign = ban_manager('banned.txt')
-
 
 _timeto = {}
 def timeto(name, interval):
@@ -97,8 +98,8 @@ def timeto(name, interval):
     return 0
 
 
-# is_conf == 2: comment
-def getBotReply(uid, message, is_conf, method=''):
+# conf_id == -1: comment
+def getBotReply(uid, message, conf_id, method=''):
     if message is None:
         return None
 
@@ -108,11 +109,11 @@ def getBotReply(uid, message, is_conf, method=''):
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
 
-    if is_conf == 0:
+    if conf_id == 0:
         answer = bot.interact('user {} {}'.format(uid, message))
-    elif is_conf == 1:
+    elif conf_id > 0:
         answer = bot.interact('conf {} {}'.format(uid, message))
-    elif is_conf == 2:
+    elif conf_id == -1:
         answer = bot.interact('flat {}'.format(message))
         bl = (answer == '$blacklisted')
         print('Comment', message, '-', 'bad' if bl else 'good')
@@ -137,8 +138,10 @@ def getBotReply(uid, message, is_conf, method=''):
 
     if method:
         console_message += ' (' + method + ')'
-
-    print('{} : {}{}'.format(message, answer, console_message))
+    if conf_id > 0:
+        print('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, {name}').replace('%c', str(conf_id)), message, answer, console_message))
+    else:
+        print('({}) {} : {}{}'.format(banign.printableName(uid), message, answer, console_message))
     return answer
 
 def processCommand(cmd, *p):
@@ -151,7 +154,7 @@ def processCommand(cmd, *p):
     elif cmd == 'banned':
         if banign.banned:
             result = sorted(banign.banned)
-            result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
+            result = [banign.printableName(j, user_fmt='https://vk.com/id{id}') for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
@@ -159,7 +162,7 @@ def processCommand(cmd, *p):
     elif cmd == 'ignored':
         if banign.ignored:
             result = sorted(banign.ignored)
-            result = [banign.printableName(j, user_fmt='https://vk.com/id{}') for j in result]
+            result = [banign.printableName(j, user_fmt='https://vk.com/id{id}') for j in result]
             return '\n'.join(result)
         else:
             return 'No one ignored!'
@@ -268,7 +271,7 @@ def reply(message):
         print(message['body'], '- ignored (caps)')
         return ('', 0)
 
-    return (getBotReply(message['user_id'], message['body'] , 'chat_id' in message, message.get('_method', '')), 0)
+    return (getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', '')), 0)
 
 
 def preprocessMessage(message, user=None):
@@ -367,6 +370,8 @@ reset_command = cfg[3] if len(cfg) > 3 else ''
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
 print('My id:', vk.self_id)
 
+banign = ban_manager('banned.txt', vk.users)
+
 addfriends_interval = config.get('inf.addfriends_interval')
 includeread_interval = config.get('inf.includeread_interval')
 setonline_interval = config.get('inf.setonline_interval')
@@ -387,7 +392,7 @@ while 1:
         if timeto('unfollow', unfollow_interval):
             vk.unfollow(banign.banned)
         if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, 2)))
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1)))
     except Exception as e:
         print('[ERROR] global {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = True

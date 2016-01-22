@@ -117,7 +117,7 @@ class vk_bot:
 
                 if 'from' in opt:
                     msg['chat_id'] = sender - CONF_START
-                    msg['user_id'] = opt['from']
+                    msg['user_id'] = int(opt['from'])
                 else:
                     msg['user_id'] = sender
                 yield msg
