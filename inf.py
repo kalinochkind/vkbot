@@ -353,6 +353,7 @@ def test_friend(uid):
     return check_friend.is_good(fr)
 
 def noaddUsers(users):
+    users = set(users)
     users.discard(admin)
     if not users:
         return
