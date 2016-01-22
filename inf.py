@@ -219,9 +219,7 @@ def processCommand(cmd, *p):
             return 'No such users'
         if admin in users:
             return 'Cannot delete admin!'
-        check_friend.noadd.update(users)
-        vk.deleteFriend(users)
-        check_friend.writeNoadd()
+        noaddUsers(users)
         return 'Noadd ' +  str(users)
 
     else:
@@ -349,6 +347,13 @@ def test_friend(uid):
         return 0
     return check_friend.is_good(fr)
 
+def noaddUsers(users):
+    users.discard(admin)
+    if not users:
+        return
+    check_friend.noadd.update(map(str, users))
+    vk.deleteFriend(users)
+    check_friend.writeNoadd()
 
 
 if sys.argv[-1] == '-l':
@@ -382,7 +387,7 @@ while 1:
         if timeto('unfollow', unfollow_interval):
             vk.unfollow(banign.banned)
         if timeto('filtercomments', filtercomments_interval):
-            vk.filterComments(lambda s:getBotReply(None, s, 2))
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, 2)))
     except Exception as e:
         print('[ERROR] global {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = True

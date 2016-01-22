@@ -275,6 +275,7 @@ class vk_bot:
 
     def filterComments(self, test):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
+        to_del = set()
         for rep in data:
             self.last_viewed_comment = max(self.last_viewed_comment, rep['date'])
 
@@ -293,12 +294,16 @@ class vk_bot:
                     if rep['type'].endswith('photo'):
                         print('Deleting photo comment')
                         self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+                        to_del.add(rep['feedback']['from_id'])
                     elif rep['type'].endswith('video'):
                         print('Deleting video comment')
                         self.api.video.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+                        to_del.add(rep['feedback']['from_id'])
                     else:
                         print('Deleting wall comment')
                         self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+                        to_del.add(rep['feedback']['from_id'])
+        return to_del
 
     def likeAva(self, uid):
         try:
