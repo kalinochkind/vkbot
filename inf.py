@@ -122,6 +122,10 @@ def getBotReply(uid, message, conf_id, method=''):
         answer = answer.lower()
     console_message = ''
 
+    if '{' in answer:
+        answer, gender = applyGender(answer, uid)
+        console_message += ' (' + gender + ')'
+
     if answer.startswith('\\'):
         res = preprocessReply(answer[1:], uid)
         log.write('preprocess', '{}: {} ({} -> {})'.format(uid, answer, message, res))
@@ -130,10 +134,6 @@ def getBotReply(uid, message, conf_id, method=''):
             res = ''
         console_message += ' (' + answer + ')'
         answer = res
-
-    if '{' in answer:
-        answer, gender = applyGender(answer, uid)
-        console_message += ' (' + gender + ')'
 
     if method:
         console_message += ' (' + method + ')'
