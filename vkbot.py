@@ -163,7 +163,6 @@ class vk_bot:
         def _send():
             res = self.sendMessage(sender, answer)
             if res is None:
-                log.write('bannedmsg', str(message['id']))  # not thread-safe, but who gives a fuck
                 self.banned_messages.add(message['id'])
                 del self.users[sender]
                 return
