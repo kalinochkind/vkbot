@@ -124,7 +124,10 @@ wstring BestReply(wstring &line, int id, bool conf)
         }*/
         if(id >= 0 && users[id].smiles >= MAX_SMILES)
         {
-            wcerr << "\033[38;5;9mToo many smiles\033[0m\n";
+            if(!conf)
+            {
+                wcerr << "\033[38;5;9mToo many smiles\033[0m\n";
+            }
             return L"";
         }
         users[id].smiles++;
