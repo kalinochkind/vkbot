@@ -116,7 +116,6 @@ def getBotReply(uid, message, conf_id, method=''):
     elif conf_id == -1:
         answer = bot.interact('flat {}'.format(message))
         bl = (answer == '$blacklisted')
-        print('Comment', message, '-', 'bad' if bl else 'good')
         return bl
 
     if message == message.lower() and message != message.upper():
@@ -263,6 +262,8 @@ def reply(message):
 
         t = evalExpression(message['body'])
         if t:
+            if getBotReply(None, message['body'], -1):
+                return ('', 0)
             print(message['body'], '=', t, '(calculated)')
             log.write('calc', '"{}" = {}'.format(message['body'], t))
             return (t, 0)
