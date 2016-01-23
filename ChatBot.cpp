@@ -71,7 +71,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     line += L' ';
     if(id >= 0 && users[id].lastReply && reply[abs(users[id].lastReply) - 1]->size() == 1 && line == L' ' + (*reply[abs(users[id].lastReply) - 1])[0] + L' ')
     {
-        wcerr << "\033[38;5;9m" << line << L"- my reply\033[39;49m\n";
+        wcerr << "\033[38;5;9m" << line << L"- my reply\033[0m\n";
         return L"";
     }
     vector<long long> words = splitWords(line, fixedstem, replaced, names);
@@ -87,7 +87,7 @@ wstring BestReply(wstring &line, int id, bool conf)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
-            wcerr << "\033[38;5;9m" << line << L"- blacklisted\033[39;49m\n";
+            wcerr << "\033[38;5;9m" << line << L"- blacklisted\033[0m\n";
             return L"$blacklisted";
         }
     }
@@ -112,7 +112,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     }
     if(mx == 0)
     {
-        wcerr << "\033[38;5;11m" << line << L"- no match\033[39;49m\n";
+        wcerr << "\033[38;5;11m" << line << L"- no match\033[0m\n";
         while(line.length() && line[0] == L' ')
         {
             line = line.substr(1);
@@ -124,7 +124,7 @@ wstring BestReply(wstring &line, int id, bool conf)
         }*/
         if(id >= 0 && users[id].smiles >= MAX_SMILES)
         {
-            wcerr << "\033[38;5;9mToo many smiles\033[39;49m\n";
+            wcerr << "\033[38;5;9mToo many smiles\033[0m\n";
             return L"";
         }
         users[id].smiles++;
@@ -135,14 +135,14 @@ wstring BestReply(wstring &line, int id, bool conf)
     {
         wcerr << L", " << reply[imx]->size() << L" replies";
     }
-    wcerr << L"\033[39;49m\n";
+    wcerr << L"\033[0m\n";
     if(users[id].lastReply == imx + 1)
     {
         users[id].lastReply = -(imx + 1);
     }
     else if(id >= 0 && users[id].lastReply == -(imx + 1))
     {
-        wcerr << "\033[38;5;9mRepeated\033[39;49m\n";
+        wcerr << "\033[38;5;9mRepeated\033[0m\n";
         return L"";
     }
     else
