@@ -6,6 +6,7 @@ import time
 import sys
 import socket
 import config
+import log
 
 class vk_api:
     logging = 0
@@ -90,16 +91,16 @@ class vk_api:
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except socket.timeout:
-                print('[WARNING] timeout')
+                log.warning('timeout')
                 time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
                 if retry:
-                    print('[ERROR] ({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
+                    log.error('({}) {}: {}'.format(method, e.__class__.__name__, str(e)), True)
                     return None
                 else:
                     time.sleep(1)
-                    print('[WARNING] ({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
+                    log.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
                     return self.apiCall(method, params, 1)
 
             data_array = json.loads(json_string.decode('utf-8'))
@@ -109,7 +110,7 @@ class vk_api:
                     print('response: %s\n' % json.dumps(data_array), file=f)
             duration = round((time.time() - last_get), 2)
             if duration > self.timeout:
-                print('[WARNING] {} timeout'.format(method))
+                log.warning('{} timeout'.format(method))
 
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
@@ -128,7 +129,7 @@ class vk_api:
                             self.captcha_delayed = 0
                     else:
                         if not self.captcha_delayed:
-                            print('[ERROR] Captcha needed')
+                            log.warning('Captcha needed')
                         time.sleep(self.captcha_check_interval)
                         self.captcha_delayed += 1
                     return self.apiCall(method, params)
@@ -136,26 +137,26 @@ class vk_api:
                     self.login()
                     return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 900: #Black list
-                    print('[ERROR] Banned')
+                    log.warning('Banned')
                     return None
                 elif data_array['error']['error_code'] == 7:
                     if retry:
-                        print('[ERROR] Banned')
+                        log.warning('Banned')
                         return None
                     else:
-                        print('[ERROR] Banned, retrying')
+                        log.warning('Banned, retrying')
                         time.sleep(3)
                         return self.apiCall(method, params, 1)
                 elif data_array['error']['error_code'] == 10:
                     if retry:
-                        print('[ERROR] Unable to reply')
+                        log.warning('Unable to reply')
                         return None
                     else:
-                        print('[ERROR] Unable to reply, retrying')
+                        log.warning('Unable to reply, retrying')
                         time.sleep(3)
                         return self.apiCall(method, params, 1)
                 else:
-                    print('[ERROR] Code {}: {}'.format(data_array['error']['error_code'], data_array['error'].get('error_msg')))
+                    log.error('Code {}: {}'.format(data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
             else:
                 return self.apiCall(method, params)
@@ -194,7 +195,7 @@ class vk_api:
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except socket.timeout:
-            print('[ERROR] longpoll timeout')
+            log.warning('longpoll timeout')
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))

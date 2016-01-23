@@ -55,7 +55,7 @@ class vk_bot:
             ans = gen_reply(message)
         except Exception as e:
             ans = None
-            print('[ERROR] local {}: {}'.format(e.__class__.__name__, str(e)))
+            log.error('local {}: {}'.format(e.__class__.__name__, str(e)), True)
             time.sleep(1)
         if ans:
             self.replyMessage(message, ans[0], ans[1])
@@ -67,7 +67,7 @@ class vk_bot:
             print('Include read')
             try:
                 messages = self.api.messages.getDialogs(unread=1, count=200)['items'][::-1]
-            except KeyError:
+            except (KeyError, TypeError):
                 # may sometimes happen because of friendship requests
                 return
 
@@ -314,6 +314,7 @@ class vk_bot:
             log.write('likeava', str(uid))
             self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
         except Exception:
+            log.error('likeava failed', True)
             log.write('likeava', str(uid) + ' failed')
 
     def setRelation(self, uid):

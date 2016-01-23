@@ -1,3 +1,4 @@
+import sys
 config_data = {}
 
 def read():
@@ -7,8 +8,8 @@ def read():
 
 def get(param):
     if param not in config_data:
-        print('[ERROR] param {} not found'.format(param))
-        return None
+        print('[FATAL] param {} not found'.format(param))
+        sys.exit(0)
     try:
         return int(config_data[param])
     except ValueError:

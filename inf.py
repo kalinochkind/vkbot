@@ -130,7 +130,7 @@ def getBotReply(uid, message, conf_id, method=''):
         res = preprocessReply(answer[1:], uid)
         log.write('preprocess', '{}: {} ({} -> {})'.format(uid, answer, message, res))
         if res is None:
-            print('[ERROR] Unknown reply:', res)
+            log.error('Unknown reply:', answer)
             res = ''
         console_message += ' (' + answer + ')'
         answer = res
@@ -398,6 +398,6 @@ while 1:
         if timeto('filtercomments', filtercomments_interval):
             noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1)))
     except Exception as e:
-        print('[ERROR] global {}: {}'.format(e.__class__.__name__, str(e)))
+        log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
         time.sleep(2)
