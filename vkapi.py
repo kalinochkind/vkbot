@@ -107,7 +107,6 @@ class vk_api:
             if self.logging:
                 with open('inf.log', 'a') as f:
                     print('method: {}, params: {}\nresponse: {}\n'.format(method, json.dumps(params), json.dumps(data_array)), file=f)
-                    print('response: %s\n' % json.dumps(data_array), file=f)
             duration = round((time.time() - last_get), 2)
             if duration > self.timeout:
                 log.warning('{} timeout'.format(method))
