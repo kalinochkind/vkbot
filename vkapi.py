@@ -1,6 +1,7 @@
 import threading
 import urllib.request
 import urllib.parse
+import urllib.error
 import json
 import time
 import sys
@@ -90,9 +91,9 @@ class vk_api:
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-            except socket.timeout:
-                log.warning('timeout')
-                time.sleep(1)
+            except urllib.error.URLError:
+                log.warning(method + ' timeout')
+                time.sleep(3)
                 return self.apiCall(method, params)
             except Exception as e:
                 if retry:
@@ -154,6 +155,9 @@ class vk_api:
                         log.warning('Unable to reply, retrying')
                         time.sleep(3)
                         return self.apiCall(method, params, 1)
+                elif data_array['error']['error_code'] == 15:  # not a friend
+                    log.warning('Not a friend')
+                    return None
                 else:
                     log.error('Code {}: {}'.format(data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
@@ -196,6 +200,9 @@ class vk_api:
         except socket.timeout:
             log.warning('longpoll timeout')
             time.sleep(1)
+            return []
+        except urllib.error.HTTPError as e:
+            log.warning('longpoll http error ' + str(e.code))
             return []
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:

@@ -324,6 +324,9 @@ class vk_bot:
 
     def likeAva(self, uid):
         try:
+            if 'photo_id' not in self.users[uid]:
+                log.write('likeava', str(uid) + ' missing')
+                return
             photo = self.users[uid]['photo_id'].split('_')
             log.write('likeava', str(uid))
             self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
