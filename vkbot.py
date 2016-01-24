@@ -55,6 +55,7 @@ class vk_bot:
     def replyOne(self, message, gen_reply, method=None):
         if 'chat_id' in message:
             if not self.checkConf(message['chat_id']):
+                self.deleteFriend(message['user_id'])
                 return
         if self.tm.isBusy(self.getSender(message)):
             return
