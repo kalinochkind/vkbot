@@ -270,8 +270,8 @@ def reply(message):
                 print('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
             log.write('calc', '"{}" = {}'.format(message['body'], t))
             return (t, 0)
-
-    message['body'] = message['body'].replace('<br>', '<BR>')
+    if message['body']:
+        message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
         if 'chat_id' in message:
             print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
