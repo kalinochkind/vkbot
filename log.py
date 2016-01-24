@@ -19,3 +19,4 @@ def error(s, need_exc_info=False):
     if need_exc_info:
         with open('logs/error.log', 'a') as f:
             traceback.print_exc(file=f)
+            print(file=f)
