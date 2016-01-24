@@ -43,6 +43,15 @@ class vk_bot:
             return 2000000000 + message['chat_id']
         return message['user_id']
 
+    def loadUsers(self, arr, key):
+        users = []
+        for i in arr:
+            try:
+                users.append(key(i))
+            except Exception:
+                pass
+        self.users.load(users)
+
     def replyOne(self, message, gen_reply, method=None):
         if 'chat_id' in message:
             if not self.checkConf(message['chat_id']):
@@ -70,7 +79,7 @@ class vk_bot:
             except (KeyError, TypeError):
                 # may sometimes happen because of friendship requests
                 return
-
+            self.loadUsers(messages, lambda x:x['message']['user_id'])
             with self.api.api_lock:
                 for msg in sorted(messages, key=lambda msg:msg['message']['id']):
                     cur = msg['message']
@@ -81,6 +90,7 @@ class vk_bot:
 
         else:
             messages = self.longpollMessages()
+            self.loadUsers(messages, lambda x:x['user_id'])
             with self.api.api_lock:
                 for cur in sorted(messages, key=lambda msg:msg['id']):
                     self.last_message_id = max(self.last_message_id, cur['id'])
@@ -276,6 +286,7 @@ class vk_bot:
     def filterComments(self, test, name_func):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
         to_del = set()
+        self.loadUsers(data, lambda x:x['feedback']['from_id'])
         for rep in data:
             self.last_viewed_comment = max(self.last_viewed_comment, rep['date'])
 
