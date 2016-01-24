@@ -264,12 +264,19 @@ def reply(message):
         if t:
             if getBotReply(None, message['body'], -1):
                 return ('', 0)
-            print(message['body'], '=', t, '(calculated)')
+            if 'chat_id' in message:
+                print('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
+            else:
+                print('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
             log.write('calc', '"{}" = {}'.format(message['body'], t))
             return (t, 0)
 
+    message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
-        print(message['body'], '- ignored (caps)')
+        if 'chat_id' in message:
+            print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
+        else:
+            print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id']), message['body']))
         return ('', 0)
 
     return (getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', '')), 0)
