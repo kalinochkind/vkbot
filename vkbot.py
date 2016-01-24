@@ -100,6 +100,7 @@ class vk_bot:
     def longpollMessages(self):
         arr = self.api.getLongpoll()
         need_extra = []
+        result = []
         for i in arr:
             if i[0] == 51:  # conf params changed
                 pass  # TODO
@@ -130,13 +131,14 @@ class vk_bot:
                     msg['user_id'] = int(opt['from'])
                 else:
                     msg['user_id'] = sender
-                yield msg
+                result.append(msg)
 
         if need_extra:
             need_extra = ','.join(need_extra)
             for i in self.api.messages.getById(message_ids=need_extra)['items']:
                 i['_method'] = 'getById'
-                yield i
+                result.append(i)
+        return result
 
     def sendMessage(self, to, msg):
         if not self.good_conf.get(to, 1):
