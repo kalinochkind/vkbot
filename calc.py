@@ -41,9 +41,9 @@ def evalExpression(s):
     s = ''.join(ans).strip()
     if not s:
         return None
-    if s[0] == '+' or isnum(s) or isnum(s.replace('(', '').replace(')', '').strip('+')):
+    if s[0] == '+' or isnum(s) or isnum(s.replace('(', '').replace(')', '').strip('+').strip('-')):
         return None
-    if '**' in s or '--' in s or '++' in s:
+    if '**' in s or '--' in s or '++' in s or '-0' in s or s == '1*1':
         return None
     if set(s) <= set('0123456789()-') and s[0] == '8':
         return None
@@ -52,10 +52,10 @@ def evalExpression(s):
         if set(s) <= set('0123456789-') and s.lstrip('-').count('-') == 1 and int(res) <= 0:
             return None
     except Exception:
-        s = s.replace('(', '').replace(')', '')
-        if not s or s[0] == '+' or isnum(s) or isnum(s.replace('(', '').replace(')', '').strip('+')):
+        s = s.replace('(', ' ').replace(')', ' ').strip()
+        if not s or s[0] == '+' or isnum(s) or isnum(s.strip('+')):
             return None
-        if '**' in s or '--' in s or '++' in s:
+        if '**' in s or '--' in s or '++' in s or '-0' in s or ''.join(s.split()) == '1*1':
             return None
         try:
             res = str(eval(s, {'__builtins__':{}}))
