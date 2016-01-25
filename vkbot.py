@@ -280,9 +280,9 @@ class vk_bot:
                 data = data[1:]
         try:
             if multiple:
-                return [str(i) for i in req]
+                return req
             else:
-                return str(req[0])
+                return req[0]
         except TypeError:
             return None
 

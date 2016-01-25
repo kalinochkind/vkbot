@@ -63,7 +63,7 @@ class ban_manager:
             return 'Already ignored!'
         self.ignored.add(pid)
         self.write()
-        return self.printableName(pid) + 'ignored'
+        return self.printableName(pid) + ' ignored'
 
     def unban(self, pid):
         if pid == '*':
