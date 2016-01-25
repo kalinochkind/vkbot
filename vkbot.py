@@ -286,6 +286,14 @@ class vk_bot:
         except TypeError:
             return None
 
+    def deleteComment(self, rep):
+        if rep['type'].endswith('photo'):
+            self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+        elif rep['type'].endswith('video'):
+            self.api.video.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+        else:
+            self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
+
     def filterComments(self, test, name_func):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
         to_del = set()
@@ -306,18 +314,12 @@ class vk_bot:
                 if test(txt):
                     print('Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'])))
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
-                    if rep['type'].endswith('photo'):
-                        print('Deleting photo comment')
-                        self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
-                        to_del.add(rep['feedback']['from_id'])
-                    elif rep['type'].endswith('video'):
-                        print('Deleting video comment')
-                        self.api.video.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
-                        to_del.add(rep['feedback']['from_id'])
-                    else:
-                        print('Deleting wall comment')
-                        self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
-                        to_del.add(rep['feedback']['from_id'])
+                    self.deleteComment(rep)
+                    to_del.add(rep['feedback']['from_id'])
+                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc'] for i in rep['feedback']['attachments']):
+                    print('Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'])))
+                    log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
+                    self.deleteComment(rep)
                 else:
                     print('Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'])))
         return to_del
