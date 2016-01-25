@@ -159,7 +159,7 @@ class vk_api:
                     log.warning('Not a friend')
                     return None
                 else:
-                    log.error('Code {}: {}'.format(data_array['error']['error_code'], data_array['error'].get('error_msg')))
+                    log.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
             else:
                 return self.apiCall(method, params)
