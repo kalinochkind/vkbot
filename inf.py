@@ -257,7 +257,11 @@ def reply(message):
                     return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
-            print(message['body'], '- ignored (bot message)')
+            print('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
+            return ('', 0)
+
+        if message['body'].strip().upper() == last_message_text.get(vk.getSender(message)):
+            print('({}) {} - ignored (my reply)'.format(banign.printableName(message['user_id']), message['body']))
             return ('', 0)
 
         t = evalExpression(message['body'])
@@ -279,7 +283,10 @@ def reply(message):
             print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id']), message['body']))
         return ('', 0)
 
-    return (getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', '')), 0)
+    reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
+    if reply is not None:
+        last_message_text[vk.getSender(message)] = reply.strip().upper()
+    return (reply, 0)
 
 
 def preprocessMessage(message, user=None):
@@ -377,6 +384,7 @@ if sys.argv[-1] == '-l':
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 admin = int(cfg[2]) if len(cfg) > 2 else -1
 reset_command = cfg[3] if len(cfg) > 3 else ''
+last_message_text = {}
 
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
 print('My id:', vk.self_id)

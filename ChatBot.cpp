@@ -69,11 +69,6 @@ long long phnamec = phash(L"firstnamec");
 wstring BestReply(wstring &line, int id, bool conf)
 {
     line += L' ';
-    if(id >= 0 && users[id].lastReply && reply[abs(users[id].lastReply) - 1]->size() == 1 && line == L' ' + (*reply[abs(users[id].lastReply) - 1])[0] + L' ')
-    {
-        wcerr << "\033[38;5;9m" << line << L"- my reply\033[0m\n";
-        return L"";
-    }
     vector<long long> words = splitWords(line, fixedstem, replaced, names);
     if(conf)
     {
