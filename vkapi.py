@@ -114,7 +114,9 @@ class vk_api:
 
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
-                self.captcha_delayed = 0
+                if self.captcha_delayed:
+                    self.captcha_delayed = 0
+                    print('Captcha no longer needed')
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
