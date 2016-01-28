@@ -5,7 +5,7 @@ import socket
 import urllib.error
 
 _key = open('antigate.txt').read().strip()
-_a = None
+
 
 def solve(url, timeout=10):
     try:
@@ -18,10 +18,12 @@ def solve(url, timeout=10):
         return None
     with open('captcha.png', 'wb') as f:
         f.write(data)
-    global _a
+
     try:
-        _a = AntiGate(_key, 'captcha.png')
+        return str(AntiGate(_key, 'captcha.png'))
     except AntiGateError as e:
         print(e)
         return None
-    return str(_a)
+    except Exception:
+        log.error('captcha error', True)
+        return None
