@@ -4,7 +4,7 @@ import config
 fields = 'photo_50,country,last_seen'
 
 s = open('allowed.txt').readlines()
-noadd = set(open('noadd.txt').read().split())
+noadd = set(map(int, open('noadd.txt').read().split()))
 allowed = set(s[0] + ' ')
 s = s[1].split()
 
@@ -12,7 +12,7 @@ offline_allowed = config.get('check_friend.offline_allowed')
 
 def writeNoadd():
     with open('noadd.txt', 'w') as f:
-        f.write('\n'.join(sorted(noadd, key=int)))
+        f.write('\n'.join(map(str, sorted(noadd))))
 
 def check_char(c):
     return c in allowed
@@ -25,5 +25,5 @@ def is_good(fr):
             all(check_char(i) for i in fr['first_name'] + fr['last_name']) and
             now - fr['last_seen']['time'] < 3600 * 24 * offline_allowed and
             not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in s) and
-            str(fr['id']) not in noadd
+            fr['id'] not in noadd
             )

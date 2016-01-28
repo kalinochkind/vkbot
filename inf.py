@@ -35,11 +35,10 @@ class ban_manager:
         self.filename = filename
         self.users = user_cache
         banign = open(filename).read().split()
-        self.banned = set(int(i[1:]) for i in banign if i.startswith('$'))
-        self.ignored = set(int(i) for i in banign if not i.startswith('$'))
+        self.banned = set(map(int, banign))
 
     def write(self):
-        s = ['$' + str(i) for i in sorted(self.banned)] + list(map(str, sorted(self.ignored)))
+        s = list(map(str, sorted(self.banned)))
         with open(self.filename, 'w') as f:
             f.write('\n'.join(s))
 
@@ -58,36 +57,13 @@ class ban_manager:
         self.write()
         return self.printableName(pid) + ' banned'
 
-    def ignore(self, pid):
-        if pid in self.ignored:
-            return 'Already ignored!'
-        self.ignored.add(pid)
-        self.write()
-        return self.printableName(pid) + ' ignored'
-
     def unban(self, pid):
-        if pid == '*':
-            ret = '{} unbanned'.format(', '.join(self.banned))
-            self.banned = set()
-        elif pid not in self.banned:
+        if pid not in self.banned:
             return 'Not banned!'
         else:
             self.banned.discard(pid)
-            ret = self.printableName(pid) + ' unbanned'
-        self.write()
-        return ret
-
-    def unignore(self, pid):
-        if pid == '*':
-            ret = '{} unignored'.format(', '.join(self.ignored))
-            self.ignored = set()
-        elif pid not in self.ignored:
-            return 'Not ignored!'
-        else:
-            self.ignored.discard(pid)
-            ret = self.printableName(pid) + ' unignored'
-        self.write()
-        return ret
+            self.write()
+            return self.printableName(pid) + ' unbanned'
 
 
 _timeto = {}
@@ -158,14 +134,6 @@ def processCommand(cmd, *p):
         else:
             return 'No one banned!'
 
-    elif cmd == 'ignored':
-        if banign.ignored:
-            result = sorted(banign.ignored)
-            result = [banign.printableName(j, user_fmt='https://vk.com/id{id}') for j in result]
-            return '\n'.join(result)
-        else:
-            return 'No one ignored!'
-
     elif cmd == 'ban':
         if not p:
             return 'Not enough parameters'
@@ -185,22 +153,24 @@ def processCommand(cmd, *p):
         return banign.unban(user)
 
     elif cmd == 'ignore':
-        if not p:
-            return 'Not enough parameters'
-        user = vk.getUserId(p[-1])
-        if user is None:
-            return 'No such user'
-        if user == admin:
+        users = vk.getUserId(p)
+        if not users:
+            return 'No such users'
+        if admin in users:
             return 'Cannot ignore admin!'
-        return banign.ignore(user)
+        noaddUsers(users)
+        vk.users.load(users)
+        return 'Ignored ' +  ', '.join(banign.printableName(i) for i in users)
 
     elif cmd == 'unignore':
-        if not p:
-            return 'Not enough parameters'
-        user = p[-1]
-        if user != '*':
-            user = vk.getUserId(user)
-        return banign.unignore(user)
+        users = vk.getUserId(p)
+        if not users:
+            return 'No such users'
+        if admin in users:
+            return 'Cannot ignore admin!'
+        noaddUsers(users, True)
+        vk.users.load(users)
+        return 'Unignored ' +  ', '.join(banign.printableName(i) for i in users)
 
     elif cmd == 'leave':
         if not p:
@@ -213,17 +183,6 @@ def processCommand(cmd, *p):
         else:
             return 'Fail'
 
-    elif cmd == 'noadd':
-        if not p:
-            return 'Not enough parameters'
-        users = vk.getUserId(p)
-        if not users:
-            return 'No such users'
-        if admin in users:
-            return 'Cannot delete admin!'
-        noaddUsers(users)
-        return 'Noadd ' +  str(users)
-
     else:
         return 'Unknown command'
 
@@ -233,7 +192,7 @@ def processCommand(cmd, *p):
 def reply(message):
     if vk.getSender(message) in banign.banned:
         return None
-    if vk.getSender(message) in banign.ignored or message['user_id'] in banign.ignored:
+    if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
         return ('', 0)
     if vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
         return ('', 0)
@@ -367,13 +326,16 @@ def test_friend(uid):
         return 0
     return check_friend.is_good(fr)
 
-def noaddUsers(users):
+def noaddUsers(users, remove=False):
     users = set(users)
     users.discard(admin)
     if not users:
         return
-    check_friend.noadd.update(map(str, users))
-    vk.deleteFriend(users)
+    if remove:
+        check_friend.noadd -= users
+    else:
+        check_friend.noadd.update(users)
+        vk.deleteFriend(users)
     check_friend.writeNoadd()
 
 
