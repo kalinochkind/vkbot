@@ -18,7 +18,7 @@ for i in range(1000000):
 print('Starting to delete')
 for i in friends:
     if not i['can_write_private_message']:
-        check_friend.noadd.add(str(i['id']))
+        check_friend.noadd.add(i['id'])
     if not check_friend.is_good(i):
         a.friends.delete.delayed(user_id=i['id'])
         print('deleted', i['id'])
