@@ -17,6 +17,8 @@ _bot_message = re.compile(r'^\(.+\)')
 def isBotMessage(msg):
     return _bot_message.match(msg.strip())
 
+bot_users = {}
+
 
 class cpp_bot:
     def __init__(self, filename):
@@ -217,7 +219,15 @@ def reply(message):
 
         if isBotMessage(message['body']):
             print('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
+            if 'chat_id' in message:
+                bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
+                if bot_users[message['user_id']] >= 3:
+                    print('Too many bot messages')
+                    log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
+                    vk.leaveConf(message['chat_id'])
             return ('', 0)
+        elif message['user_id'] in bot_users:
+            del bot_users[message['user_id']]
 
         if message['body'].strip().upper() == last_message_text.get(vk.getSender(message)):
             print('({}) {} - ignored (my reply)'.format(banign.printableName(message['user_id']), message['body']))
