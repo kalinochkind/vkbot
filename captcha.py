@@ -20,7 +20,7 @@ def solve(url, timeout=10):
         f.write(data)
 
     try:
-        return str(AntiGate(_key, 'captcha.png'))
+        return str(AntiGate(_key, 'captcha.png')) or None
     except AntiGateError as e:
         print(e)
         return None
