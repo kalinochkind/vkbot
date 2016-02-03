@@ -316,7 +316,7 @@ class vk_bot:
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
-                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc'] for i in rep['feedback']['attachments']):
+                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
                     print('Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'])))
                     log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
