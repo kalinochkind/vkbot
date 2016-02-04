@@ -1,5 +1,6 @@
 import config
 import time
+import log
 
 class user_cache:
 
@@ -17,7 +18,7 @@ class user_cache:
             to_get = []
             ctime = time.time()
             for user in uid:
-                if user not in self.users or self.users[user][0] + self.invalidate_interval - 5 < ctime:
+                if user > 0 and (user not in self.users or self.users[user][0] + self.invalidate_interval - 5 < ctime):
                     to_get.append(user)
             if to_get:
                 resp = self.api.users.get(user_ids=','.join(map(str, to_get)), fields=self.fields)

@@ -194,6 +194,8 @@ def processCommand(cmd, *p):
 def reply(message):
     if vk.getSender(message) in banign.banned:
         return None
+    if vk.getSender(message) < 0:
+        return None
     if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
         return ('', 0)
     if vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:

@@ -10,7 +10,7 @@ _key = open('antigate.txt').read().strip()
 def solve(url, timeout=10):
     try:
         data = urlopen(url, timeout=timeout).read()
-    except urllib.error.URLError:
+    except (urllib.error.URLError, socket.timeout):
         log.warning('captcha timeout')
         return None
     except Exception:
