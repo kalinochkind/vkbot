@@ -199,7 +199,7 @@ class vk_api:
         url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
-        except socket.timeout:
+        except (socket.timeout, urllib.error.URLError):
             log.warning('longpoll timeout')
             time.sleep(1)
             return []
