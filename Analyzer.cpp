@@ -42,16 +42,19 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
 {
     vector<long long> ans;
     wstring word;
+    int prevKind = 0;  // 1 - letter, 2 - digit
     for(auto i: s + L' ')
     {
         i = towupper(i);
-        if(isLetter(i))
+        if(isLetter(i) && prevKind != 2)
         {
             word.push_back(i);
+            prevKind = 1;
         }
-        else if(isDigit(i))
+        else if(isDigit(i) && prevKind != 1)
         {
             word.push_back('0');
+            prevKind = 2;
         }
         else
         {
@@ -92,6 +95,17 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
                 }
             }
             word.clear();
+            prevKind = 0;
+            if(isLetter(i))
+            {
+                word.push_back(i);
+                prevKind = 1;
+            }
+            else if(isDigit(i))
+            {
+                word.push_back('0');
+                prevKind = 2;
+            }
         }
     }
     return ans;
