@@ -273,11 +273,17 @@ class vk_bot:
                     i = i.split('/')[-1]
                 req.append(int(i) if i.isdigit() else i)
 
-        data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str))
+        data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str), fields='domain')
+        if data is None:
+            return []
         for i in range(len(req)):
             if type(req[i]) == str:
-                req[i] = data[0]['id']
-                data = data[1:]
+                if data[0]['domain'] == req[i]:
+                    req[i] = data[0]['id']
+                    data = data[1:]
+                else:
+                    req[i] = None
+        req = [i for i in req if i is not None]
         try:
             if multiple:
                 return req
