@@ -160,6 +160,9 @@ class vk_api:
                 elif data_array['error']['error_code'] == 15:  # not a friend
                     log.warning('Not a friend')
                     return None
+                elif data_array['error']['error_code'] == 100 and method == 'messages.markAsRead':
+                    log.warning('Missing params in markAsRead')
+                    return None
                 else:
                     log.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
