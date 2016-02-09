@@ -107,7 +107,7 @@ class vk_api:
             data_array = json.loads(json_string.decode('utf-8'))
             if self.logging:
                 with open('inf.log', 'a') as f:
-                    print('method: {}, params: {}\nresponse: {}\n'.format(method, json.dumps(params), json.dumps(data_array)), file=f)
+                    print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
             duration = round((time.time() - last_get), 2)
             if duration > self.timeout:
                 log.warning('{} timeout'.format(method))
@@ -212,7 +212,7 @@ class vk_api:
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:
             with open('inf.log', 'a') as f:
-                print('longpoll request: {}\nresponse: {}\n'.format(url, json.dumps(data_array)), file=f)
+                print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), url, json.dumps(data_array)), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
 
