@@ -2,7 +2,6 @@
 
 import time
 import sys
-from subprocess import Popen, PIPE
 from vkbot import vk_bot, CONF_START
 import vkapi
 import captcha
@@ -11,6 +10,7 @@ import check_friend
 from calc import evalExpression
 import log
 import config
+from cppbot import cpp_bot
 
 
 _bot_message = re.compile(r'^\(.+\)')
@@ -18,17 +18,6 @@ def isBotMessage(msg):
     return _bot_message.match(msg.strip())
 
 bot_users = {}
-
-
-class cpp_bot:
-    def __init__(self, filename):
-        self.bot = Popen([filename], stdout=PIPE, stdin=PIPE)
-
-    def interact(self, msg):
-        self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
-        self.bot.stdin.flush()
-        answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-        return answer.decode().strip()
 
 bot = cpp_bot('./chat.exe')
 
