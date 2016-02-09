@@ -75,6 +75,7 @@ class vk_bot:
         self.tm.gc()
         if include_read:
             print('Include read')
+            self.users.gc()
             try:
                 messages = self.api.messages.getDialogs(unread=1, count=200)['items'][::-1]
             except (KeyError, TypeError):

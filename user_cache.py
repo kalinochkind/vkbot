@@ -45,3 +45,9 @@ class user_cache:
 
     def clear(self):
         self.users = {}
+
+    def gc(self):
+        t = time.time()
+        for uid in list(self.users):
+            if self.users[uid][0] + self.invalidate_interval < t:
+                del self.users[uid]
