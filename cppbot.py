@@ -20,6 +20,6 @@ class cpp_bot:
         self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
         self.bot.stdin.flush()
         answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-        info = nonBlockRead(self.bot.stderr)
+        info = nonBlockRead(self.bot.stderr) or b''
         print(info.decode(), end='')
         return answer.decode().strip()
