@@ -19,7 +19,7 @@ def isBotMessage(msg):
 
 bot_users = {}
 
-bot = cpp_bot('./chat.exe')
+bot = cpp_bot()
 
 class ban_manager:
     def __init__(self, filename, user_cache):
