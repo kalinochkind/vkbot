@@ -82,7 +82,7 @@ wstring BestReply(wstring &line, int id, bool conf)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
-            wcerr << "\033[38;5;9m" << line << L"- blacklisted\033[0m\n";
+            wcerr << "red|" << line << L"- blacklisted\n";
             return L"$blacklisted";
         }
     }
@@ -107,7 +107,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     }
     if(mx == 0)
     {
-        wcerr << "\033[38;5;11m" << line << L"- no match\033[0m\n";
+        wcerr << "yellow|" << line << L"- no match\n";
         while(line.length() && line[0] == L' ')
         {
             line = line.substr(1);
@@ -121,26 +121,26 @@ wstring BestReply(wstring &line, int id, bool conf)
         {
             if(!conf)
             {
-                wcerr << "\033[38;5;9mToo many smiles\033[0m\n";
+                wcerr << "red|Too many smiles\n";
             }
             return L"";
         }
         users[id].smiles++;
         return L"$noans";
     }
-    wcerr << "\033[38;5;10m" << line << L"== " << request[imx] << L" (" << mx / norm(words) << L")";
+    wcerr << "green|" << line << L"== " << request[imx] << L" (" << mx / norm(words) << L")";
     if(reply[imx]->size() > 1)
     {
         wcerr << L", " << reply[imx]->size() << L" replies";
     }
-    wcerr << L"\033[0m\n";
+    wcerr << L"\n";
     if(users[id].lastReply == imx + 1)
     {
         users[id].lastReply = -(imx + 1);
     }
     else if(id >= 0 && users[id].lastReply == -(imx + 1))
     {
-        wcerr << "\033[38;5;9mRepeated\033[0m\n";
+        wcerr << "red|Repeated\n";
         return L"";
     }
     else

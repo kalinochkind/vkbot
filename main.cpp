@@ -10,8 +10,6 @@ int main()
     Load();
     char wd[256];
     getcwd(wd, sizeof(wd));
-    wcerr << L"Current working directory: " << wd << endl;
-    wcerr << L"Base loaded!" << endl;
     wstring s;
     while(1)
     {

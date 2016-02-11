@@ -9,7 +9,7 @@ def nonBlockRead(output):
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
     try:
-        return output.read()
+        return output.readline()
     except Exception:
         return b''
 
@@ -32,8 +32,12 @@ class cpp_bot:
         self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
         self.bot.stdin.flush()
         answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-        info = nonBlockRead(self.bot.stderr) or b''
-        log.info(info.decode().rstrip())
+        while True:
+            info = nonBlockRead(self.bot.stderr)
+            if not info:
+                break
+            info = info.decode().rstrip().split('|', maxsplit=1)
+            log.info(info[1], info[0])
         return answer.decode().strip()
 
     def build_exe(self):

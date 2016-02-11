@@ -3,8 +3,15 @@ import config
 import traceback
 
 
-def info(s):
-    print(s)
+def info(s, color=''):
+    if color == 'red':
+        print('\033[38;5;9m' + s + '\033[0m')
+    elif color == 'green':
+        print('\033[38;5;10m' + s + '\033[0m')
+    elif color == 'yellow':
+        print('\033[38;5;11m' + s + '\033[0m')
+    else:
+        print(s)
 
 def warning(s):
     print('[WARNING]', s)
