@@ -116,12 +116,12 @@ class vk_api:
             if 'response' in data_array:
                 if self.captcha_delayed:
                     self.captcha_delayed = 0
-                    print('Captcha no longer needed')
+                    log.info('Captcha no longer needed')
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
                     if self.captcha_delayed == self.checks_before_antigate and self.captcha_handler:
-                        print('Using antigate')
+                        log.info('Using antigate')
                         ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
                         if ans is None:
                             time.sleep(1)
@@ -170,7 +170,7 @@ class vk_api:
                 return self.apiCall(method, params)
 
     def login(self):
-        print('Fetching new token')
+        log.info('Fetching new token')
         url = 'https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username + '&password=' + self.password
         try:
             json_string = urllib.request.urlopen(url).read().decode()

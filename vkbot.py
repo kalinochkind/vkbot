@@ -36,7 +36,7 @@ class vk_bot:
         res = self.api.users.get(fields='contacts')[0]
         self.self_id = res['id']
         self.phone = res.get('mobile_phone', '')
-        print('My phone:', self.phone)
+        log.info('My phone: ' + self.phone)
 
     def getSender(self, message):
         if 'chat_id' in message:
@@ -74,7 +74,7 @@ class vk_bot:
     def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
         if include_read:
-            print('Include read')
+            log.info('Include read')
             self.users.gc()
             try:
                 messages = self.api.messages.getDialogs(unread=1, count=200)['items'][::-1]
@@ -216,7 +216,7 @@ class vk_bot:
         return 1
 
     def leaveConf(self, cid):
-        print('Leaving conf', cid)
+        log.info('Leaving conf ' + str(cid))
         self.good_conf[cid + CONF_START] = 0
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
@@ -319,16 +319,16 @@ class vk_bot:
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
                 if test(txt):
-                    print('Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'])))
+                    log.info('Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'])))
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
                 elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
-                    print('Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'])))
+                    log.info('Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'])))
                     log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
                 else:
-                    print('Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'])))
+                    log.info('Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'])))
         return to_del
 
     def likeAva(self, uid):

@@ -22,7 +22,7 @@ def solve(url, timeout=10):
     try:
         return str(AntiGate(_key, 'captcha.png')) or None
     except AntiGateError as e:
-        print(e)
+        log.warning(str(e))
         return None
     except Exception:
         log.error('captcha error', True)

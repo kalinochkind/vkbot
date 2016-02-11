@@ -2,13 +2,9 @@ import time
 import config
 import traceback
 
-datetime_format = config.get('log.datetime_format')
 
-
-def write(log, s):
-    curtime = time.strftime(datetime_format, time.localtime())
-    with open('logs/{}.log'.format(log), 'a') as f:
-        f.write('[{}] {}\n'.format(curtime, s))
+def info(s):
+    print(s)
 
 def warning(s):
     print('[WARNING]', s)
@@ -24,3 +20,11 @@ def error(s, need_exc_info=False):
 def fatal(s):
     print('[FATAL]', s)
     exit(0)
+
+
+datetime_format = config.get('log.datetime_format')
+
+def write(log, s):
+    curtime = time.strftime(datetime_format, time.localtime())
+    with open('logs/{}.log'.format(log), 'a') as f:
+        f.write('[{}] {}\n'.format(curtime, s))

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import log  # must be first
 import time
 import sys
 from vkbot import vk_bot, CONF_START
@@ -8,10 +9,10 @@ import captcha
 import re
 import check_friend
 from calc import evalExpression
-import log
 import config
 from cppbot import cpp_bot
 
+log.info('Starting vkbot')
 
 _bot_message = re.compile(r'^\(.+\)')
 def isBotMessage(msg):
@@ -105,16 +106,16 @@ def getBotReply(uid, message, conf_id, method=''):
     if method:
         console_message += ' (' + method + ')'
     if conf_id > 0:
-        print('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, {name}').replace('%c', str(conf_id)), message, answer, console_message))
+        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, {name}').replace('%c', str(conf_id)), message, answer, console_message))
     else:
-        print('({}) {} : {}{}'.format(banign.printableName(uid), message, answer, console_message))
+        log.info('({}) {} : {}{}'.format(banign.printableName(uid), message, answer, console_message))
     return answer
 
 def processCommand(cmd, *p):
     if cmd == 'reload':
         bot.interact('reld')
         vk.initSelf()
-        print('Reloaded!')
+        log.info('Reloaded!')
         return 'Reloaded!'
 
     elif cmd == 'banned':
@@ -209,11 +210,11 @@ def reply(message):
                     return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
-            print('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
             if 'chat_id' in message:
                 bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
                 if bot_users[message['user_id']] >= 3:
-                    print('Too many bot messages')
+                    log.info('Too many bot messages')
                     log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
                     vk.leaveConf(message['chat_id'])
             return ('', 0)
@@ -221,7 +222,7 @@ def reply(message):
             del bot_users[message['user_id']]
 
         if message['body'].strip().upper() == last_message_text.get(vk.getSender(message)):
-            print('({}) {} - ignored (my reply)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (my reply)'.format(banign.printableName(message['user_id']), message['body']))
             return ('', 0)
 
         t = evalExpression(message['body'])
@@ -229,18 +230,18 @@ def reply(message):
             if getBotReply(None, message['body'], -1):
                 return ('', 0)
             if 'chat_id' in message:
-                print('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
+                log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
             else:
-                print('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
+                log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
             log.write('calc', '"{}" = {}'.format(message['body'], t))
             return (t, 0)
     if message['body']:
         message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
         if 'chat_id' in message:
-            print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
+            log.info('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
         else:
-            print('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id']), message['body']))
         return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
@@ -344,7 +345,7 @@ def noaddUsers(users, remove=False):
 
 if sys.argv[-1] == '-l':
     vkapi.vk_api.logging = 1
-    print('Logging enabled')
+    log.info('Logging enabled')
 
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 admin = int(cfg[2]) if len(cfg) > 2 else -1
@@ -352,7 +353,7 @@ reset_command = cfg[3] if len(cfg) > 3 else ''
 last_message_text = {}
 
 vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
-print('My id:', vk.self_id)
+log.info('My id: ' + str(vk.self_id))
 
 banign = ban_manager('banned.txt', vk.users)
 

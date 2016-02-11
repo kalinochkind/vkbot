@@ -33,11 +33,11 @@ class cpp_bot:
         self.bot.stdin.flush()
         answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
         info = nonBlockRead(self.bot.stderr) or b''
-        print(info.decode(), end='')
+        log.info(info.decode().rstrip())
         return answer.decode().strip()
 
     def build_exe(self):
-        print('Rebuilding', self.exe_name)
+        log.info('Rebuilding ' + self.exe_name)
         if os.system('./build.sh'):
             log.fatal('Unable to build')
-        print('Build successful')
+        log.info('Build successful')

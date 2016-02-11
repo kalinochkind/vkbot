@@ -8,7 +8,8 @@ def read():
 
 def get(param):
     if param not in config_data:
-        print('[FATAL] param {} not found'.format(param))
+        import log
+        log.fatal('param {} not found'.format(param))
         sys.exit(0)
     try:
         return int(config_data[param])
