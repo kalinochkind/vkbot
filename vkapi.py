@@ -175,8 +175,7 @@ class vk_api:
         try:
             json_string = urllib.request.urlopen(url).read().decode()
         except Exception:
-            print('[FATAL] Authorization failed')
-            sys.exit(0)
+            log.fatal('Authorization failed')
         data = json.loads(json_string)
         self.token = data['access_token']
         with open('token.txt', 'w') as f:

@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 import fcntl
 import os
+import log
 
 
 def nonBlockRead(output):
@@ -38,6 +39,5 @@ class cpp_bot:
     def build_exe(self):
         print('Rebuilding', self.exe_name)
         if os.system('./build.sh'):
-            print('[FATAL] Unable to build')
-            exit(0)
+            log.fatal('Unable to build')
         print('Build successful')

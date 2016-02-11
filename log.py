@@ -20,3 +20,7 @@ def error(s, need_exc_info=False):
         with open('logs/error.log', 'a') as f:
             traceback.print_exc(file=f)
             print(file=f)
+
+def fatal(s):
+    print('[FATAL]', s)
+    exit(0)
