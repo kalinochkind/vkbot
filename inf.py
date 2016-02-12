@@ -11,6 +11,7 @@ import check_friend
 from calc import evalExpression
 import config
 from cppbot import cpp_bot
+import signal
 
 log.info('Starting vkbot')
 
@@ -342,6 +343,13 @@ def noaddUsers(users, remove=False):
         vk.deleteFriend(users)
     check_friend.writeNoadd()
 
+def _onexit(*p):
+    log.info('Received SIGTERM')
+    vk.waitAllThreads()
+    log.info('Bye')
+    exit(0)
+
+signal.signal(signal.SIGTERM, _onexit)
 
 if sys.argv[-1] == '-l':
     vkapi.vk_api.logging = 1

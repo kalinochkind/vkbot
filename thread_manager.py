@@ -22,6 +22,9 @@ class thread_manager:  # not thread-safe, should be used only from main thread
         for i in to_del:
             del self.threads[i]
 
+    def all(self):
+        return list(self.threads.values())
+
 
 class timeline:
 

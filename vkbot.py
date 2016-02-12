@@ -349,3 +349,7 @@ class vk_bot:
             log.write('relation', uid)
         except Exception:
             log.write('relation', str(uid) + ' failed')
+
+    def waitAllThreads(self):
+        for t in self.tm.all():
+            t.join()
