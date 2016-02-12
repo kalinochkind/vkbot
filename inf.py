@@ -12,8 +12,12 @@ from calc import evalExpression
 import config
 from cppbot import cpp_bot
 import signal
+import os
+import codecs
 
 log.info('Starting vkbot')
+os.environ['LC_ALL'] = 'ru_RU.utf-8'
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 _bot_message = re.compile(r'^\(.+\)')
 def isBotMessage(msg):
