@@ -3,7 +3,7 @@ import config
 
 fields = 'photo_50,country,last_seen'
 
-s = open('allowed.txt').readlines()
+s = open('allowed.txt', encoding='utf-8').readlines()
 noadd = set(map(int, open('noadd.txt').read().split()))
 allowed = set(s[0] + ' ')
 s = s[1].split()
