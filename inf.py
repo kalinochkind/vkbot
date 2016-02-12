@@ -41,7 +41,7 @@ class ban_manager:
 
     # {name} - first_name last_name
     # {id} - id
-    def printableName(self, pid, user_fmt = '{name}', conf_fmt = 'Conf {id}'):
+    def printableName(self, pid, user_fmt = '<a href="https://vk.com/id{id}" target="_blank">{name}</a>', conf_fmt = 'Conf {id}'):
         if pid > CONF_START:
             return conf_fmt.format(id=(pid - CONF_START))
         else:
@@ -111,7 +111,7 @@ def getBotReply(uid, message, conf_id, method=''):
     if method:
         console_message += ' (' + method + ')'
     if conf_id > 0:
-        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, {name}').replace('%c', str(conf_id)), message, answer, console_message))
+        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(conf_id)), message, answer, console_message))
     else:
         log.info('({}) {} : {}{}'.format(banign.printableName(uid), message, answer, console_message))
     return answer
