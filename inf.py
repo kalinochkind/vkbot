@@ -52,7 +52,7 @@ class ban_manager:
             return 'Already banned!'
         self.banned.add(pid)
         self.write()
-        return self.printableName(pid) + ' banned'
+        return self.printableName(pid, user_fmt='[id{id}|{name}]') + ' banned'
 
     def unban(self, pid):
         if pid not in self.banned:
@@ -60,7 +60,7 @@ class ban_manager:
         else:
             self.banned.discard(pid)
             self.write()
-            return self.printableName(pid) + ' unbanned'
+            return self.printableName(pid, user_fmt='[id{id}|{name}]') + ' unbanned'
 
 
 _timeto = {}
@@ -126,7 +126,7 @@ def processCommand(cmd, *p):
     elif cmd == 'banned':
         if banign.banned:
             result = sorted(banign.banned)
-            result = [banign.printableName(j, user_fmt='https://vk.com/id{id}') for j in result]
+            result = [banign.printableName(j, user_fmt='[id{id}|{name}]') for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
@@ -157,7 +157,7 @@ def processCommand(cmd, *p):
             return 'Cannot ignore admin!'
         noaddUsers(users)
         vk.users.load(users)
-        return 'Ignored ' +  ', '.join(banign.printableName(i) for i in users)
+        return 'Ignored ' +  ', '.join(banign.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
 
     elif cmd == 'unignore':
         users = vk.getUserId(p)
@@ -167,7 +167,7 @@ def processCommand(cmd, *p):
             return 'Cannot ignore admin!'
         noaddUsers(users, True)
         vk.users.load(users)
-        return 'Unignored ' +  ', '.join(banign.printableName(i) for i in users)
+        return 'Unignored ' +  ', '.join(banign.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
 
     elif cmd == 'leave':
         if not p:
