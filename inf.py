@@ -14,6 +14,15 @@ from cppbot import cpp_bot
 import signal
 import os
 import codecs
+import fcntl
+
+pid_file = 'inf.pid'
+fp = open(pid_file, 'w')
+try:
+    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    log.write('singleton', '')
+    sys.exit(0)
 
 log.info('Starting vkbot')
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
