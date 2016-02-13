@@ -15,6 +15,3 @@ long long phash(const wstring &s);
 long long stem(const wstring &word);
 
 extern long long phname;
-
-/*void initLogging();
-void logWrite(wstring s);*/
