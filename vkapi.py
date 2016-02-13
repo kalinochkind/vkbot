@@ -8,6 +8,7 @@ import sys
 import socket
 import config
 import log
+import captcha
 
 class vk_api:
     logging = 0
@@ -15,11 +16,11 @@ class vk_api:
     captcha_check_interval = config.get('vkapi.captcha_check_interval')
     api_version = '5.44'
 
-    def __init__(self, username='', password='', timeout=config.get('vkapi.default_timeout'), captcha_handler=None):
+    def __init__(self, username='', password='', timeout=config.get('vkapi.default_timeout')):
         self.username = username
         self.password = password
         self.captcha_delayed = 0
-        self.captcha_handler = captcha_handler
+        self.captcha_sid = ''
         self.delayed_list = []
         self.delayedReset()
         self.timeout = timeout
@@ -117,12 +118,30 @@ class vk_api:
                 if self.captcha_delayed:
                     self.captcha_delayed = 0
                     log.info('Captcha no longer needed')
+                    self.captcha_sid = ''
+                    captcha.delete()
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
-                    if self.captcha_delayed == self.checks_before_antigate and self.captcha_handler:
+                    if self.captcha_delayed == 0:
+                        log.warning('Captcha needed')
+                        self.captcha_sid = data_array['error']['captcha_sid']
+                        with open('captcha.txt', 'w') as f:
+                            f.write('sid ' + self.captcha_sid)
+                        captcha.receive(data_array['error']['captcha_img'])
+                    elif self.captcha_sid:
+                        key = open('captcha.txt').read()
+                        if key.startswith('key'):
+                            log.info('Trying a key from captcha.txt')
+                            params['captcha_sid'] = self.captcha_sid
+                            params['captcha_key'] = key.split()[1]
+                            self.captcha_sid = ''
+                            captcha.delete()
+                            return self.apiCall(method, params)
+                    if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
-                        ans = self.captcha_handler(data_array['error']['captcha_img'], self.timeout)
+                        captcha.retrieve(data_array['error']['captcha_img'])
+                        ans = captchs.solve()
                         if ans is None:
                             time.sleep(1)
                         else:
@@ -130,11 +149,10 @@ class vk_api:
                             params['captcha_key'] = ans
                             self.captcha_delayed = 0
                     else:
-                        if not self.captcha_delayed:
-                            log.warning('Captcha needed')
                         time.sleep(self.captcha_check_interval)
                         self.captcha_delayed += 1
                     return self.apiCall(method, params)
+
                 elif data_array['error']['error_code'] == 5: #Auth error
                     self.login()
                     return self.apiCall(method, params)

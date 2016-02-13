@@ -5,7 +5,6 @@ import time
 import sys
 from vkbot import vk_bot, CONF_START
 import vkapi
-import captcha
 import re
 import check_friend
 from calc import evalExpression
@@ -379,7 +378,7 @@ admin = int(cfg[2]) if len(cfg) > 2 else -1
 reset_command = cfg[3] if len(cfg) > 3 else ''
 last_message_text = {}
 
-vk = vk_bot(cfg[0], cfg[1], captcha_handler=captcha.solve) # login, pass
+vk = vk_bot(cfg[0], cfg[1]) # login, pass
 log.info('My id: ' + str(vk.self_id))
 
 banign = ban_manager('banned.txt', vk.users)

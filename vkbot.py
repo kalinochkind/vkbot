@@ -18,8 +18,8 @@ class vk_bot:
     typing_interval = config.get('vkbot.typing_interval')
     noans = open('noans.txt').read().split()
 
-    def __init__(self, username, password, captcha_handler=None):
-        self.api = vkapi.vk_api(username, password, captcha_handler=captcha_handler)
+    def __init__(self, username, password):
+        self.api = vkapi.vk_api(username, password)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
         self.initSelf()
