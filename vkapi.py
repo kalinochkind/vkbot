@@ -137,6 +137,7 @@ class vk_api:
                             params['captcha_key'] = key.split()[1]
                             self.captcha_sid = ''
                             captcha.delete()
+                            self.captcha_delayed = 0
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
