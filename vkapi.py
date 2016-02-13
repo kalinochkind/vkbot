@@ -140,8 +140,8 @@ class vk_api:
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
-                        captcha.retrieve(data_array['error']['captcha_img'])
-                        ans = captchs.solve()
+                        captcha.receive(data_array['error']['captcha_img'])
+                        ans = captcha.solve()
                         if ans is None:
                             time.sleep(1)
                         else:
