@@ -252,7 +252,7 @@ def reply(message):
                 log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
             else:
                 log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
-            log.write('calc', '"{}" = {}'.format(message['body'], t))
+            log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
     if message['body']:
         message['body'] = message['body'].replace('<br>', '<BR>')
