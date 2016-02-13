@@ -18,10 +18,16 @@ import fcntl
 
 pid_file = 'inf.pid'
 fp = open(pid_file, 'w')
-try:
-    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-except IOError:
-    log.write('singleton', '')
+single = 0
+for i in range(100):
+    try:
+        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        time.sleep(5)
+    else:
+        single = 1
+        break
+if not single:
     sys.exit(0)
 
 log.info('Starting vkbot')

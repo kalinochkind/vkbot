@@ -28,7 +28,7 @@ def error(s, need_exc_info=False):
     db_logger.log(s, 'error')
     write('error', s)
     if need_exc_info:
-        with open('logs/error.log', 'a') as f:
+        with open('logs/error.log', 'a', encoding='utf-8') as f:
             traceback.print_exc(file=f)
             print(file=f)
     sys.stdout.flush()
@@ -44,5 +44,5 @@ datetime_format = config.get('log.datetime_format')
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
-    with open('logs/{}.log'.format(log), 'a') as f:
+    with open('logs/{}.log'.format(log), 'a', encoding='utf-8') as f:
         f.write('[{}] {}\n'.format(curtime, s))
