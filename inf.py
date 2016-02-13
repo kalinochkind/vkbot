@@ -297,6 +297,7 @@ def preprocessMessage(message, user=None):
             return None
     for a in att:
         result += ' [' + a.lower() + ']'
+    result = result.replace('vkgift', 'Vkgift')
 
     for fwd in message.get('fwd_messages', []):
         if len(message['fwd_messages']) == 1 and fwd.get('user_id') == vk.self_id and result:
