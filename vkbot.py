@@ -245,8 +245,8 @@ class vk_bot:
         for i in requests:
             if i not in banned:
                 self.api.friends.delete.delayed(user_id=i)
+                yield i
         self.api.sync()
-        return len(requests)
 
     def deleteFriend(self, uid):
         if type(uid) == int:

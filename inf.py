@@ -402,7 +402,7 @@ while 1:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('unfollow', unfollow_interval):
-            vk.unfollow(banign.banned)
+            noaddUsers(vk.unfollow(banign.banned))
         if timeto('filtercomments', filtercomments_interval):
             noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), banign.printableName))
     except Exception as e:
