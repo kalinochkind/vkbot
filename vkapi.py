@@ -30,6 +30,7 @@ class vk_api:
         self.api_lock = threading.RLock()
         self.token = None
         self.getToken()
+        self.externalCaptcha = False
 
     def __getattr__(self, item):
         handler = self
@@ -115,14 +116,16 @@ class vk_api:
 
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
-                if self.captcha_delayed:
+                if self.captcha_delayed or self.externalCaptcha:
                     self.captcha_delayed = 0
+                    self.externalCaptcha = False
                     log.info('Captcha no longer needed')
                     self.captcha_sid = ''
                     captcha.delete()
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
+                    self.externalCaptcha = False
                     if self.captcha_delayed == 0:
                         log.warning('Captcha needed')
                         self.captcha_sid = data_array['error']['captcha_sid']
@@ -137,7 +140,8 @@ class vk_api:
                             params['captcha_key'] = key.split()[1]
                             self.captcha_sid = ''
                             captcha.delete()
-                            self.captcha_delayed = 1
+                            self.captcha_delayed = 0
+                            self.externalCaptcha = True
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
