@@ -13,7 +13,7 @@ def isnum(s):
 
 
 def evalExpression(s):
-    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ')
+    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('\u00d7', '*').replace('*', ' * ')
     if '/' in s:
         return None
     s = ''.join(i if i in allowed else ' ' for i in s.lower()).split()
