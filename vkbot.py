@@ -175,12 +175,15 @@ class vk_bot:
             typing_time = len(answer) / self.chars_per_second
 
         def _send():
-            res = self.sendMessage(sender, answer)
-            if res is None:
-                self.banned_messages.add(message['id'])
-                del self.users[sender]
-                return
-            self.last_message[sender] = (res, 0 if fast == 1 else time.time())
+            try:
+                res = self.sendMessage(sender, answer)
+                if res is None:
+                    self.banned_messages.add(message['id'])
+                    del self.users[sender]
+                    return
+                self.last_message[sender] = (res, 0 if fast == 1 else time.time())
+            except Exception as e:
+                log.error('thread {}: {}'.format(e.__class__.__name__, str(e)), True)
 
         send_time = self.delay_on_reply + typing_time
         user_delay = 0

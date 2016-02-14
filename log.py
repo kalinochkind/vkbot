@@ -3,7 +3,9 @@ import config
 import traceback
 import db_logger
 import sys
+import threading
 
+errLock = threading.Lock()
 
 def info(s, color=''):
     if color == 'red':
@@ -26,11 +28,12 @@ def warning(s):
 def error(s, need_exc_info=False):
     print('[ERROR]', s)
     db_logger.log(s, 'error')
-    write('error', s)
-    if need_exc_info:
-        with open('logs/error.log', 'a', encoding='utf-8') as f:
-            traceback.print_exc(file=f)
-            print(file=f)
+    with errLock:
+        write('error', s)
+        if need_exc_info:
+            with open('logs/error.log', 'a', encoding='utf-8') as f:
+                traceback.print_exc(file=f)
+                print(file=f)
     sys.stdout.flush()
 
 def fatal(s):
