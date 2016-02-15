@@ -145,12 +145,11 @@ class vk_api:
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
-                        captcha.receive(data_array['error']['captcha_img'])
                         ans = captcha.solve()
                         if ans is None:
-                            time.sleep(1)
+                            time.sleep(5)
                         else:
-                            params['captcha_sid'] = data_array['error']['captcha_sid']
+                            params['captcha_sid'] = self.captcha_sid
                             params['captcha_key'] = ans
                             self.captcha_delayed = 0
                     else:
