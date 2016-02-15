@@ -355,4 +355,4 @@ class vk_bot:
 
     def waitAllThreads(self):
         for t in self.tm.all():
-            t.join()
+            t.join(60)
