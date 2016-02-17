@@ -335,6 +335,7 @@ class vk_bot:
         return to_del
 
     def likeAva(self, uid):
+        del self.users[uid]
         try:
             if 'photo_id' not in self.users[uid]:
                 log.write('likeava', str(uid) + ' missing')
