@@ -121,7 +121,7 @@ class vk_api:
                     self.externalCaptcha = False
                     log.info('Captcha no longer needed')
                     self.captcha_sid = ''
-                    captcha.delete()
+                captcha.delete()
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed

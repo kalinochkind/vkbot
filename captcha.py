@@ -34,5 +34,4 @@ def solve():
     except Exception:
         log.error('captcha error', True)
         return None
-    finally:
-        delete()
+
