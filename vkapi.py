@@ -151,6 +151,10 @@ class vk_api:
                         if ans is None:
                             self.captchaError = True
                             time.sleep(5)
+                        elif not ans:
+                            captcha.receive(data_array['error']['captcha_img'])
+                            self.captcha_sid = data_array['error']['captcha_sid']
+                            return self.apiCall(method, params)
                         else:
                             params['captcha_sid'] = self.captcha_sid
                             params['captcha_key'] = ans

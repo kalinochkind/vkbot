@@ -36,5 +36,5 @@ def solve():
         return None
     except Exception:
         log.error('captcha.solve error', True)
-        return None
+        return ''
 
