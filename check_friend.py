@@ -25,5 +25,6 @@ def is_good(fr):
             all(check_char(i) for i in fr['first_name'] + fr['last_name']) and
             now - fr['last_seen']['time'] < 3600 * 24 * offline_allowed and
             not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in s) and
-            fr['id'] not in noadd
+            fr['id'] not in noadd and
+            fr['first_name'] != fr['last_name']
             )
