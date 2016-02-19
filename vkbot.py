@@ -309,7 +309,8 @@ class vk_bot:
         to_del = set()
         self.loadUsers(data, lambda x:x['feedback']['from_id'])
         for rep in data:
-            self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
+            if rep['date'] != 'i':
+                self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
 
             def _check(s):
                 if 'photo' in s:
