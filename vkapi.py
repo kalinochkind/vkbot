@@ -117,7 +117,6 @@ class vk_api:
 
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
-                self.captchaError = False
                 if self.captcha_delayed or self.externalCaptcha:
                     self.captcha_delayed = 0
                     self.externalCaptcha = False

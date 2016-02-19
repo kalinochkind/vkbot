@@ -395,6 +395,7 @@ while 1:
     try:
         vk.replyAll(reply, reply_all)
         reply_all = vk.api.captchaError
+        vk.api.captchaError = False
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, test_friend)
         if timeto('includeread', includeread_interval):
