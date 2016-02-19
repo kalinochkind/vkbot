@@ -4,6 +4,7 @@ import log
 import socket
 import urllib.error
 import os
+import time
 
 _key = open('antigate.txt').read().strip()
 
@@ -12,10 +13,12 @@ def receive(url, timeout=10):
         data = urlopen(url, timeout=timeout).read()
     except (urllib.error.URLError, socket.timeout):
         log.warning('captcha timeout')
-        return None
+        time.sleep(5)
+        receive(url, timeout)
     except Exception:
-        log.error('captcha error', True)
-        return None
+        log.error('captcha.receive error', True)
+        time.sleep(5)
+        receive(url, timeout)
     with open('captcha.png', 'wb') as f:
         f.write(data)
 
@@ -32,6 +35,6 @@ def solve():
         log.warning(str(e))
         return None
     except Exception:
-        log.error('captcha error', True)
+        log.error('captcha.solve error', True)
         return None
 
