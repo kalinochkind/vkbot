@@ -31,6 +31,7 @@ class vk_api:
         self.token = None
         self.getToken()
         self.externalCaptcha = False
+        self.captchaError = False
 
     def __getattr__(self, item):
         handler = self
@@ -116,6 +117,7 @@ class vk_api:
 
             time.sleep(max(0, last_get - time.time() + 0.4))
             if 'response' in data_array:
+                self.captchaError = False
                 if self.captcha_delayed or self.externalCaptcha:
                     self.captcha_delayed = 0
                     self.externalCaptcha = False
@@ -147,6 +149,7 @@ class vk_api:
                         log.info('Using antigate')
                         ans = captcha.solve()
                         if ans is None:
+                            self.captchaError = True
                             time.sleep(5)
                         else:
                             params['captcha_sid'] = self.captcha_sid
