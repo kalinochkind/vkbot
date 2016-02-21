@@ -14,6 +14,7 @@ def isnum(s):
 
 def evalExpression(s):
     s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('\u00d7', '*').replace('*', ' * ')
+    prev = s
     if '/' in s:
         return None
     s = ''.join(i if i in allowed else ' ' for i in s.lower()).split()
@@ -43,7 +44,7 @@ def evalExpression(s):
         return None
     if s[0] == '+' or isnum(s) or isnum(s.replace('(', '').replace(')', '').strip('+').strip('-')):
         return None
-    if '**' in s or '--' in s or '++' in s or '-0' in s or s == '1*1':
+    if '**' in s or '--' in s or '++' in s or '-0' in s or s == '1*1' or (s == '50*50' and '*' not in prev):
         return None
     if set(s) <= set('0123456789()-') and s[0] == '8':
         return None
