@@ -359,6 +359,7 @@ def noaddUsers(users, remove=False):
         check_friend.noadd -= users
     else:
         check_friend.noadd.update(users)
+        log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]))
         vk.deleteFriend(users)
     check_friend.writeNoadd()
 
