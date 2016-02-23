@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE
 import fcntl
 import os
 import log
+import threading
 
 
 def nonBlockRead(output):
@@ -12,6 +13,7 @@ def nonBlockRead(output):
         return output.readline()
     except Exception:
         return b''
+
 
 class cpp_bot:
 
@@ -27,17 +29,19 @@ class cpp_bot:
         except FileNotFoundError:
             self.build_exe()
         self.bot = Popen('./' + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.bot_lock = threading.Lock()
 
     def interact(self, msg):
-        self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
-        self.bot.stdin.flush()
-        answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-        while True:
-            info = nonBlockRead(self.bot.stderr)
-            if not info:
-                break
-            info = info.decode().rstrip().split('|', maxsplit=1)
-            log.info(info[1], info[0])
+        with self.bot_lock:
+            self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
+            self.bot.stdin.flush()
+            answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
+            while True:
+                info = nonBlockRead(self.bot.stderr)
+                if not info:
+                    break
+                info = info.decode().rstrip().split('|', maxsplit=1)
+                log.info(info[1], info[0])
         return answer.decode().strip()
 
     def build_exe(self):
