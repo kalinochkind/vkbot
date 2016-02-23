@@ -134,6 +134,16 @@ wstring BestReply(wstring &line, int id, bool conf)
         wcerr << L", " << reply[imx]->size() << L" replies";
     }
     wcerr << L"\n";
+    if(id < 0)
+    {
+        wstring ans = (*reply[imx])[0];
+        for(int i=1;i<(int)reply[imx]->size();i++)
+        {
+            ans += '|';
+            ans += (*reply[imx])[i];
+        }
+        return ans;
+    }
     if(users[id].lastReply == imx + 1)
     {
         users[id].lastReply = -(imx + 1);
