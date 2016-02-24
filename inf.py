@@ -393,7 +393,7 @@ unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
 
 srv = MessageServer()
-srv.addHandler('reply', lambda x:bot.interact('flat ' + x))
+srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
 srv.listen()
 
 reply_all = False

@@ -31,7 +31,7 @@ class cpp_bot:
         self.bot = Popen('./' + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         self.bot_lock = threading.Lock()
 
-    def interact(self, msg):
+    def interact(self, msg, do_log=True):
         with self.bot_lock:
             self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
             self.bot.stdin.flush()
@@ -41,7 +41,8 @@ class cpp_bot:
                 if not info:
                     break
                 info = info.decode().rstrip().split('|', maxsplit=1)
-                log.info(info[1], info[0])
+                if do_log:
+                    log.info(info[1], info[0])
         return answer.decode().strip()
 
     def build_exe(self):
