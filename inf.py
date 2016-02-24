@@ -14,6 +14,7 @@ import signal
 import os
 import codecs
 import fcntl
+from server import MessageServer
 
 pid_file = 'inf.pid'
 fp = open(pid_file, 'w')
@@ -390,6 +391,10 @@ includeread_interval = config.get('inf.includeread_interval')
 setonline_interval = config.get('inf.setonline_interval')
 unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
+
+srv = MessageServer()
+srv.addHandler('reply', lambda x:bot.interact('flat ' + x))
+srv.listen()
 
 reply_all = False
 while 1:
