@@ -102,7 +102,7 @@ def getBotReply(uid, message, conf_id, method=''):
     elif conf_id > 0:
         answer = bot.interact('conf {} {}'.format(uid, message))
     elif conf_id == -1:
-        answer = bot.interact('flat {}'.format(message))
+        answer = bot.interact('comm {}'.format(message))
         bl = (answer == '$blacklisted')
         return bl
 

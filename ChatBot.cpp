@@ -66,7 +66,10 @@ void SwapFirst(vector<wstring> &v, bool canStay)
 
 long long phnamec = phash(L"firstnamec");
 
-wstring BestReply(wstring &line, int id, bool conf)
+
+//-1: comment
+//-2: flat
+wstring Say(wstring &line, int id, bool conf)
 {
     line += L' ';
     vector<long long> words = splitWords(line, fixedstem, replaced, names);
@@ -78,7 +81,7 @@ wstring BestReply(wstring &line, int id, bool conf)
     words.resize(unique(words.begin(), words.end()) - words.begin());
     for(auto &i : blacklist)
     {
-        if(i.second && id >= 0)
+        if(i.second && id != -1)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
@@ -112,11 +115,6 @@ wstring BestReply(wstring &line, int id, bool conf)
         {
             line = line.substr(1);
         }
-       /* if(id >= 0 && words.size())
-        {
-            misslog << line << endl;
-            misslog.flush();
-        }*/
         if(id >= 0 && users[id].smiles >= MAX_SMILES)
         {
             if(!conf)
@@ -125,7 +123,8 @@ wstring BestReply(wstring &line, int id, bool conf)
             }
             return L"";
         }
-        users[id].smiles++;
+        if(id >= 0)
+            users[id].smiles++;
         return L"$noans";
     }
     wcerr << "green|" << line << L"== " << request[imx] << L" (" << mx / norm(words) << L")";
@@ -134,7 +133,7 @@ wstring BestReply(wstring &line, int id, bool conf)
         wcerr << L", " << reply[imx]->size() << L" replies";
     }
     wcerr << L"\n";
-    if(id < 0)
+    if(id == -2)
     {
         wstring ans = (*reply[imx])[0];
         for(int i=1;i<(int)reply[imx]->size();i++)
@@ -144,30 +143,26 @@ wstring BestReply(wstring &line, int id, bool conf)
         }
         return ans;
     }
-    if(users[id].lastReply == imx + 1)
+    if(id >= 0)
     {
-        users[id].lastReply = -(imx + 1);
+        if(users[id].lastReply == imx + 1)
+        {
+            users[id].lastReply = -(imx + 1);
+        }
+        else if(users[id].lastReply == -(imx + 1))
+        {
+            wcerr << "red|Repeated\n";
+            return L"";
+        }
+        else
+        {
+            users[id].lastReply = imx + 1;
+        }
+        users[id].smiles = 0;
     }
-    else if(id >= 0 && users[id].lastReply == -(imx + 1))
-    {
-        wcerr << "red|Repeated\n";
-        return L"";
-    }
-    else
-    {
-        users[id].lastReply = imx + 1;
-    }
-    users[id].smiles = 0;
     wstring ans = (*reply[imx])[0];
     SwapFirst(*reply[imx], 0);
-   // alllog << line << L"\n==" << request[imx] << L'\n' << ans << endl;
-   // alllog.flush();
     return ans;
-}
-
-wstring Say(wstring &curline, int id, bool conf)
-{
-    return BestReply(curline, id, conf);
 }
 
 vector<wstring> splitReply(const wstring &t)

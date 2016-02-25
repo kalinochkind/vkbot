@@ -27,10 +27,17 @@ int main()
             getline(wcin, s, L'\n');
             wcout << Say(s, id, cmd == L"conf") << endl;
         }
-        else if(cmd == L"flat")
+        else if(cmd == L"comm")
         {
             getline(wcin, s, L'\n');
-            wcout << Say(s, -1, 1) << endl;
+            wcout << Say(s, -1, 0) << endl;
+        }
+        else if(cmd == L"flat")
+        {
+            int conf;
+            wcin >> conf;
+            getline(wcin, s, L'\n');
+            wcout << Say(s, -2, conf) << endl;
         }
         else if(cmd.empty())
         {
