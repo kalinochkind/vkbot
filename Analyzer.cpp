@@ -74,7 +74,7 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
                 }
                 if(names.count(pw))
                 {
-                    ans.push_back(phname); 
+                    ans.push_back(phname);
                 }
                 else
                 {
@@ -132,10 +132,8 @@ wregex SUPERLATIVE(L"(ейше|ейш)$");
 wregex I(L"и$");
 map<long long, long long> stemmed;
 
-
-long long stem(const wstring &wrd)
+wstring sstem(const wstring &wrd)
 {
-    //wcerr << word << L": ";
     int vp = -1;
     wstring word = L"";
     wchar_t p = 0;
@@ -157,13 +155,6 @@ long long stem(const wstring &wrd)
         if(vp < 0 && isVowel(i))
             vp = _i;
     }
-    long long h = phash(word);
-    if(stemmed.count(h))
-    {
-        //wcerr << stemmed[word] << endl;
-        return stemmed[h];
-    }
-
     wsmatch m;
     if (vp >= 0)
     {
@@ -191,26 +182,32 @@ long long stem(const wstring &wrd)
                     rv = temp;
                 }
             }
-
         }
         else
         {
             rv = temp;
         }
-
         rv = regex_replace(rv, I, L"");
         regex_match(rv, m, DERIVATIONAL);
         if (m.size())
         {
             rv = regex_replace(rv, DER, L"");
         }
-
         regex_replace(rv, SUPERLATIVE, L"");
-
         word = pre + rv;
-
     }
-    return stemmed[h] = phash(word);
+    return word;
+}
+
+long long stem(const wstring &wrd)
+{
+
+    long long h = phash(wrd);
+    if(stemmed.count(h))
+    {
+        return stemmed[h];
+    }
+    return stemmed[h] = phash(sstem(wrd));
 }
 
 

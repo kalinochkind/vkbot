@@ -393,6 +393,7 @@ filtercomments_interval = config.get('inf.filtercomments_interval')
 
 srv = MessageServer()
 srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
+srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
 srv.listen()
 
 reply_all = False

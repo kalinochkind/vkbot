@@ -39,6 +39,11 @@ int main()
             getline(wcin, s, L'\n');
             wcout << Say(s, -2, conf) << endl;
         }
+        else if(cmd == L"stem")
+        {
+            getline(wcin, s, L'\n');
+            wcout << sstem(s) << endl;
+        }
         else if(cmd.empty())
         {
             break;
