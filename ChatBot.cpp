@@ -135,7 +135,7 @@ wstring Say(wstring &line, int id, bool conf)
     wcerr << L"\n";
     if(id == -2)
     {
-        wstring ans = (*reply[imx])[0];
+        wstring ans = request[imx] + L'|' + (*reply[imx])[0];
         for(int i=1;i<(int)reply[imx]->size();i++)
         {
             ans += '|';
