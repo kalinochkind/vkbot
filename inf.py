@@ -15,6 +15,7 @@ import os
 import codecs
 import fcntl
 from server import MessageServer
+import threading
 
 pid_file = 'inf.pid'
 fp = open(pid_file, 'w')
@@ -350,18 +351,20 @@ def test_friend(uid):
         return 0
     return check_friend.is_good(fr)
 
+_noadd_lock = threading.Lock()
 def noaddUsers(users, remove=False):
     users = set(users)
     users.discard(admin)
     if not users:
         return
-    if remove:
-        check_friend.noadd -= users
-    else:
-        check_friend.noadd.update(users)
-        log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]))
-        vk.deleteFriend(users)
-    check_friend.writeNoadd()
+    with _noadd_lock:
+        if remove:
+            check_friend.noadd -= users
+        else:
+            check_friend.noadd.update(users)
+            log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]))
+            vk.deleteFriend(users)
+        check_friend.writeNoadd()
 
 def _onexit(*p):
     log.info('Received SIGTERM')
@@ -391,9 +394,24 @@ setonline_interval = config.get('inf.setonline_interval')
 unfollow_interval = config.get('inf.unfollow_interval')
 filtercomments_interval = config.get('inf.filtercomments_interval')
 
+def ignoreHandler(user):
+    user = vk.getUserId(user)
+    if not user:
+        return 'Invalid user'
+    noaddUsers([user])
+    return 'Ignored ' + banign.printableName(user, user_fmt='{name}')
+def unignoreHandler(user):
+    user = vk.getUserId(user)
+    if not user:
+        return 'Invalid user'
+    noaddUsers([user], True)
+    return 'Unignored ' + banign.printableName(user, user_fmt='{name}')
+
 srv = MessageServer()
 srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
 srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
+srv.addHandler('ignore', ignoreHandler)
+srv.addHandler('unignore', unignoreHandler)
 srv.listen()
 
 reply_all = False
