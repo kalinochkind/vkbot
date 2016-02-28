@@ -20,9 +20,10 @@ class MessageServer:
             data = conn.recv(65536).decode('utf-8')  # message format: type|text
             if not data:
                 continue
-            data = data.split('|', maxsplit=1)
-            if len(data) < 2:
-                continue
+            if '|' in data:
+                data = data.split('|', maxsplit=1)
+            else:
+                data = [data, None]
             if data[0] not in self.handlers:
                 continue
             res = self.handlers[data[0]](data[1])

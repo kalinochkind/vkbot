@@ -133,10 +133,7 @@ def getBotReply(uid, message, conf_id, method=''):
 
 def processCommand(cmd, *p):
     if cmd == 'reload':
-        bot.interact('reld')
-        vk.initSelf()
-        log.info('Reloaded!')
-        return 'Reloaded!'
+        return reload()
 
     elif cmd == 'banned':
         if banign.banned:
@@ -366,6 +363,12 @@ def noaddUsers(users, remove=False):
             vk.deleteFriend(users)
         check_friend.writeNoadd()
 
+def reload(*p):
+    bot.interact('reld')
+    vk.initSelf()
+    log.info('Reloaded!')
+    return 'Reloaded!'
+
 def _onexit(*p):
     log.info('Received SIGTERM')
     vk.waitAllThreads()
@@ -412,6 +415,7 @@ srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
 srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
 srv.addHandler('ignore', ignoreHandler)
 srv.addHandler('unignore', unignoreHandler)
+srv.addHandler('reload', reload)
 srv.listen()
 
 reply_all = False
