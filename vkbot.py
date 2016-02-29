@@ -264,6 +264,7 @@ class vk_bot:
         multiple = type(domain) != str
         if not multiple:
             domain = [domain]
+        domain = list(map(str.lower, domain))
         req = []
         for i in domain:
             i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
