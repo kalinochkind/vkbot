@@ -410,12 +410,22 @@ def unignoreHandler(user):
     noaddUsers([user], True)
     return 'Unignored ' + banign.printableName(user, user_fmt='{name}')
 
+def isignoredHandler(user):
+    user = vk.getUserId(user)
+    if user is None or user > CONF_START:
+        return '-1'
+    if user in check_friend.noadd:
+        return '1'
+    else:
+        return '0'
+
 srv = MessageServer()
 srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
 srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
 srv.addHandler('ignore', ignoreHandler)
 srv.addHandler('unignore', unignoreHandler)
 srv.addHandler('reload', reload)
+srv.addHandler('isignored', isignoredHandler)
 srv.listen()
 
 reply_all = False

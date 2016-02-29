@@ -191,6 +191,8 @@ class vk_api:
                 elif data_array['error']['error_code'] == 100 and method == 'messages.markAsRead':
                     log.warning('Missing params in markAsRead')
                     return None
+                elif data_array['error']['error_code'] == 113 and method == 'users.get':
+                    return None
                 else:
                     log.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None

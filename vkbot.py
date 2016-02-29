@@ -279,7 +279,7 @@ class vk_bot:
 
         data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str), fields='domain')
         if data is None:
-            return []
+            return [] if multiple else None
         for i in range(len(req)):
             if type(req[i]) == str:
                 if data[0]['domain'] == req[i]:
