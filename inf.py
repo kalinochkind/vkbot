@@ -167,7 +167,7 @@ def processCommand(cmd, *p):
             return 'No such users'
         if admin in users:
             return 'Cannot ignore admin!'
-        noaddUsers(users)
+        noaddUsers(users, reason='\\ignore command')
         vk.users.load(users)
         return 'Ignored ' +  ', '.join(banign.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
 
@@ -349,7 +349,7 @@ def test_friend(uid):
     return check_friend.is_good(fr)
 
 _noadd_lock = threading.Lock()
-def noaddUsers(users, remove=False):
+def noaddUsers(users, remove=False, reason=None):
     users = set(users)
     users.discard(admin)
     if not users:
@@ -359,7 +359,7 @@ def noaddUsers(users, remove=False):
             check_friend.noadd -= users
         else:
             check_friend.noadd.update(users)
-            log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]))
+            log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]) + (' ({})'.format(reason) if reason else ''))
             vk.deleteFriend(users)
         check_friend.writeNoadd()
 
@@ -401,7 +401,7 @@ def ignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    noaddUsers([user])
+    noaddUsers([user], reason='external command')
     return 'Ignored ' + banign.printableName(user, user_fmt='{name}')
 def unignoreHandler(user):
     user = vk.getUserId(user)
@@ -441,9 +441,9 @@ while 1:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('unfollow', unfollow_interval):
-            noaddUsers(vk.unfollow(banign.banned))
+            noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), banign.printableName))
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), banign.printableName), reason='bad comment')
     except Exception as e:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
