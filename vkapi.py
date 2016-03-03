@@ -94,7 +94,7 @@ class vk_api:
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-            except urllib.error.URLError:
+            except (urllib.error.URLError, socket.timeout):
                 log.warning(method + ' timeout')
                 time.sleep(3)
                 return self.apiCall(method, params)
