@@ -31,7 +31,7 @@ def delete():
 def solve():
     if not os.path.isfile('captcha.png'):
         log.warning('captcha.png does not exist')
-        return None
+        return ''
     try:
         return str(AntiGate(_key, 'captcha.png')) or None
     except AntiGateError as e:
