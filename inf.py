@@ -16,6 +16,8 @@ import codecs
 import fcntl
 from server import MessageServer
 import threading
+import db_logger
+db_logger.enabled = True
 
 pid_file = 'inf.pid'
 fp = open(pid_file, 'w')

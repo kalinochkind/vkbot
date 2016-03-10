@@ -3,7 +3,6 @@
 from vkapi import *
 import check_friend
 import db_logger
-db_logger.enabled = False
 
 login, password = open('data.txt').read().split()[:2]
 a = vk_api(login, password, 10)

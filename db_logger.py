@@ -2,7 +2,7 @@ import mysql.connector
 import config
 import threading
 
-enabled = True
+enabled = False
 
 db_lock = threading.Lock()
 conn = mysql.connector.connect(host=config.get('db_logger.host'), user=config.get('db_logger.username'), password=config.get('db_logger.password'), database=config.get('db_logger.database'))

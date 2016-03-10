@@ -5,7 +5,6 @@ import check_friend
 import datetime 
 import config
 import db_logger
-db_logger.enadled = False
 
 login, password = open('data.txt').read().split()[:2]
 age = config.get('birthday.age')
