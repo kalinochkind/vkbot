@@ -9,6 +9,16 @@ import random
 
 CONF_START = 2000000000
 
+ignored_errors = {
+    # (code, method): (message, can_retry)
+    (900, 'messages.send'): ('Blacklisted', False),
+    (7, 'messages.send'): ('Banned', True),
+    (10, 'messages.send'): ('Unable to reply', True),
+    (15, 'friends.delete'): ('Not a friend', False),
+    (100, 'messages.markAsRead'): None,
+    (113, 'users.get'): None,
+}
+
 class vk_bot:
 
     delay_on_reply = config.get('vkbot.delay_on_reply')
@@ -19,7 +29,7 @@ class vk_bot:
     noans = open('noans.txt').read().split()
 
     def __init__(self, username, password):
-        self.api = vkapi.vk_api(username, password)
+        self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
         self.initSelf()

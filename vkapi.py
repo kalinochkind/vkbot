@@ -16,13 +16,14 @@ class vk_api:
     captcha_check_interval = config.get('vkapi.captcha_check_interval')
     api_version = '5.44'
 
-    def __init__(self, username='', password='', timeout=config.get('vkapi.default_timeout')):
+    def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout')):
         self.username = username
         self.password = password
         self.captcha_delayed = 0
         self.captcha_sid = ''
         self.delayed_list = []
         self.delayedReset()
+        self.ignored_errors = ignored_errors
         self.timeout = timeout
         self.longpoll_server = ''
         self.longpoll_key = ''
@@ -87,7 +88,7 @@ class vk_api:
                 self.callback(*i)
         self.delayed_list.clear()
 
-    def apiCall(self, method, params, retry=0):
+    def apiCall(self, method, params, retry=False):
         with self.api_lock:
             params['v'] = self.api_version
             url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
@@ -111,11 +112,11 @@ class vk_api:
             if self.logging:
                 with open('inf.log', 'a') as f:
                     print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
-            duration = round((time.time() - last_get), 2)
+            duration = time.time() - last_get
             if duration > self.timeout:
                 log.warning('{} timeout'.format(method))
-
             time.sleep(max(0, last_get - time.time() + 0.4))
+
             if 'response' in data_array:
                 if self.captcha_delayed or self.externalCaptcha:
                     self.captcha_delayed = 0
@@ -124,6 +125,7 @@ class vk_api:
                     self.captcha_sid = ''
                 captcha.delete()
                 return data_array['response']
+
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
                     self.externalCaptcha = False
@@ -162,37 +164,22 @@ class vk_api:
                         time.sleep(self.captcha_check_interval)
                         self.captcha_delayed += 1
                     return self.apiCall(method, params)
-
                 elif data_array['error']['error_code'] == 5: #Auth error
                     self.login()
                     return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 900: #Black list
-                    log.warning('Banned')
-                    return None
-                elif data_array['error']['error_code'] == 7:
-                    if retry:
-                        log.warning('Banned')
+
+                elif (data_array['error']['error_code'], method) in self.ignored_errors:
+                    handler = self.ignored_errors[(data_array['error']['error_code'], method)]
+                    if not handler:
+                        return None
+                    if retry or not handler[1]:
+                        log.warning(handler[0])
                         return None
                     else:
-                        log.warning('Banned, retrying')
+                        log.warning(handler[0] + ', retrying')
                         time.sleep(3)
-                        return self.apiCall(method, params, 1)
-                elif data_array['error']['error_code'] == 10:
-                    if retry:
-                        log.warning('Unable to reply')
-                        return None
-                    else:
-                        log.warning('Unable to reply, retrying')
-                        time.sleep(3)
-                        return self.apiCall(method, params, 1)
-                elif data_array['error']['error_code'] == 15:  # not a friend
-                    log.warning('Not a friend')
-                    return None
-                elif data_array['error']['error_code'] == 100 and method == 'messages.markAsRead':
-                    log.warning('Missing params in markAsRead')
-                    return None
-                elif data_array['error']['error_code'] == 113 and method == 'users.get':
-                    return None
+                        return self.apiCall(method, params, True)
+
                 else:
                     log.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
