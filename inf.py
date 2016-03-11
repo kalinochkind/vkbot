@@ -220,13 +220,8 @@ def reply(message):
     if message['body']:
         if message['body'].startswith('\\') and len(message['body']) > 1:
             cmd = message['body'][1:].split()
-            if cmd:
-                if reset_command and cmd[0] == reset_command:
-                    cmd = cmd[1:]
-                    vk.sendMessage(admin, '{} from {}'.format(cmd, message['user_id']))
-                    return (processCommand(*cmd), 1)
-                elif message['user_id'] == admin:
-                    return (processCommand(*cmd), 1)
+            if cmd and message['user_id'] == admin:
+                return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
             log.info('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
@@ -385,7 +380,6 @@ if sys.argv[-1] == '-l':
 
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 admin = int(cfg[2]) if len(cfg) > 2 else -1
-reset_command = cfg[3] if len(cfg) > 3 else ''
 last_message_text = {}
 
 vk = vk_bot(cfg[0], cfg[1]) # login, pass
