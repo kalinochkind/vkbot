@@ -17,6 +17,7 @@ ignored_errors = {
     (15, 'friends.delete'): ('Not a friend', False),
     (100, 'messages.markAsRead'): None,
     (113, 'users.get'): None,
+    (100, 'messages.removeChatUser'): ('Unable to leave', False),
 }
 
 class vk_bot:
