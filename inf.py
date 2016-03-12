@@ -429,6 +429,15 @@ def isignoredHandler(user):
     else:
         return '0'
 
+def leaveHandler(conf):
+    conf = vk.getUserId(conf)
+    if conf > CONF_START:
+        conf -= CONF_START
+    if vk.leaveConf(conf):
+        return 'Ok'
+    else:
+        return 'Fail'
+
 srv = MessageServer()
 srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
 srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
@@ -436,6 +445,7 @@ srv.addHandler('ignore', ignoreHandler)
 srv.addHandler('unignore', unignoreHandler)
 srv.addHandler('reload', reload)
 srv.addHandler('isignored', isignoredHandler)
+srv.addHandler('leave', leaveHandler)
 srv.listen()
 
 reply_all = False
