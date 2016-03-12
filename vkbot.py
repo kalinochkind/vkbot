@@ -26,7 +26,6 @@ class vk_bot:
     same_user_interval = config.get('vkbot.same_user_interval')
     same_conf_interval = config.get('vkbot.same_conf_interval')
     typing_interval = config.get('vkbot.typing_interval')
-    noans = open('noans.txt').read().split()
 
     def __init__(self, username, password):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
@@ -165,14 +164,6 @@ class vk_bot:
         sender = self.getSender(message)
         if 'id' in message and message['id'] <= self.last_message.get(sender, (0, 0))[0]:
             return
-
-        if answer == '$noans':
-            if sender > CONF_START:
-                answer = ''
-            else:
-                answer = random.choice(self.noans)
-        elif answer == '$blacklisted':
-            answer = ''
 
         if not answer:
             if 'id' in message:

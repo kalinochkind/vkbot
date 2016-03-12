@@ -8,6 +8,7 @@ import vkapi
 import re
 import check_friend
 from calc import evalExpression
+import random
 import config
 from cppbot import cpp_bot
 import signal
@@ -44,6 +45,9 @@ def isBotMessage(msg):
 bot_users = {}
 
 bot = cpp_bot()
+
+noans = open('noans.txt', encoding='utf-8').read().splitlines()
+random.shuffle(noans)
 
 class ban_manager:
     def __init__(self, filename, user_cache):
@@ -108,6 +112,16 @@ def getBotReply(uid, message, conf_id, method=''):
         answer = bot.interact('comm {}'.format(message))
         bl = (answer == '$blacklisted')
         return bl
+
+    if answer == '$noans':
+        if conf_id > 0:
+            answer = ''
+        else:
+            answer = noans[0]
+            next_ans = random.randint(1, len(noans) - 1)
+            noans[0], noans[next_ans] = noans[next_ans], noans[0]
+    elif answer == '$blacklisted':
+        answer = ''
 
     if message == message.lower() and message != message.upper():
         answer = answer.lower()
