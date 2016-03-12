@@ -47,6 +47,7 @@ bot_users = {}
 bot = cpp_bot()
 
 noans = open('noans.txt', encoding='utf-8').read().splitlines()
+smiles = open('smiles.txt', encoding='utf-8').read().splitlines()
 random.shuffle(noans)
 
 class ban_manager:
@@ -117,9 +118,12 @@ def getBotReply(uid, message, conf_id, method=''):
         if conf_id > 0:
             answer = ''
         else:
-            answer = noans[0]
-            next_ans = random.randint(1, len(noans) - 1)
-            noans[0], noans[next_ans] = noans[next_ans], noans[0]
+            if message.upper() == message.lower():
+                answer = random.choice(smiles)
+            else:
+                answer = noans[0]
+                next_ans = random.randint(1, len(noans) - 1)
+                noans[0], noans[next_ans] = noans[next_ans], noans[0]
     elif answer == '$blacklisted':
         answer = ''
 
@@ -142,9 +146,9 @@ def getBotReply(uid, message, conf_id, method=''):
     if method:
         console_message += ' (' + method + ')'
     if conf_id > 0:
-        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(conf_id)), message, answer, console_message))
+        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(conf_id)), message, answer.replace('&', '&amp;'), console_message))
     else:
-        log.info('({}) {} : {}{}'.format(banign.printableName(uid), message, answer, console_message))
+        log.info('({}) {} : {}{}'.format(banign.printableName(uid), message, answer.replace('&', '&amp;'), console_message))
     return answer
 
 def processCommand(cmd, *p):
@@ -392,7 +396,6 @@ if sys.argv[-1] == '-l':
     vkapi.vk_api.logging = 1
     log.info('Logging enabled')
 
-cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
 admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
