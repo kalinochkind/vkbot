@@ -5,8 +5,9 @@ import socket
 import urllib.error
 import os
 import time
+import config
 
-_key = open('antigate.txt').read().strip()
+_key = config.get('antigate.key')
 
 def receive(url, timeout=10):
     try:

@@ -8,7 +8,7 @@ noadd = set(map(int, open('noadd.txt').read().split()))
 allowed = set(s[0] + ' ')
 s = s[1].split()
 
-offline_allowed = config.get('check_friend.offline_allowed')
+offline_allowed = config.get('check_friend.offline_allowed', 'i')
 
 def writeNoadd():
     with open('noadd.txt', 'w') as f:

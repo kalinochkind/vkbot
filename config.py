@@ -1,19 +1,16 @@
 import sys
-config_data = {}
+import configparser
 
-def read():
-    global config_data
-    config_data = [i.strip().split(maxsplit=1) for i in open('config.txt').readlines() if i.strip()]
-    config_data = dict(config_data)
+cp = configparser.ConfigParser()
+cp.read('inf.cfg')
 
-def get(param):
-    if param not in config_data:
-        import log
-        log.fatal('param {} not found'.format(param))
-        sys.exit(0)
-    try:
-        return int(config_data[param])
-    except ValueError:
-        return config_data[param]
-
-read()
+def get(param, type='s'):
+    param = param.split('.')
+    if type == 's':
+        return cp[param[0]].get(param[1])
+    elif type == 'i':
+        return cp[param[0]].getint(param[1])
+    elif type == 'f':
+        return cp[param[0]].getfloat(param[1])
+    elif type == 'b':
+        return cp[param[0]].getboolean(param[1])

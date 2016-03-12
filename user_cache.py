@@ -5,7 +5,7 @@ import threading
 
 class user_cache:
 
-    invalidate_interval = config.get('user_cache.invalidate_interval')
+    invalidate_interval = config.get('user_cache.invalidate_interval', 'i')
 
     def __init__(self, api, fields):
         self.api = api

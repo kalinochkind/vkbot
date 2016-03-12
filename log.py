@@ -43,7 +43,7 @@ def fatal(s):
     exit(0)
 
 
-datetime_format = config.get('log.datetime_format')
+datetime_format = '%d.%m.%Y %H:%M:%S'
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())

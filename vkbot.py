@@ -21,11 +21,11 @@ ignored_errors = {
 
 class vk_bot:
 
-    delay_on_reply = config.get('vkbot.delay_on_reply')
-    chars_per_second = config.get('vkbot.chars_per_second')
-    same_user_interval = config.get('vkbot.same_user_interval')
-    same_conf_interval = config.get('vkbot.same_conf_interval')
-    typing_interval = config.get('vkbot.typing_interval')
+    delay_on_reply = config.get('vkbot.delay_on_reply', 'i')
+    chars_per_second = config.get('vkbot.chars_per_second', 'i')
+    same_user_interval = config.get('vkbot.same_user_interval', 'i')
+    same_conf_interval = config.get('vkbot.same_conf_interval', 'i')
+    typing_interval = config.get('vkbot.typing_interval', 'i')
 
     def __init__(self, username, password):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)

@@ -393,19 +393,19 @@ if sys.argv[-1] == '-l':
     log.info('Logging enabled')
 
 cfg = list(map(str.strip, open('data.txt').read().strip().splitlines()))
-admin = int(cfg[2]) if len(cfg) > 2 else -1
+admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
-vk = vk_bot(cfg[0], cfg[1]) # login, pass
+vk = vk_bot(config.get('login.login'), config.get('login.password')) # login, pass
 log.info('My id: ' + str(vk.self_id))
 
 banign = ban_manager('banned.txt', vk.users)
 
-addfriends_interval = config.get('inf.addfriends_interval')
-includeread_interval = config.get('inf.includeread_interval')
-setonline_interval = config.get('inf.setonline_interval')
-unfollow_interval = config.get('inf.unfollow_interval')
-filtercomments_interval = config.get('inf.filtercomments_interval')
+addfriends_interval = config.get('inf.addfriends_interval', 'i')
+includeread_interval = config.get('inf.includeread_interval', 'i')
+setonline_interval = config.get('inf.setonline_interval', 'i')
+unfollow_interval = config.get('inf.unfollow_interval', 'i')
+filtercomments_interval = config.get('inf.filtercomments_interval', 'i')
 
 def ignoreHandler(user):
     user = vk.getUserId(user)
