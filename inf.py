@@ -18,7 +18,8 @@ import fcntl
 from server import MessageServer
 import threading
 import db_logger
-db_logger.enabled = True
+from args import args
+
 
 pid_file = 'inf.pid'
 fp = open(pid_file, 'w')
@@ -33,6 +34,19 @@ for i in range(100):
         break
 if not single:
     sys.exit(0)
+
+login = config.get('login.login')
+password = config.get('login.password')
+
+if args.get('database'):
+    db_logger.enabled = True
+if args.get('user'):
+    if ':' not in args['user']:
+        log.fatal('-u param must look like login:password')
+    login, password = args['user'].split(':', maxsplit=1)
+if args.get('logging'):
+    vkapi.vk_api.logging = 1
+    log.info('Logging enabled')
 
 log.info('Starting vkbot')
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
@@ -392,14 +406,11 @@ def _onexit(*p):
 
 signal.signal(signal.SIGTERM, _onexit)
 
-if sys.argv[-1] == '-l':
-    vkapi.vk_api.logging = 1
-    log.info('Logging enabled')
 
 admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
-vk = vk_bot(config.get('login.login'), config.get('login.password')) # login, pass
+vk = vk_bot(login, password) # login, pass
 log.info('My id: ' + str(vk.self_id))
 
 banign = ban_manager('banned.txt', vk.users)
