@@ -19,16 +19,17 @@ class cpp_bot:
 
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h']
     exe_name = 'chat.exe'
+    path = 'chat/'
 
     def __init__(self):
         try:
-            exe_time = os.path.getmtime(self.exe_name)
-            src_time = max(os.path.getmtime(i) for i in self.source_files)
+            exe_time = os.path.getmtime(self.path + self.exe_name)
+            src_time = max(os.path.getmtime(self.path + i) for i in self.source_files)
             if src_time > exe_time:
                 self.build_exe()
         except FileNotFoundError:
             self.build_exe()
-        self.bot = Popen('./' + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.bot = Popen(self.path + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         self.bot_lock = threading.Lock()
 
     def interact(self, msg, do_log=True):
@@ -47,6 +48,6 @@ class cpp_bot:
 
     def build_exe(self):
         log.info('Rebuilding ' + self.exe_name)
-        if os.system('./build.sh'):
+        if os.system(self.path + 'build.sh'):
             log.fatal('Unable to build')
         log.info('Build successful')
