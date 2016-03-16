@@ -60,8 +60,8 @@ bot_users = {}
 
 bot = cpp_bot()
 
-noans = open('noans.txt', encoding='utf-8').read().splitlines()
-smiles = open('smiles.txt', encoding='utf-8').read().splitlines()
+noans = open('data/noans.txt', encoding='utf-8').read().splitlines()
+smiles = open('data/smiles.txt', encoding='utf-8').read().splitlines()
 random.shuffle(noans)
 
 class ban_manager:

@@ -208,10 +208,10 @@ void AddReply(const wstring &req, const wstring &rep)
 }
 
 wchar_t buf1[12000], buf2[12000];
-const string file = "bot.txt";
-const string filebl = "blacklist.txt";
-const string filestem = "fixedstem.txt";
-const string filenames = "names.txt";
+const string file = "data/bot.txt";
+const string filebl = "data/blacklist.txt";
+const string filestem = "data/fixedstem.txt";
+const string filenames = "data/names.txt";
 
 void Load()
 {
