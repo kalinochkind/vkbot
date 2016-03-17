@@ -6,9 +6,9 @@ import datetime
 import config
 import db_logger
 
-login, password = open('data.txt').read().split()[:2]
+login, password = config.get('login.login'), config.get('login.password')
 age = config.get('birthday.age', 'i')
-a = vk_api(login, password, 10)
+a = vk_api(login, password)
 d = datetime.date.today()
 d = datetime.date(year=d.year-age, day=d.day, month=d.month)
 d += datetime.timedelta(days=1)

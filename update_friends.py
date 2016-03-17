@@ -3,9 +3,10 @@
 from vkapi import *
 import check_friend
 import db_logger
+import config
 
-login, password = open('data.txt').read().split()[:2]
-a = vk_api(login, password, 10)
+login, password = config.get('login.login'), config.get('login.password')
+a = vk_api(login, password, timeout=10)
 a.delayedReset()
 friends = []
 print('Fetching friends')
@@ -36,7 +37,7 @@ for i in range(1000000):
     foll.extend(fr['items'])
     if len(fr['items']) < 1000:
         break
-    
+
 print('Starting to add')
 for i in foll:
     if check_friend.is_good(i):
