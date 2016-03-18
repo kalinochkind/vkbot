@@ -19,10 +19,12 @@ from server import MessageServer
 import threading
 import db_logger
 from args import args
+import os
 
 
 pid_file = 'inf.pid'
-fp = open(pid_file, 'w')
+lock_file = 'inf.lock'
+fp = open(lock_file, 'w')
 single = 0
 for i in range(100):
     try:
@@ -34,6 +36,8 @@ for i in range(100):
         break
 if not single:
     sys.exit(0)
+with open(pid_file, 'w') as f:
+    f.write(str(os.getpid()))
 
 login = config.get('login.login')
 password = config.get('login.password')
@@ -48,7 +52,7 @@ if args.get('logging'):
     vkapi.vk_api.logging = 1
     log.info('Logging enabled')
 
-log.info('Starting vkbot')
+log.info('Starting vkbot, pid ' + str(os.getpid()))
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
