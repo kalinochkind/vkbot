@@ -9,6 +9,7 @@ import socket
 import config
 import log
 import captcha
+import accounts
 
 class vk_api:
     logging = 0
@@ -132,11 +133,11 @@ class vk_api:
                     if self.captcha_delayed == 0:
                         log.warning('Captcha needed')
                         self.captcha_sid = data_array['error']['captcha_sid']
-                        with open('captcha.txt', 'w') as f:
+                        with open(accounts.getFile('captcha.txt'), 'w') as f:
                             f.write('sid ' + self.captcha_sid)
                         captcha.receive(data_array['error']['captcha_img'])
                     elif self.captcha_sid:
-                        key = open('captcha.txt').read()
+                        key = open(accounts.getFile('captcha.txt')).read()
                         if key.startswith('key'):
                             log.info('Trying a key from captcha.txt')
                             params['captcha_sid'] = self.captcha_sid
@@ -195,13 +196,13 @@ class vk_api:
             log.fatal('Authorization failed')
         data = json.loads(json_string)
         self.token = data['access_token']
-        with open('token.txt', 'w') as f:
+        with open(accounts.getFile('token.txt'), 'w') as f:
             f.write(self.token)
 
     def getToken(self):
         if not self.token:
             try:
-                self.token = open('token.txt').read().strip()
+                self.token = open(accounts.getFile('token.txt')).read().strip()
             except FileNotFoundError:
                 self.token = ''
         return self.token

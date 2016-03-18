@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import log  # must be first
+import accounts # must be first
+import log
 import time
 import sys
 from vkbot import vk_bot, CONF_START
@@ -22,8 +23,8 @@ from args import args
 import os
 
 
-pid_file = 'inf.pid'
-lock_file = 'inf.lock'
+pid_file = accounts.getFile('inf.pid', True)
+lock_file = accounts.getFile('inf.lock', True)
 fp = open(lock_file, 'w')
 single = 0
 for i in range(100):
@@ -417,7 +418,7 @@ last_message_text = {}
 vk = vk_bot(login, password) # login, pass
 log.info('My id: ' + str(vk.self_id))
 
-banign = ban_manager('banned.txt', vk.users)
+banign = ban_manager(accounts.getFile('banned.txt'), vk.users)
 
 addfriends_interval = config.get('inf.addfriends_interval', 'i')
 includeread_interval = config.get('inf.includeread_interval', 'i')
