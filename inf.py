@@ -107,7 +107,7 @@ class ban_manager:
 
 _timeto = {}
 def timeto(name, interval):
-    if time.time() > _timeto.get(name, 0) + interval:
+    if interval >= 0 and time.time() > _timeto.get(name, 0) + interval:
         _timeto[name] = time.time()
         return 1
     return 0
@@ -457,15 +457,16 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
-srv = MessageServer()
-srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
-srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
-srv.addHandler('ignore', ignoreHandler)
-srv.addHandler('unignore', unignoreHandler)
-srv.addHandler('reload', reload)
-srv.addHandler('isignored', isignoredHandler)
-srv.addHandler('leave', leaveHandler)
-srv.listen()
+if config.get('inf.server', 'b'):
+    srv = MessageServer()
+    srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
+    srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
+    srv.addHandler('ignore', ignoreHandler)
+    srv.addHandler('unignore', unignoreHandler)
+    srv.addHandler('reload', reload)
+    srv.addHandler('isignored', isignoredHandler)
+    srv.addHandler('leave', leaveHandler)
+    srv.listen()
 
 reply_all = False
 while 1:
