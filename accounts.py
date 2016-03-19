@@ -5,11 +5,17 @@ import sys
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
 
+def forceInput(text):
+    s = ''
+    while not s.strip():
+        s = input(text)
+    return s
+
 def createAccount(name):
     if not name or len(name) > 256 or any(i in name for i in './\\ '):
         return False
-    login = input('Login for {}: '.format(name))
-    password = input('Password for {}: '.format(name))
+    login = forceInput('Login for {}: '.format(name))
+    password = forceInput('Password for {}: '.format(name))
     dirname = 'accounts/' + name + '/'
     os.mkdir(dirname)
     for i in account_files:
@@ -41,9 +47,7 @@ if not os.path.isdir('accounts'):
     os.mkdir('accounts')
 acc = args.args['account']
 if acc is None:
-    acc_list = listAccounts()
-    while not acc:
-        acc = input('Enter account name ({}): '.format(acc_list or 'no existing accounts'))
+    acc = forceInput('Enter account name ({}): '.format(listAccounts() or 'no existing accounts'))
 
 if accountExists(acc):
     selectAccount(acc)
