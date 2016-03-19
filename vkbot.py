@@ -40,6 +40,7 @@ class vk_bot:
         self.tm = thread_manager()
         self.last_message = {}
         self.last_message_id = 0
+        self.whitelist = None
 
     def initSelf(self):
         self.users.clear()
@@ -63,6 +64,8 @@ class vk_bot:
         self.users.load(users)
 
     def replyOne(self, message, gen_reply, method=None):
+        if self.whitelist and self.getSender(message) not in self.whitelist:
+            return
         if 'chat_id' in message:
             if not self.checkConf(message['chat_id']):
                 self.deleteFriend(message['user_id'])

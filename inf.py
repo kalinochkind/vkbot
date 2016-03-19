@@ -415,10 +415,13 @@ signal.signal(signal.SIGTERM, _onexit)
 admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
-vk = vk_bot(login, password) # login, pass
+vk = vk_bot(login, password)
 log.info('My id: ' + str(vk.self_id))
-
 banign = ban_manager(accounts.getFile('banned.txt'), vk.users)
+if args['whitelist']:
+    vk.whitelist = vk.getUserId(args['whitelist'].split(','))
+    log.info('Whitelist: ' +', '.join(map(lambda x:banign.printableName(x, user_fmt='{name}'), vk.whitelist)))
+
 
 addfriends_interval = config.get('inf.addfriends_interval', 'i')
 includeread_interval = config.get('inf.includeread_interval', 'i')
