@@ -3,7 +3,7 @@ import configparser
 import accounts
 
 cp_global = configparser.ConfigParser()
-cp_global.read('inf.cfg')
+cp_global.read('data/inf.cfg')
 cp_local = configparser.ConfigParser()
 cp_local.read(accounts.getFile('inf.cfg'))
 
