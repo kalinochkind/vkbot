@@ -4,6 +4,8 @@ import traceback
 import db_logger
 import sys
 import threading
+import os
+import accounts
 
 errLock = threading.Lock()
 
@@ -45,7 +47,11 @@ def fatal(s):
 
 datetime_format = '%d.%m.%Y %H:%M:%S'
 
+logdir = 'accounts/{}/logs/'.format(accounts.current_account)
+if not os.path.isdir(logdir):
+    os.mkdir(logdir)
+
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
-    with open('logs/{}.log'.format(log), 'a', encoding='utf-8') as f:
+    with open(logdir + log + '.log', 'a', encoding='utf-8') as f:
         f.write('[{}] {}\n'.format(curtime, s))

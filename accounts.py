@@ -25,11 +25,11 @@ def createAccount(name):
     selectAccount(name)
     return True
 
-def getFile(filename, force_local=False):
+def getFile(filename):
     local = 'accounts/{}/{}'.format(current_account, filename)
-    if current_account and (os.path.isfile(local) or force_local):
+    if current_account and (os.path.isfile(local) or not os.path.isfile('data/' + filename)):
         return local
-    return filename
+    return 'data/' + filename
 
 def selectAccount(name):
     global current_account

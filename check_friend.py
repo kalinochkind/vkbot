@@ -4,7 +4,7 @@ import accounts
 
 fields = 'photo_50,country,last_seen'
 
-s = open('data/allowed.txt', encoding='utf-8').readlines()
+s = open(accounts.getFile('allowed.txt'), encoding='utf-8').readlines()
 noadd = set(map(int, open(accounts.getFile('noadd.txt')).read().split()))
 allowed = set(s[0] + ' ')
 s = s[1].split()

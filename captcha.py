@@ -9,7 +9,7 @@ import config
 import accounts
 
 _key = config.get('antigate.key')
-png_filename = accounts.getFile('captcha.png', True)
+png_filename = accounts.getFile('captcha.png')
 
 def receive(url, timeout=10):
     try:

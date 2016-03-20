@@ -23,8 +23,8 @@ from args import args
 import os
 
 
-pid_file = accounts.getFile('inf.pid', True)
-lock_file = accounts.getFile('inf.lock', True)
+pid_file = accounts.getFile('inf.pid')
+lock_file = accounts.getFile('inf.lock')
 fp = open(lock_file, 'w')
 single = 0
 for i in range(100):
@@ -65,8 +65,8 @@ bot_users = {}
 
 bot = cpp_bot()
 
-noans = open('data/noans.txt', encoding='utf-8').read().splitlines()
-smiles = open('data/smiles.txt', encoding='utf-8').read().splitlines()
+noans = open(accounts.getFile('noans.txt'), encoding='utf-8').read().splitlines()
+smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitlines()
 random.shuffle(noans)
 
 class ban_manager:
