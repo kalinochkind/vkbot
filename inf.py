@@ -471,22 +471,22 @@ if config.get('inf.server', 'b'):
     srv.addHandler('leave', leaveHandler)
     srv.listen()
 
-reply_all = False
+reply_all = timeto('includeread', includeread_interval)
 while 1:
     try:
+        if timeto('setonline', setonline_interval):
+            vk.setOnline()
         vk.replyAll(reply, reply_all)
         reply_all = vk.api.captchaError
         vk.api.captchaError = False
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, test_friend)
-        if timeto('includeread', includeread_interval):
-            reply_all = True
-        if timeto('setonline', setonline_interval):
-            vk.setOnline()
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('filtercomments', filtercomments_interval):
             noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), banign.printableName), reason='bad comment')
+        if timeto('includeread', includeread_interval):
+            reply_all = True
     except Exception as e:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
