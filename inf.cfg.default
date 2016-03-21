@@ -1,5 +1,5 @@
 [antigate]
-key = YOUR KEY
+key =
 
 [vkbot]
 delay_on_reply = 3
@@ -14,13 +14,13 @@ captcha_check_interval =  5
 default_timeout = 5
 
 [inf]
-addfriends_interval = 20
-includeread_interval = 120
-setonline_interval = 100
-unfollow_interval = 50
-filtercomments_interval = 25
-admin = YOUR ID
-server = on
+addfriends_interval = -1
+includeread_interval = 30
+setonline_interval = 90
+unfollow_interval = -1
+filtercomments_interval = -1
+admin = 0
+server = off
 
 [birthday]
 age = 15
@@ -32,8 +32,7 @@ offline_allowed = 14
 invalidate_interval = 900
 
 [db_logger]
-host = 
-username = 
-password = 
-database = 
-
+host =
+username =
+password =
+database =

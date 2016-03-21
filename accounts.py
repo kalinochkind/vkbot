@@ -21,7 +21,7 @@ def createAccount(name):
     for i in account_files:
         open(dirname + i, 'w').close()
     with open(dirname + 'inf.cfg', 'w') as f:
-        f.write('[login]\nlogin = {}\npassword = {}'.format(login, password))
+        f.write(open('inf.cfg.default').read().strip() + '\n\n[login]\nlogin = {}\npassword = {}'.format(login, password))
     selectAccount(name)
     return True
 
