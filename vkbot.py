@@ -41,6 +41,7 @@ class vk_bot:
         self.last_message = {}
         self.last_message_id = 0
         self.whitelist = None
+        self.bad_conf_title = lambda s: False
 
     def initSelf(self):
         self.users.clear()
@@ -220,6 +221,12 @@ class vk_bot:
                 log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
                 self.good_conf[cid + CONF_START] = 0
                 return 0
+        title = self.api.messages.getChat(chat_id=cid).get('title', '')
+        if self.bad_conf_title(title):
+            self.leaveConf(cid)
+            log.write('conf',  str(cid) + ' (name: {})'.format(title))
+            self.good_conf[cid + CONF_START] = 0
+            return 0
         self.good_conf[cid + CONF_START] = 1
         return 1
 

@@ -130,7 +130,7 @@ def getBotReply(uid, message, conf_id, method=''):
     elif conf_id > 0:
         answer = bot.interact('conf {} {}'.format(uid, message))
     elif conf_id in (-1, -2):
-        answer = bot.interact('{} {}'.format('comm' if conf_id == -1 else 'flat', message))
+        answer = bot.interact('{} {}'.format('comm' if conf_id == -1 else 'flat 0', message))
         bl = (answer == '$blacklisted')
         return bl
 
@@ -309,6 +309,9 @@ def preprocessMessage(message, user=None):
     if 'action' in message:
         if message['action'] == 'chat_invite_user' and message['action_mid'] == vk.self_id:
             vk.deleteFriend(message['user_id'])
+        if message['action'] == 'chat_title_update' and getBotReply(None, message['action_text'], -2):
+            del vk.good_conf[message['chat_id'] + CONF_START]
+            vk.checkConf(message['chat_id'])
         return None
 
     result = message['body']
@@ -417,6 +420,7 @@ admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
 vk = vk_bot(login, password)
+vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
 log.info('My id: ' + str(vk.self_id))
 banign = ban_manager(accounts.getFile('banned.txt'), vk.users)
 if args['whitelist']:
