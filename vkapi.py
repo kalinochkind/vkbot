@@ -15,7 +15,7 @@ class vk_api:
     logging = 0
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
-    api_version = '5.44'
+    api_version = '5.50'
 
     def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout', 'i')):
         self.username = username

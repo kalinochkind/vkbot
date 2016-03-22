@@ -160,7 +160,7 @@ class vk_bot:
         if not self.good_conf.get(to, 1):
             return
         self.guid += 1
-        return self.api.messages.send(peer_id=to, message=msg, guid=self.guid)
+        return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
     # message==None: special conf messages, don't need to reply
     # fast==1: no delay
