@@ -114,6 +114,7 @@ def timeto(name, interval):
 
 
 # conf_id == -1: comment
+# conf_id == -2: flat
 def getBotReply(uid, message, conf_id, method=''):
     if message is None:
         return None
@@ -128,8 +129,8 @@ def getBotReply(uid, message, conf_id, method=''):
         answer = bot.interact('user {} {}'.format(uid, message))
     elif conf_id > 0:
         answer = bot.interact('conf {} {}'.format(uid, message))
-    elif conf_id == -1:
-        answer = bot.interact('comm {}'.format(message))
+    elif conf_id in (-1, -2):
+        answer = bot.interact('{} {}'.format('comm' if conf_id == -1 else 'flat', message))
         bl = (answer == '$blacklisted')
         return bl
 
@@ -278,7 +279,7 @@ def reply(message):
 
         t = evalExpression(message['body'])
         if t:
-            if getBotReply(None, message['body'], -1):
+            if getBotReply(None, message['body'], -2):
                 return ('', 0)
             if 'chat_id' in message:
                 log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
