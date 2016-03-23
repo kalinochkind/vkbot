@@ -10,6 +10,7 @@ import accounts
 
 _key = config.get('antigate.key')
 png_filename = accounts.getFile('captcha.png')
+_has_captcha = False
 
 def receive(url, timeout=10):
     try:
@@ -22,14 +23,20 @@ def receive(url, timeout=10):
         log.error('captcha.receive error', True)
         time.sleep(5)
         receive(url, timeout)
+    global _has_captcha
+    _has_captcha = True
     with open(png_filename, 'wb') as f:
         f.write(data)
 
 def delete():
+    global _has_captcha
+    if not _has_captcha:
+        return
     try:
         os.remove(png_filename)
     except FileNotFoundError:
         pass
+    _has_captcha = False
 
 def solve():
     if not os.path.isfile(png_filename):
