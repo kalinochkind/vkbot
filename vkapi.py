@@ -1,10 +1,7 @@
 import threading
 import urllib.request
-import urllib.parse
-import urllib.error
 import json
 import time
-import sys
 import socket
 import config
 import log
@@ -12,7 +9,7 @@ import captcha
 import accounts
 
 class vk_api:
-    logging = 0
+    logging = False
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
     api_version = '5.50'

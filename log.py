@@ -1,5 +1,4 @@
 import time
-import config
 import traceback
 import db_logger
 import sys

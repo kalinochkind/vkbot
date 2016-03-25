@@ -5,7 +5,6 @@ from thread_manager import thread_manager, timeline
 from user_cache import user_cache
 import config
 import re
-import random
 
 CONF_START = 2000000000
 
@@ -219,20 +218,18 @@ class vk_bot:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
                 log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
-                self.good_conf[cid + CONF_START] = 0
-                return 0
+                return False
         title = self.api.messages.getChat(chat_id=cid).get('title', '')
         if self.bad_conf_title(title):
             self.leaveConf(cid)
             log.write('conf',  str(cid) + ' (name: {})'.format(title))
-            self.good_conf[cid + CONF_START] = 0
-            return 0
-        self.good_conf[cid + CONF_START] = 1
-        return 1
+            return False
+        self.good_conf[cid + CONF_START] = True
+        return True
 
     def leaveConf(self, cid):
         log.info('Leaving conf ' + str(cid))
-        self.good_conf[cid + CONF_START] = 0
+        self.good_conf[cid + CONF_START] = False
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
     def addFriends(self, gen_reply, is_good):
@@ -252,13 +249,15 @@ class vk_bot:
         self.api.sync()
 
     def unfollow(self, banned):
+        result = []
         requests = self.api.friends.getRequests(out=1)['items']
         self.api.delayedReset()
         for i in requests:
             if i not in banned:
                 self.api.friends.delete.delayed(user_id=i)
-                yield i
+                result.append(i)
         self.api.sync()
+        return result
 
     def deleteFriend(self, uid):
         if type(uid) == int:
@@ -270,7 +269,7 @@ class vk_bot:
             self.api.sync()
 
     def setOnline(self):
-        self.api.account.setOnline(voip=0)
+        self.api.account.setOnline()
 
     def getUserId(self, domain):
         multiple = type(domain) != str
@@ -371,3 +370,11 @@ class vk_bot:
     def waitAllThreads(self):
         for t in self.tm.all():
             t.join(60)
+
+    # {name} - first_name last_name
+    # {id} - id
+    def printableName(self, pid, user_fmt = '<a href="https://vk.com/id{id}" target="_blank">{name}</a>', conf_fmt = 'Conf {id}'):
+        if pid > CONF_START:
+            return conf_fmt.format(id=(pid - CONF_START))
+        else:
+            return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])

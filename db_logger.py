@@ -1,4 +1,3 @@
-import mysql.connector
 import config
 import threading
 
@@ -11,6 +10,7 @@ db_lock = threading.Lock()
 def log(message, kind):
     if enabled:
         with db_lock:
+            import mysql.connector
             global conn, cur, connected
             if not connected:
                 conn = mysql.connector.connect(host=config.get('db_logger.host'), user=config.get('db_logger.username'), password=config.get('db_logger.password'), database=config.get('db_logger.database'))

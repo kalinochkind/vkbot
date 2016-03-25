@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 
-from vkapi import *
-import check_friend
+from vkapi import vk_api
 import datetime 
 import config
-import db_logger
 
 login, password = config.get('login.login'), config.get('login.password')
 age = config.get('birthday.age', 'i')

@@ -1,4 +1,3 @@
-import sys
 import configparser
 import accounts
 

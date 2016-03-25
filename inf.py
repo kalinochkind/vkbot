@@ -20,20 +20,19 @@ from server import MessageServer
 import threading
 import db_logger
 from args import args
-import os
 
 
 pid_file = accounts.getFile('inf.pid')
 lock_file = accounts.getFile('inf.lock')
 fp = open(lock_file, 'w')
-single = 0
+single = False
 for i in range(100):
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         time.sleep(5)
     else:
-        single = 1
+        single = True
         break
 if not single:
     sys.exit(0)
@@ -50,7 +49,7 @@ if args.get('user'):
         log.fatal('-u param must look like login:password')
     login, password = args['user'].split(':', maxsplit=1)
 if args.get('logging'):
-    vkapi.vk_api.logging = 1
+    vkapi.vk_api.logging = True
     log.info('Logging enabled')
 
 log.info('Starting vkbot, pid ' + str(os.getpid()))
@@ -70,9 +69,9 @@ smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitline
 random.shuffle(noans)
 
 class ban_manager:
-    def __init__(self, filename, user_cache):
+    def __init__(self, filename, vkbot):
         self.filename = filename
-        self.users = user_cache
+        self.vkbot = vkbot
         banign = open(filename).read().split()
         self.banned = set(map(int, banign))
 
@@ -81,20 +80,12 @@ class ban_manager:
         with open(self.filename, 'w') as f:
             f.write('\n'.join(s))
 
-    # {name} - first_name last_name
-    # {id} - id
-    def printableName(self, pid, user_fmt = '<a href="https://vk.com/id{id}" target="_blank">{name}</a>', conf_fmt = 'Conf {id}'):
-        if pid > CONF_START:
-            return conf_fmt.format(id=(pid - CONF_START))
-        else:
-            return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
-
     def ban(self, pid):
         if pid in self.banned:
             return 'Already banned!'
         self.banned.add(pid)
         self.write()
-        return self.printableName(pid, user_fmt='[id{id}|{name}]') + ' banned'
+        return self.vkbot.printableName(pid, user_fmt='[id{id}|{name}]') + ' banned'
 
     def unban(self, pid):
         if pid not in self.banned:
@@ -102,15 +93,15 @@ class ban_manager:
         else:
             self.banned.discard(pid)
             self.write()
-            return self.printableName(pid, user_fmt='[id{id}|{name}]') + ' unbanned'
+            return self.vkbot.printableName(pid, user_fmt='[id{id}|{name}]') + ' unbanned'
 
 
 _timeto = {}
 def timeto(name, interval):
     if interval >= 0 and time.time() > _timeto.get(name, 0) + interval:
         _timeto[name] = time.time()
-        return 1
-    return 0
+        return True
+    return False
 
 
 # conf_id == -1: comment
@@ -166,9 +157,9 @@ def getBotReply(uid, message, conf_id, method=''):
     if method:
         console_message += ' (' + method + ')'
     if conf_id > 0:
-        log.info('({}) {} : {}{}'.format(banign.printableName(uid, user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(conf_id)), message, answer.replace('&', '&amp;'), console_message))
+        log.info('({}) {} : {}{}'.format(vk.printableName(uid, user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(conf_id)), message, answer.replace('&', '&amp;'), console_message))
     else:
-        log.info('({}) {} : {}{}'.format(banign.printableName(uid), message, answer.replace('&', '&amp;'), console_message))
+        log.info('({}) {} : {}{}'.format(vk.printableName(uid), message, answer.replace('&', '&amp;'), console_message))
     return answer
 
 def processCommand(cmd, *p):
@@ -178,7 +169,7 @@ def processCommand(cmd, *p):
     elif cmd == 'banned':
         if banign.banned:
             result = sorted(banign.banned)
-            result = [banign.printableName(j, user_fmt='[id{id}|{name}]') for j in result]
+            result = [vk.printableName(j, user_fmt='[id{id}|{name}]') for j in result]
             return '\n'.join(result)
         else:
             return 'No one banned!'
@@ -209,7 +200,7 @@ def processCommand(cmd, *p):
             return 'Cannot ignore admin!'
         noaddUsers(users, reason='\\ignore command')
         vk.users.load(users)
-        return 'Ignored ' +  ', '.join(banign.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
+        return 'Ignored ' +  ', '.join(vk.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
 
     elif cmd == 'unignore':
         users = vk.getUserId(p)
@@ -219,7 +210,7 @@ def processCommand(cmd, *p):
             return 'Cannot ignore admin!'
         noaddUsers(users, True)
         vk.users.load(users)
-        return 'Unignored ' +  ', '.join(banign.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
+        return 'Unignored ' +  ', '.join(vk.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
 
     elif cmd == 'leave':
         if not p:
@@ -262,7 +253,7 @@ def reply(message):
                 return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
-            log.info('({}) {} - ignored (bot message)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (bot message)'.format(vk.printableName(message['user_id']), message['body']))
             if 'chat_id' in message:
                 bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
                 if bot_users[message['user_id']] >= 3:
@@ -274,7 +265,7 @@ def reply(message):
             del bot_users[message['user_id']]
 
         if message['body'].strip().upper() == last_message_text.get(vk.getSender(message)):
-            log.info('({}) {} - ignored (my reply)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (my reply)'.format(vk.printableName(message['user_id']), message['body']))
             return ('', 0)
 
         t = evalExpression(message['body'])
@@ -282,18 +273,18 @@ def reply(message):
             if getBotReply(None, message['body'], -2):
                 return ('', 0)
             if 'chat_id' in message:
-                log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
+                log.info('({}) {} = {} (calculated)'.format(vk.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body'], t))
             else:
-                log.info('({}) {} = {} (calculated)'.format(banign.printableName(message['user_id']), message['body'], t))
+                log.info('({}) {} = {} (calculated)'.format(vk.printableName(message['user_id']), message['body'], t))
             log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
     if message['body']:
         message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
         if 'chat_id' in message:
-            log.info('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
+            log.info('({}) {} - ignored (caps)'.format(vk.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id'])), message['body']))
         else:
-            log.info('({}) {} - ignored (caps)'.format(banign.printableName(message['user_id']), message['body']))
+            log.info('({}) {} - ignored (caps)'.format(vk.printableName(message['user_id']), message['body']))
         return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
@@ -383,7 +374,7 @@ def test_friend(uid):
     try:
         fr = vk.api.users.get(user_ids=uid, fields=check_friend.fields)[0]
     except KeyError:
-        return 0
+        return False
     return check_friend.is_good(fr)
 
 _noadd_lock = threading.Lock()
@@ -397,7 +388,7 @@ def noaddUsers(users, remove=False, reason=None):
             check_friend.noadd -= users
         else:
             check_friend.noadd.update(users)
-            log.info('Deleting ' + ', '.join([banign.printableName(i) for i in users]) + (' ({})'.format(reason) if reason else ''))
+            log.info('Deleting ' + ', '.join([vk.printableName(i) for i in users]) + (' ({})'.format(reason) if reason else ''))
             vk.deleteFriend(users)
         check_friend.writeNoadd()
 
@@ -422,10 +413,10 @@ last_message_text = {}
 vk = vk_bot(login, password)
 vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
 log.info('My id: ' + str(vk.self_id))
-banign = ban_manager(accounts.getFile('banned.txt'), vk.users)
+banign = ban_manager(accounts.getFile('banned.txt'), vk)
 if args['whitelist']:
     vk.whitelist = vk.getUserId(args['whitelist'].split(','))
-    log.info('Whitelist: ' +', '.join(map(lambda x:banign.printableName(x, user_fmt='{name}'), vk.whitelist)))
+    log.info('Whitelist: ' +', '.join(map(lambda x:vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 
 addfriends_interval = config.get('inf.addfriends_interval', 'i')
@@ -439,13 +430,13 @@ def ignoreHandler(user):
     if not user:
         return 'Invalid user'
     noaddUsers([user], reason='external command')
-    return 'Ignored ' + banign.printableName(user, user_fmt='{name}')
+    return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
 def unignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
     noaddUsers([user], True)
-    return 'Unignored ' + banign.printableName(user, user_fmt='{name}')
+    return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
 
 def isignoredHandler(user):
     user = vk.getUserId(user)
@@ -489,7 +480,7 @@ while 1:
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), banign.printableName), reason='bad comment')
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), vk.printableName), reason='bad comment')
         if timeto('includeread', includeread_interval):
             reply_all = True
     except Exception as e:

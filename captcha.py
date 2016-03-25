@@ -1,5 +1,4 @@
 from urllib.request import urlopen
-from antigate import AntiGate, AntiGateError
 import log
 import socket
 import urllib.error
@@ -42,9 +41,10 @@ def solve():
     if not os.path.isfile(png_filename):
         log.warning('captcha.png does not exist')
         return ''
+    import antigate
     try:
-        return str(AntiGate(_key, png_filename)) or None
-    except AntiGateError as e:
+        return str(antigate.AntiGate(_key, png_filename)) or None
+    except antigate.AntiGateError as e:
         log.warning(str(e))
         return None
     except Exception:

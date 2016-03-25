@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 
-from vkapi import *
+from vkapi import vk_api
 import check_friend
-import db_logger
 import config
 
 login, password = config.get('login.login'), config.get('login.password')
