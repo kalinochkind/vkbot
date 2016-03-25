@@ -1,12 +1,11 @@
 # vkbot
 Chat-bot for vk.com
 
-Does not work on Windows. Tested with Python 3.4. gcc >= 4.9 required.
+Does not work on Windows. Tested with Python 3.5. gcc >= 4.9 required. The database is located at the `data` directory.
 
-## How to run it
+Run: inf.py [-l] [-d] [-a account]
 
-1. pip3 install antigate
-1. Put your anti-captcha.com key into antigate.txt
-1. Create reply database (bot.txt, blacklist.txt, fixedstem.txt)
-1. Put your VK account info into data.txt
-1. Run inf.py
+-l: write all VK api requests to inf.log, 
+-d: logging to MySQL (`mysql.connector` required)
+
+Needs `antigate` package to support captcha recognition using anti-captcha.com. 
