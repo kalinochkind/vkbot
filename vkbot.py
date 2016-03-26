@@ -337,16 +337,20 @@ class vk_bot:
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
                 if test(txt):
-                    log.info('Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'])))
+                    text_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], False))
+                    html_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], True))
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
                 elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
-                    log.info('Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'])))
+                    text_msg = 'Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'], False))
+                    html_msg = 'Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'], True))
                     log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
                 else:
-                    log.info('Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'])))
+                    text_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], False))
+                    html_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], True))
+                log.info((text_msg, html_msg))
         return to_del
 
     def likeAva(self, uid):

@@ -8,40 +8,40 @@ import accounts
 
 errLock = threading.Lock()
 
+# s = (console message, db message)
 def info(s, color=''):
+    if isinstance(s, str):
+        s = (s, s)
     if color == 'red':
-        print('\033[38;5;9m' + s + '\033[0m')
+        print('\033[38;5;9m' + s[0] + '\033[0m')
     elif color == 'green':
-        print('\033[38;5;10m' + s + '\033[0m')
+        print('\033[38;5;10m' + s[0] + '\033[0m')
     elif color == 'yellow':
-        print('\033[38;5;11m' + s + '\033[0m')
+        print('\033[38;5;11m' + s[0] + '\033[0m')
+    elif color:
+        print('[{}] {}'.format(color.upper(), s[0]))
     else:
-        print(s)
-        color = ''
-    db_logger.log(s, color)
+        print(s[0])
+    db_logger.log(s[1], color)
     sys.stdout.flush()
 
 def warning(s):
-    print('[WARNING]', s)
-    db_logger.log(s, 'warning')
-    sys.stdout.flush()
+    info(s, 'warning')
 
 def error(s, need_exc_info=False):
-    print('[ERROR]', s)
-    db_logger.log(s, 'error')
+    info(s, 'error')
+    if not isinstance(s, str):
+        s = s[0]
     with errLock:
         write('error', s)
         if need_exc_info:
             with open(logdir + 'error.log', 'a', encoding='utf-8') as f:
                 traceback.print_exc(file=f)
                 print(file=f)
-    sys.stdout.flush()
 
 def fatal(s):
-    print('[FATAL]', s)
-    db_logger.log(s, 'fatal')
-    sys.stdout.flush()
-    exit(0)
+    info(s, 'fatal')
+    sys.exit()
 
 
 datetime_format = '%d.%m.%Y %H:%M:%S'
