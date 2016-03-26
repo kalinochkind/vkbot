@@ -5,6 +5,7 @@ from thread_manager import thread_manager, timeline
 from user_cache import user_cache
 import config
 import re
+import random
 
 CONF_START = 2000000000
 
@@ -190,7 +191,8 @@ class vk_bot:
             except Exception as e:
                 log.error('thread {}: {}'.format(e.__class__.__name__, str(e)), True)
 
-        send_time = self.delay_on_reply + typing_time
+        cur_delay = (self.delay_on_reply - 1) * random.random() + 1
+        send_time = cur_delay + typing_time
         user_delay = 0
         if sender in self.last_message:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
@@ -204,7 +206,7 @@ class vk_bot:
             if fast == 0:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 
-        tl.sleep(self.delay_on_reply)
+        tl.sleep(cur_delay)
         if typing_time:
             tl.do_every_for(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
