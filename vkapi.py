@@ -7,12 +7,16 @@ import config
 import log
 import captcha
 import accounts
+import args
 
 class vk_api:
-    logging = False
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
     api_version = '5.50'
+
+    logging = bool(args.args['logging'])
+    if logging:
+        log.info('Logging enabled')
 
     def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout', 'i')):
         self.username = username

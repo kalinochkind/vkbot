@@ -1,7 +1,8 @@
 import config
 import threading
+import args
 
-enabled = False
+enabled = bool(args.args['database'])
 connected = False
 
 db_lock = threading.Lock()

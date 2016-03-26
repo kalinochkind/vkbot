@@ -5,7 +5,6 @@ import log
 import time
 import sys
 from vkbot import vk_bot, CONF_START
-import vkapi
 import re
 import check_friend
 from calc import evalExpression
@@ -41,17 +40,6 @@ with open(pid_file, 'w') as f:
 
 login = config.get('login.login')
 password = config.get('login.password')
-
-if args.get('database'):
-    db_logger.enabled = True
-if args.get('user'):
-    if ':' not in args['user']:
-        log.fatal('-u param must look like login:password')
-    login, password = args['user'].split(':', maxsplit=1)
-if args.get('logging'):
-    vkapi.vk_api.logging = True
-    log.info('Logging enabled')
-
 log.info('Starting vkbot, pid ' + str(os.getpid()))
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
