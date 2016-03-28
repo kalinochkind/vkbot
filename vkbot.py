@@ -14,7 +14,7 @@ ignored_errors = {
     (900, 'messages.send'): ('Blacklisted', False),
     (7, 'messages.send'): ('Banned', True),
     (10, 'messages.send'): ('Unable to reply', True),
-    (15, 'friends.delete'): ('Not a friend', False),
+    (15, 'friends.delete'): None,
     (100, 'messages.markAsRead'): None,
     (113, 'users.get'): None,
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
