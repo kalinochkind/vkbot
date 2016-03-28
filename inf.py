@@ -103,6 +103,8 @@ def printableSender(message, need_html):
         else:
             return vk.printableName(message['user_id'], user_fmt='{name}')
 
+
+_last_reply_lower = set()
 # conf_id == -1: comment
 # conf_id == -2: flat
 def getBotReply(uid, message, conf_id, method=''):
@@ -137,8 +139,11 @@ def getBotReply(uid, message, conf_id, method=''):
     elif answer == '$blacklisted':
         answer = ''
 
-    if message == message.lower() and message != message.upper():
+    if message == message.lower() and message != message.upper() or message.upper() == message.lower() and uid in _last_reply_lower:
+        _last_reply_lower.add(uid)
         answer = answer.lower()
+    else:
+        _last_reply_lower.discard(uid)
     console_message = ''
 
     if '{' in answer:
