@@ -18,14 +18,25 @@ def writeNoadd():
 def check_char(c):
     return c in allowed
 
-def is_good(fr):
-    now = int(time.time())
-    return (('deactivated' not in fr) and 
-            fr['photo_50'] and not fr['photo_50'].endswith('camera_50.png') and 
-            fr.get('country', {'id':0})['id'] in [0, 1, 2, 3] and 
-            all(check_char(i) for i in fr['first_name'] + fr['last_name']) and
-            now - fr['last_seen']['time'] < 3600 * 24 * offline_allowed and
-            not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in s) and
-            fr['id'] not in noadd and
-            fr['first_name'] != fr['last_name']
-            )
+checks = [
+(lambda fr:'deactivated' not in fr, 'Account is deactivated'),
+(lambda fr:fr['photo_50'] and not fr['photo_50'].endswith('camera_50.png'), 'No avatar'),
+(lambda fr:fr.get('country', {'id':0})['id'] in [0, 1, 2, 3], 'Bad country'),
+(lambda fr:all(check_char(i) for i in fr['first_name'] + fr['last_name']), 'Bad characters in name'),
+(lambda fr:time.time() - fr['last_seen']['time'] < 3600 * 24 * offline_allowed, 'Offline too long'),
+(lambda fr:not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in s), 'Bad substring in name'),
+(lambda fr:fr['id'] not in noadd, 'Ignored'),
+(lambda fr:fr['first_name'] != fr['last_name'], 'First name equal to last name'),
+]
+
+def is_good(fr, need_reason=False):
+    for fun, msg in checks:
+        if not fun(fr):
+            if need_reason:
+                return msg
+            else:
+                return False
+    if need_reason:
+        return None
+    else:
+        return True

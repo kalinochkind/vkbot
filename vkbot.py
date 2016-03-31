@@ -239,13 +239,20 @@ class vk_bot:
         self.api.delayedReset()
         to_rep = []
         for i in data['items']:
-            if is_good(i['user_id']):
+            res = is_good(i['user_id'], True)
+            if res is None:
                 self.api.friends.add.delayed(user_id=i['user_id'])
+                text_msg = 'Adding ' + self.printableSender(i, False)
+                html_msg = 'Adding ' + self.printableSender(i, True)
+                log.info((text_msg, html_msg))
                 if 'message' in i:
                     ans = gen_reply(i)
                     to_rep.append((i, ans))
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
+                text_msg = 'Not adding {} ({})'.format(self.printableSender(i, False), res)
+                html_msg = 'Not adding {} ({})'.format(self.printableSender(i, True), res)
+                log.info((text_msg, html_msg))
         for i in to_rep:
             self.replyMessage(i[0], i[1][0], i[1][1])
         self.api.sync()
@@ -384,3 +391,15 @@ class vk_bot:
             return conf_fmt.format(id=(pid - CONF_START))
         else:
             return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
+
+    def printableSender(self, message, need_html):
+        if message.get('chat_id', 0) > 0:
+            if need_html:
+                return self.printableName(message['user_id'], user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(message['chat_id']))
+            else:
+                return self.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id']))
+        else:
+            if need_html:
+                return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
+            else:
+                return self.printableName(message['user_id'], user_fmt='{name}')
