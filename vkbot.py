@@ -303,14 +303,17 @@ class vk_bot:
         data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str), fields='domain')
         if data is None:
             return [] if multiple else None
-        for i in range(len(req)):
-            if type(req[i]) == str:
-                if data[0]['domain'] == req[i]:
-                    req[i] = data[0]['id']
-                    data = data[1:]
-                else:
-                    req[i] = None
-        req = [i for i in req if i is not None]
+        if len(req) == 1 and len(data) == 1:
+            req = [data[0]['id']]  # kostil :(
+        else:
+            for i in range(len(req)):
+                if type(req[i]) == str:
+                    if data[0]['domain'] == req[i]:
+                        req[i] = data[0]['id']
+                        data = data[1:]
+                    else:
+                        req[i] = None
+            req = [i for i in req if i is not None]
         try:
             if multiple:
                 return req
