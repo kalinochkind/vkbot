@@ -436,11 +436,11 @@ def unignoreHandler(user):
 def isignoredHandler(user):
     user = vk.getUserId(user)
     if user is None or user > CONF_START:
-        return '-1'
-    if user in check_friend.noadd:
-        return '1'
-    else:
-        return '0'
+        return 'Invalid user'
+    r = test_friend(user, True)
+    if r is None:
+        return 'Good'
+    return r
 
 def leaveHandler(conf):
     conf = vk.getUserId(conf)
