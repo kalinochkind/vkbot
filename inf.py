@@ -379,13 +379,15 @@ def noaddUsers(users, remove=False, reason=None):
     with _noadd_lock:
         if remove:
             check_friend.noadd -= users
+            check_friend.writeNoadd()
         else:
-            check_friend.noadd.update(users)
+            users -= check_friend.noadd
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             log.info((text_msg, html_msg))
+            check_friend.appendNoadd(users)
             vk.deleteFriend(users)
-        check_friend.writeNoadd()
+
 
 def reload(*p):
     bot.interact('reld')

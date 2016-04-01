@@ -15,6 +15,11 @@ def writeNoadd():
     with open(accounts.getFile('noadd.txt'), 'w') as f:
         f.write('\n'.join(map(str, sorted(noadd))))
 
+def appendNoadd(users):
+    noadd.update(users)
+    with open(accounts.getFile('noadd.txt'), 'a') as f:
+        f.write('\n' + '\n'.join(map(str, sorted(users))))
+
 def check_char(c):
     return c in allowed
 
