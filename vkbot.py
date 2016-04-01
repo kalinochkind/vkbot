@@ -91,7 +91,7 @@ class vk_bot:
             log.info('Include read')
             self.users.gc()
             try:
-                messages = self.api.messages.getDialogs(unread=1, count=200)['items'][::-1]
+                messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))['items'][::-1]
             except (KeyError, TypeError):
                 # may sometimes happen because of friendship requests
                 return
@@ -99,6 +99,8 @@ class vk_bot:
             with self.api.api_lock:
                 for msg in sorted(messages, key=lambda msg:msg['message']['id']):
                     cur = msg['message']
+                    if cur['out']:
+                        continue
                     if self.last_message_id and cur['id'] > self.last_message_id:
                         continue
                     self.replyOne(cur, gen_reply, 'getDialogs')
