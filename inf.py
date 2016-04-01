@@ -395,6 +395,7 @@ def reload(*p):
 
 def _onexit(*p):
     log.info('Received SIGTERM')
+    loop_thread.join(60)
     vk.waitAllThreads()
     log.info('Bye')
     exit(0)
@@ -463,7 +464,8 @@ if config.get('inf.server', 'b'):
     srv.listen()
 
 reply_all = timeto('includeread', includeread_interval)
-while 1:
+def main_loop():
+    global reply_all
     try:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
@@ -482,3 +484,8 @@ while 1:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
         time.sleep(2)
+
+while True:
+    loop_thread = threading.Thread(target=main_loop)
+    loop_thread.start()
+    loop_thread.join()
