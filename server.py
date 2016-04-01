@@ -1,5 +1,6 @@
 import socket
 import threading
+import log
 
 class MessageServer:
 
@@ -26,8 +27,12 @@ class MessageServer:
                 data = [data, None]
             if data[0] not in self.handlers:
                 continue
-            res = self.handlers[data[0]](data[1])
-            conn.send(res.encode('utf-8'))
+            try:
+                res = self.handlers[data[0]](data[1])
+                conn.send(res.encode('utf-8'))
+            except Exception:
+                log.error('MessageServer error', True)
+                conn.send(b'error')
 
     def listen(self):
         t = threading.Thread(target=self._listen)
