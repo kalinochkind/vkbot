@@ -261,7 +261,7 @@ class vk_bot:
 
     def unfollow(self, banned):
         result = []
-        requests = self.api.friends.getRequests(out=1)['items']
+        requests = self.api.friends.getRequests(out=1)['items'] + self.api.friends.getRequests(suggested=1)['items']
         self.api.delayedReset()
         for i in requests:
             if i not in banned:
