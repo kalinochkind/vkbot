@@ -373,7 +373,6 @@ def test_friend(uid, need_reason=False):
 _noadd_lock = threading.Lock()
 def noaddUsers(users, remove=False, reason=None):
     users = set(users)
-    users.discard(admin)
     if not users:
         return
     with _noadd_lock:
@@ -382,6 +381,9 @@ def noaddUsers(users, remove=False, reason=None):
             check_friend.writeNoadd()
         else:
             users -= check_friend.noadd
+            users.discard(admin)
+            if not users:
+                return
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             log.info((text_msg, html_msg))
