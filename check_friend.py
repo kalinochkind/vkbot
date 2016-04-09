@@ -35,13 +35,14 @@ checks = [
 ]
 
 def is_good(fr, need_reason=False):
+    reasons = []
     for fun, msg in checks:
         if not fun(fr):
             if need_reason:
-                return msg
+                reasons.append(msg)
             else:
                 return False
     if need_reason:
-        return None
+        return ', '.join(reasons) or None
     else:
         return True
