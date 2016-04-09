@@ -22,10 +22,11 @@ def receive(url, timeout=10):
         log.error('captcha.receive error', True)
         time.sleep(5)
         receive(url, timeout)
-    global _has_captcha
-    _has_captcha = True
-    with open(png_filename, 'wb') as f:
-        f.write(data)
+    else:
+        global _has_captcha
+        _has_captcha = True
+        with open(png_filename, 'wb') as f:
+            f.write(data)
 
 def delete():
     global _has_captcha
