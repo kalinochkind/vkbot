@@ -10,11 +10,12 @@ struct userinfo
 {
     int smiles;
     int lastReply;
+    long long context;
 };
 
 vector<wstring> request;
-vector<shared_ptr<vector<wstring> > > reply;
-vector<vector<long long> > tf;
+vector<shared_ptr<pair<vector<wstring>, long long> > > reply;
+vector<pair<vector<long long>, long long> > tf;
 vector<pair<long long, long long> > fixedstem;
 vector<pair<long long, long long> > replaced;
 vector<pair<long long, bool> > blacklist;
@@ -91,18 +92,23 @@ wstring Say(wstring &line, int id, bool conf)
     }
     double mx = 0;
     int imx = 0;
+    long long context = users[id].context;
     vector<long long> common;
     for(int i=0;i<(int)tf.size();i++)
     {
+        if(tf[i].second != 0 && context != tf[i].second)
+        {
+            continue;
+        }
         common.clear();
-        set_intersection(words.begin(), words.end(), tf[i].begin(), tf[i].end(), back_inserter(common));
+        set_intersection(words.begin(), words.end(), tf[i].first.begin(), tf[i].first.end(), back_inserter(common));
         double ans = 0;
         for(auto&& word: common)
         {
             ans += sqr(tfidf(word));
         }
         ans /= tfnorm[i];
-        if(ans > mx + 0.00000001)
+        if(ans > mx + 0.00000001 || (tf[i].second && ans > mx - 0.00000001))
         {
             mx = ans;
             imx = i;
@@ -127,24 +133,25 @@ wstring Say(wstring &line, int id, bool conf)
             users[id].smiles++;
         return L"$noans";
     }
-    wcerr << "green|" << line << L"== " << request[imx] << L" (" << mx / norm(words) << L")";
-    if(reply[imx]->size() > 1)
+    wcerr << "green|" << line << L"== " << request[imx] << (tf[imx].second ? L"(context, " : L" (") << mx / norm(words) << L")";
+    if(reply[imx]->first.size() > 1)
     {
-        wcerr << L", " << reply[imx]->size() << L" replies";
+        wcerr << L", " << reply[imx]->first.size() << L" replies";
     }
     wcerr << L"\n";
     if(id == -2)
     {
-        wstring ans = request[imx] + L'|' + (*reply[imx])[0];
-        for(int i=1;i<(int)reply[imx]->size();i++)
+        wstring ans = request[imx] + L'|' + reply[imx]->first[0];
+        for(int i=1;i<(int)reply[imx]->first.size();i++)
         {
             ans += '|';
-            ans += (*reply[imx])[i];
+            ans += reply[imx]->first[i];
         }
         return ans;
     }
     if(id >= 0)
     {
+        users[id].context = reply[imx]->second;
         if(users[id].lastReply == imx + 1)
         {
             users[id].lastReply = -(imx + 1);
@@ -160,18 +167,32 @@ wstring Say(wstring &line, int id, bool conf)
         }
         users[id].smiles = 0;
     }
-    wstring ans = (*reply[imx])[0];
-    SwapFirst(*reply[imx], 0);
+    wstring ans = reply[imx]->first[0];
+    SwapFirst(reply[imx]->first, 0);
     return ans;
 }
 
-vector<wstring> splitReply(const wstring &t)
+shared_ptr<pair<vector<wstring>, long long> > splitReply(const wstring &t)
 {
     vector<wstring> ans;
     wstring s;
-    for(wchar_t i : t)
+    wstring ctx;
+    int i = 0;
+    if(t[0] == L'$')
     {
-        if(i == L'|')
+        for(i=1;i<(int)t.size();i++)
+        {
+            if(t[i] == L' ')
+            {
+                i++;
+                break;
+            }
+            ctx += t[i];
+        }
+    }
+    for(;i<(int)t.size();i++)
+    {
+        if(t[i] == L'|')
         {
             if(s.length())
                 ans.push_back(s);
@@ -179,20 +200,20 @@ vector<wstring> splitReply(const wstring &t)
         }
         else
         {
-            s.push_back(i);
+            s.push_back(t[i]);
         }
     }
     if(s.length())
         ans.push_back(s);
     SwapFirst(ans, 1);
-    return ans;
+    return make_shared<pair<vector<wstring>, long long> >(make_pair(ans, phash(ctx)));
 }
 
 void AddReply(const wstring &req, const wstring &rep)
 {
-    shared_ptr<vector<wstring> > v(new vector<wstring>());
-    *v = splitReply(rep);
-    for(wstring& i : splitReply(req))
+    auto v = splitReply(rep);
+    auto u = *splitReply(req);
+    for(wstring& i : u.first)
     {
         reply.push_back(v);
         request.push_back(i);
@@ -203,7 +224,7 @@ void AddReply(const wstring &req, const wstring &rep)
         {
             df[j]++;
         }
-        tf.push_back(words);
+        tf.push_back({words, u.second});
     }
 }
 
@@ -260,7 +281,7 @@ void Load()
     df[phnamec] = 10000;
     for(auto&& i : tf)
     {
-        tfnorm.push_back(norm(i));
+        tfnorm.push_back(norm(i.first));
     }
     fin.close();
     wifstream fbl(filebl);
