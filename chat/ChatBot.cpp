@@ -133,7 +133,7 @@ wstring Say(wstring &line, int id, bool conf)
             users[id].smiles++;
         return L"$noans";
     }
-    wcerr << "green|" << line << L"== " << request[imx] << (tf[imx].second ? L"(context, " : L" (") << mx / norm(words) << L")";
+    wcerr << "green|" << line << L"== " << request[imx] << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
     if(reply[imx]->first.size() > 1)
     {
         wcerr << L", " << reply[imx]->first.size() << L" replies";
