@@ -49,5 +49,5 @@ class cpp_bot:
     def build_exe(self):
         log.info('Rebuilding ' + self.exe_name)
         if os.system(self.path + 'build.sh'):
-            log.fatal('Unable to build')
+            log.error('Unable to build', fatal=True)
         log.info('Build successful')

@@ -28,8 +28,8 @@ def info(s, color=''):
 def warning(s):
     info(s, 'warning')
 
-def error(s, need_exc_info=False):
-    info(s, 'error')
+def error(s, need_exc_info=False, fatal=False):
+    info(s, 'fatal' if fatal else 'error')
     if not isinstance(s, str):
         s = s[0]
     with errLock:
@@ -38,10 +38,8 @@ def error(s, need_exc_info=False):
             with open(logdir + 'error.log', 'a', encoding='utf-8') as f:
                 traceback.print_exc(file=f)
                 print(file=f)
-
-def fatal(s):
-    info(s, 'fatal')
-    sys.exit()
+    if fatal:
+        sys.exit()
 
 
 datetime_format = '%d.%m.%Y %H:%M:%S'
