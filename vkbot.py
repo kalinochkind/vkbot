@@ -48,6 +48,7 @@ class vk_bot:
         res = self.api.users.get(fields='contacts')[0]
         self.self_id = res['id']
         self.phone = res.get('mobile_phone', '')
+        self.name = (res['first_name'], res['last_name'])
         log.info('My phone: ' + self.phone)
 
     def getSender(self, message):

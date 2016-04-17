@@ -337,14 +337,20 @@ def preprocessReply(s, uid):
         return vk.users[uid]['last_name']
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
-    if s.startswith('likeava'):
+    if s == 'likeava':
         vk.likeAva(uid)
         return ''
-    if s.startswith('gosp'):
+    if s == 'gosp':
         vk.setRelation(uid)
         return ''
     if s == 'phone':
         return vk.phone
+    if s == 'age':
+        return config.get('birthday.age')
+    if s == 'name':
+        return vk.name[0]
+    if s == 'lastname':
+        return vk.name[1]
     log.error('Unknown variable: ' + s)
 
 
