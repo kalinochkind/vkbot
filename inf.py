@@ -138,11 +138,9 @@ def getBotReply(uid, message, conf_id, method=''):
         answer, gender = applyGender(answer, uid)
         console_message += ' (' + gender + ')'
 
-    if answer.startswith('\\'):
-        res = preprocessReply(answer[1:], uid)
-        if res is None:
-            log.error('Unknown reply:', answer)
-            res = ''
+    if '\\' in answer:
+        r = re.compile(r'\\[a-zA-Z]+')
+        res = r.sub(lambda m:preprocessReply(m.group(0)[1:], uid), answer)
         console_message += ' (' + answer + ')'
         answer = res
 
@@ -341,12 +339,13 @@ def preprocessReply(s, uid):
         return time.strftime("%H:%M", time.localtime())
     if s.startswith('likeava'):
         vk.likeAva(uid)
-        return s.split(maxsplit=1)[1]
+        return ''
     if s.startswith('gosp'):
         vk.setRelation(uid)
-        return s.split(maxsplit=1)[1]
+        return ''
     if s == 'phone':
         return vk.phone
+    log.error('Unknown variable: ' + s)
 
 
 _male_re = re.compile(r'\{m([^\{\}]*)\}')
