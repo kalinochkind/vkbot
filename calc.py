@@ -7,20 +7,20 @@ rep = {"ноль": "0", "нуль": '0', "один": "1", "два": "2", "два
        "двадцать": "20", "тридцать": "30", "сорок": "40", "пятьдесят": "50",
        "шестьдесят": "60", "семьдесят": "70", "восемьдесят": "80", "восемдесят": "80", "девяносто": "90", "девяноста": "90"}
 op = {"плюс":"+", "минус":"-", "прибавить": "+", "отнять": "-", "умножить": "*", "разделить": "//", "делить": "//"}
-allowed = set('йцукенгшщзхъфывапролджэячсмитьбю.1234567890()+-* ')
+allowed = set('йцукенгшщзхъфывапролджэячсмитьбю.1234567890()+-*/ ')
 
 def isnum(s):
     return s and (s.isdigit() or s[0] == '-' and len(s) > 1 and s[1:].isdigit())
 
 def evalExpression(s):
-    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('\u00d7', '*').replace('*', ' * ')
+    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('\u00d7', '*').replace('*', ' * ').replace('\u00f7', '/').replace('/', ' // ')
     prev = s
-    if '/' in s or '[' in s:
+    if '[' in s:
         return None
     s = ''.join(i if i in allowed else ' ' for i in s.lower()).split()
     ans = []
     for i in s:
-        if set(i) <= set('0123456789+-*() '):
+        if set(i) <= set('0123456789+-*/() '):
             ans.append(i)
         elif i in op:
             ans.append(op[i])
@@ -48,6 +48,8 @@ def evalExpression(s):
         res = str(eval(s, {'__builtins__':{}}))
         if set(s) <= set('0123456789-') and s.lstrip('-').count('-') == 1 and int(res) <= 0:
             return None
+    except ZeroDivisionError:
+        return None
     except Exception:
         s = s.replace('(', ' ').replace(')', ' ').strip()
         if not s or s[0] == '+' or isnum(s) or isnum(s.strip('+')):
