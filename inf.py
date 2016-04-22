@@ -104,6 +104,7 @@ def getBotReply(uid, message, conf_id, method=''):
     message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
+    message = message.replace("`", "'")
 
     if conf_id == 0:
         answer = bot.interact('user {} {}'.format(uid, message))

@@ -38,14 +38,16 @@ long long phash(const wstring &s)
 
 long long phname = phash(L"firstname");
 
-vector<long long> splitWords(const wstring &s, vector<pair<long long, long long> > &fixedstem, vector<pair<long long, long long> > &replaced, set<long long> &names)
+// <hash, <start, len> >
+vector<pair<long long, pair<int, int> > > splitWords(const wstring &s, vector<pair<long long, long long> > &fixedstem, vector<pair<long long, long long> > &replaced, set<long long> &names)
 {
-    vector<long long> ans;
+    vector<pair<long long, pair<int, int> > > ans;
     wstring word;
     int prevKind = 0;  // 1 - letter, 2 - digit
-    for(auto i: s + L' ')
+    wstring S = s + L' ';
+    for(int j=0;j<(int)S.size();j++)
     {
-        i = towupper(i);
+        wchar_t i = towupper(S[j]);
         if(isLetter(i) && prevKind != 2)
         {
             word.push_back(i);
@@ -62,11 +64,11 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
             {
                 bool st = 1;
                 long long pw = phash(word);
-                for(auto &j : fixedstem)
+                for(auto &t : fixedstem)
                 {
-                    if(j.first == pw)
+                    if(t.first == pw)
                     {
-                        pw = j.second;
+                        pw = t.second;
 //                        wcerr << pw << L" proc\n";
                         st = 0;
                         break;
@@ -74,7 +76,7 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
                 }
                 if(names.count(pw))
                 {
-                    ans.push_back(phname);
+                    ans.push_back({phname, {j-word.length(), word.length()}});
                 }
                 else
                 {
@@ -82,16 +84,16 @@ vector<long long> splitWords(const wstring &s, vector<pair<long long, long long>
                     if(st)
                     {
                         std = stem(word);
-                        for(auto &j : replaced)
+                        for(auto &t : replaced)
                         {
-                            if(std == j.first)
+                            if(std == t.first)
                             {
-                                std = j.second;
+                                std = t.second;
                                 break;
                             }
                         }
                     }
-                    ans.push_back(st ? std : pw);
+                    ans.push_back({st ? std : pw, {j-word.length(), word.length()}});
                 }
             }
             word.clear();

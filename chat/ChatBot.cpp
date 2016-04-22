@@ -65,6 +65,45 @@ void SwapFirst(vector<wstring> &v, bool canStay)
     }
 }
 
+template<class T>
+vector<long long> PlainWords(const vector<pair<long long, T> > &words_pos)
+{
+    vector<long long> words;
+    for(auto &i : words_pos)
+        words.push_back(i.first);
+    return words;
+}
+
+void Highlight(wstring &line, const vector<pair<long long, pair<int, int> > > &words_pos, const vector<long long> &common)
+{
+    set<int> bpos;
+    for(auto i : common)
+    {
+        for(auto& j : words_pos)
+        {
+            if(i == j.first)
+            {
+                bpos.insert(j.second.first);
+                bpos.insert(-(j.second.first + j.second.second)-1);
+            }
+        }
+    }
+    int tadd = 0;
+    for(int i=0;i<(int)line.size();i++)
+    {
+        if(bpos.count(-i-1))
+        {
+            line.insert(i+tadd, L"}`");
+            tadd += 2;
+        }
+        if(bpos.count(i))
+        {
+            line.insert(i+tadd, L"`{");
+            tadd += 2;
+        }
+    }
+}
+
 long long phnamec = phash(L"firstnamec");
 
 
@@ -73,7 +112,8 @@ long long phnamec = phash(L"firstnamec");
 wstring Say(wstring &line, int id, bool conf)
 {
     line += L' ';
-    vector<long long> words = splitWords(line, fixedstem, replaced, names);
+    auto words_pos = splitWords(line, fixedstem, replaced, names);
+    vector<long long> words = PlainWords(words_pos);
     if(conf)
     {
         replace(words.begin(), words.end(), phname, phnamec);
@@ -86,6 +126,7 @@ wstring Say(wstring &line, int id, bool conf)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
+            Highlight(line, words_pos, PlainWords(blacklist));
             wcerr << "red|" << line << L"- blacklisted\n";
             return L"$blacklisted";
         }
@@ -133,7 +174,12 @@ wstring Say(wstring &line, int id, bool conf)
             users[id].smiles++;
         return L"$noans";
     }
-    wcerr << "green|" << line << L"== " << request[imx] << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
+    common.clear();
+    set_intersection(words.begin(), words.end(), tf[imx].first.begin(), tf[imx].first.end(), back_inserter(common));
+    Highlight(line, words_pos, common);
+    wstring req = request[imx];
+    Highlight(req, splitWords(req, fixedstem, replaced, names), common);
+    wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
     if(reply[imx]->first.size() > 1)
     {
         wcerr << L", " << reply[imx]->first.size() << L" replies";
@@ -217,7 +263,8 @@ void AddReply(const wstring &req, const wstring &rep)
     {
         reply.push_back(v);
         request.push_back(i);
-        vector<long long> words = splitWords(i, fixedstem, replaced, names);
+        auto words_pos = splitWords(i, fixedstem, replaced, names);
+        vector<long long> words = PlainWords(words_pos);
         sort(words.begin(), words.end());
         words.resize(unique(words.begin(), words.end()) - words.begin());
         for(auto& j: words)
