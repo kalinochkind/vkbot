@@ -19,6 +19,7 @@ vector<pair<vector<long long>, long long> > tf;
 vector<pair<long long, long long> > fixedstem;
 vector<pair<long long, long long> > replaced;
 vector<pair<long long, bool> > blacklist;
+vector<long long> plain_blacklist;
 vector<double> tfnorm;
 map<long long, int> df;
 map<int, userinfo> users;
@@ -74,6 +75,7 @@ vector<long long> PlainWords(const vector<pair<long long, T> > &words_pos)
     return words;
 }
 
+
 void Highlight(wstring &line, const vector<pair<long long, pair<int, int> > > &words_pos, const vector<long long> &common)
 {
     set<int> bpos;
@@ -126,7 +128,7 @@ wstring Say(wstring &line, int id, bool conf)
             continue;
         if(find(words.begin(), words.end(), i.first) != words.end())
         {
-            Highlight(line, words_pos, PlainWords(blacklist));
+            Highlight(line, words_pos, (id==-1) ? PlainWords(blacklist) : plain_blacklist);
             wcerr << "red|" << line << L"- blacklisted\n";
             return L"$blacklisted";
         }
@@ -296,6 +298,7 @@ void Load()
     tfnorm.clear();
     df.clear();
     blacklist.clear();
+    plain_blacklist.clear();
     fixedstem.clear();
     names.clear();
     srand(time(0));
@@ -338,7 +341,10 @@ void Load()
         if(buf1[0] == '$')
             blacklist.push_back({stem(buf1 + 1), 1});
         else
+        {
             blacklist.push_back({stem(buf1), 0});
+            plain_blacklist.push_back(stem(buf1));
+        }
     }
     fbl.close();
     wifstream fnm(filenames);
