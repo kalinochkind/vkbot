@@ -189,13 +189,12 @@ wstring Say(wstring &line, int id, bool conf)
     wcerr << L"\n";
     if(id == -2)
     {
-        wstring ans = request[imx] + L'|' + reply[imx]->first[0];
-        for(int i=1;i<(int)reply[imx]->first.size();i++)
+        for(int i=0;i<(int)reply[imx]->first.size();i++)
         {
-            ans += '|';
-            ans += reply[imx]->first[i];
+            req += '|';
+            req += reply[imx]->first[i];
         }
-        return ans;
+        return req;
     }
     if(id >= 0)
     {
