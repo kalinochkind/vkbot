@@ -119,7 +119,7 @@ def getBotReply(uid, message, conf_id, method=''):
         if conf_id > 0:
             answer = ''
         else:
-            if message.upper() == message.lower():
+            if message.upper() == message.lower() and '?' not in message:
                 answer = random.choice(smiles)
             else:
                 answer = noans[0]
