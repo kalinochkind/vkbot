@@ -110,7 +110,11 @@ class vk_api:
                     log.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
                     return self.apiCall(method, params, 1)
 
-            data_array = json.loads(json_string.decode('utf-8'))
+            try:
+                data_array = json.loads(json_string.decode('utf-8'))
+            except json.decoder.JSONDecodeError:
+                log.error('Invalid JSON')
+                data_array = None
             if self.logging:
                 with open('inf.log', 'a') as f:
                     print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
@@ -119,6 +123,8 @@ class vk_api:
                 log.warning('{} timeout'.format(method))
             time.sleep(max(0, last_get - time.time() + 0.4))
 
+            if data_array is None:
+                return None
             if 'response' in data_array:
                 if self.captcha_delayed or self.externalCaptcha:
                     self.captcha_delayed = 0
