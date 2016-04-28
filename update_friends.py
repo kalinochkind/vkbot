@@ -6,7 +6,6 @@ import config
 
 login, password = config.get('login.login'), config.get('login.password')
 a = vk_api(login, password, timeout=10)
-a.delayedReset()
 friends = []
 print('Fetching friends')
 for i in range(1000000):

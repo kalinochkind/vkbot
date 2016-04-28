@@ -9,6 +9,31 @@ import captcha
 import accounts
 import args
 
+class DelayedCall:
+
+    def __init__(self, method, params):
+        self.method = method
+        self.params = params
+        self.callback_func = None
+        self.callback_params = []
+
+    def callback(self, func, *p):
+        self.callback_func = func
+        self.callback_params = p
+        return self
+
+    def _called(self, response):
+        if not self.callback_func:
+            return
+        args = []
+        for i in self.callback_params:
+            if i.startswith('@'):
+                args.append(self.params.get(i[1:]))
+            else:
+                args.append(response.get(i))
+        self.callback_func(*args)
+
+
 class vk_api:
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
@@ -24,7 +49,7 @@ class vk_api:
         self.captcha_delayed = 0
         self.captcha_sid = ''
         self.delayed_list = []
-        self.delayedReset()
+        self.max_delayed = 25
         self.ignored_errors = ignored_errors
         self.timeout = timeout
         self.longpoll_server = ''
@@ -50,7 +75,9 @@ class vk_api:
                     def delayed(self, **dp):
                         if len(handler.delayed_list) >= handler.max_delayed:
                             handler.sync()
-                        handler.delayed_list.append((self.method, dp.copy()))
+                        dc = DelayedCall(self.method, dp)
+                        handler.delayed_list.append(dc)
+                        return dc
                 return _method_wrapper(self.group + '.' + item)
         if item not in ['users', 'auth', 'wall', 'photos', 'friends', 'widgets', 'storage', 'status', 'audio', 'pages',
                     'groups', 'board', 'video', 'notes', 'places', 'account', 'messages', 'newsfeed', 'likes', 'polls',
@@ -58,37 +85,32 @@ class vk_api:
             raise AttributeError(item)
         return _group_wrapper(item)
 
-    def delayedReset(self, max_delayed=25, callback=None):
-        self.sync()
-        self.max_delayed = max_delayed
-        self.callback = callback
-
     def execute(self, code):
         return self.apiCall('execute', {"code": code})
 
-    def encodeApiCall(self, s):
-        return "API." + s[0] + '(' + str(s[1]).replace('"', '\\"').replace("'", '"') + ')'
+    @staticmethod
+    def encodeApiCall(s):
+        return "API." + s.method + '(' + str(s.params).replace('"', '\\"').replace("'", '"') + ')'
 
     def sync(self):
         if not self.delayed_list:
             return
-        if len(self.delayed_list) == 1:
-            response = self.apiCall(*self.delayed_list[0])
-            if self.callback:
-                self.callback(self.delayed_list[0], response)
-            self.delayed_list.clear()
+        dl = self.delayed_list
+        self.delayed_list = []
+        if len(dl) == 1:
+            dc = dl[0]
+            response = self.apiCall(dc.method, dc.params)
+            dc._called(response)
             return
 
         query = ['return[']
-        for num, i in enumerate(self.delayed_list):
+        for num, i in enumerate(dl):
             query.append(self.encodeApiCall(i) + ',')
         query.append('];')
         query = ''.join(query)
         response = self.execute(query)
-        if self.callback:
-            for i in zip(self.delayed_list, response):
-                self.callback(*i)
-        self.delayed_list.clear()
+        for dc, r in zip(dl, response):
+            dc._called(r)
 
     def apiCall(self, method, params, retry=False):
         with self.api_lock:

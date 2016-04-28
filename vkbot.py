@@ -239,7 +239,6 @@ class vk_bot:
 
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)
-        self.api.delayedReset()
         to_rep = []
         for i in data['items']:
             res = is_good(i['user_id'], True)
@@ -263,7 +262,6 @@ class vk_bot:
     def unfollow(self, banned):
         result = []
         requests = self.api.friends.getRequests(out=1)['items'] + self.api.friends.getRequests(suggested=1)['items']
-        self.api.delayedReset()
         for i in requests:
             if i not in banned:
                 self.api.friends.delete.delayed(user_id=i)
@@ -275,7 +273,6 @@ class vk_bot:
         if type(uid) == int:
             self.api.friends.delete(user_id=uid)
         else:
-            self.api.delayedReset()
             for i in uid:
                 self.api.friends.delete.delayed(user_id=i)
             self.api.sync()
