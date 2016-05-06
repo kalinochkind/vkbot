@@ -194,6 +194,8 @@ wstring Say(wstring &line, int id, bool conf)
             req += '|';
             req += reply[imx]->first[i];
         }
+        req += '|';
+        req += to_wstring(mx / norm(words));
         return req;
     }
     if(id >= 0)
