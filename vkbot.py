@@ -56,14 +56,14 @@ class vk_bot:
             return 2000000000 + message['chat_id']
         return message['user_id']
 
-    def loadUsers(self, arr, key):
+    def loadUsers(self, arr, key, clean=False):
         users = []
         for i in arr:
             try:
                 users.append(key(i))
             except Exception:
                 pass
-        self.users.load(users)
+        self.users.load(users, clean)
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
@@ -331,7 +331,8 @@ class vk_bot:
     def filterComments(self, test, name_func):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
         to_del = set()
-        self.loadUsers(data, lambda x:x['feedback']['from_id'])
+        to_bl = set()
+        self.loadUsers(data, lambda x:x['feedback']['from_id'], True)
         for rep in data:
             if rep['date'] != 'i':
                 self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
@@ -346,7 +347,13 @@ class vk_bot:
 
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = rep['feedback']['text']
-                if test(txt):
+                if self.users[rep['feedback']['from_id']]['blacklisted']:
+                    text_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], False))
+                    html_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], True))
+                    log.write('comments', str(rep['feedback']['from_id']) + ' (blacklisted): ' + txt)
+                    self.deleteComment(rep)
+                    to_bl.add(rep['feedback']['from_id'])
+                elif test(txt):
                     text_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], False))
                     html_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], True))
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
@@ -361,6 +368,8 @@ class vk_bot:
                     text_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], False))
                     html_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], True))
                 log.info((text_msg, html_msg))
+        for i in to_bl:
+            self.blacklist(i)
         return to_del
 
     def likeAva(self, uid):
@@ -406,3 +415,6 @@ class vk_bot:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
             else:
                 return self.printableName(message['user_id'], user_fmt='{name}')
+
+    def blacklist(self, uid):
+        self.api.account.banUser(user_id=uid)

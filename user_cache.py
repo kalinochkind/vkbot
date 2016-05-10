@@ -13,7 +13,7 @@ class user_cache:
         self.users = {}
         self.lock = threading.RLock()
 
-    def load(self, uid):
+    def load(self, uid, clean=False):
         uid = list(map(int, uid))
 
         try:
@@ -21,7 +21,7 @@ class user_cache:
             with self.lock:
                 ctime = time.time()
                 for user in uid:
-                    if user > 0 and (user not in self.users or self.users[user][0] + self.invalidate_interval - 5 < ctime):
+                    if user > 0 and (clean or user not in self.users or self.users[user][0] + self.invalidate_interval - 5 < ctime):
                         to_get.append(user)
                 if to_get:
                     resp = self.api.users.get(user_ids=','.join(map(str, to_get)), fields=self.fields)
