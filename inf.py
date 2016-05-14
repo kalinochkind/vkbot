@@ -256,17 +256,17 @@ def reply(message):
         elif message['user_id'] in bot_users:
             del bot_users[message['user_id']]
 
-        if message['body'] == last_message_text.get(vk.getSender(message), (0,0,0))[0]:
-            last_message_text[vk.getSender(message)][2] += 1
-            if last_message_text[vk.getSender(message)][2] >= 5:
-                noaddUsers([vk.getSender(message)], reason='flood')
+        if message['body'] == last_message_text.get(message['user_id'], (0,0,0))[0]:
+            last_message_text[message['user_id']][2] += 1
+            if last_message_text[message['user_id']][2] >= 5:
+                noaddUsers([message['user_id']], reason='flood')
             else:
                 text_msg = '({}) {} - ignored (repeated)'.format(vk.printableSender(message, False), message['body'])
                 html_msg = '({}) {} - ignored (repeated)'.format(vk.printableSender(message, True), message['body'])
                 log.info((text_msg, html_msg))
             return ('', 0)
 
-        if message['body'].strip().upper() == last_message_text.get(vk.getSender(message), (0,0,0))[1]:
+        if message['body'].strip().upper() == last_message_text.get(message['user_id'], (0,0,0))[1]:
             text_msg = '({}) {} - ignored (my reply)'.format(vk.printableSender(message, False), message['body'])
             html_msg = '({}) {} - ignored (my reply)'.format(vk.printableSender(message, True), message['body'])
             log.info((text_msg, html_msg))
@@ -291,7 +291,7 @@ def reply(message):
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
     if reply is not None:
-        last_message_text[vk.getSender(message)] = [message['body'], reply.strip().upper(), 1]
+        last_message_text[message['user_id']] = [message['body'], reply.strip().upper(), 1]
     return (reply, 0)
 
 
