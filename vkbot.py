@@ -6,6 +6,7 @@ from user_cache import user_cache
 import config
 import re
 import random
+import html
 
 CONF_START = 2000000000
 
@@ -350,7 +351,7 @@ class vk_bot:
                     return s['post']['to_id'] == self.self_id
 
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
-                txt = rep['feedback']['text']
+                txt = html.escape(rep['feedback']['text'])
                 if self.users[rep['feedback']['from_id']]['blacklisted']:
                     text_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], False))
                     html_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], True))
