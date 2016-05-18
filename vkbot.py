@@ -188,7 +188,8 @@ class vk_bot:
             try:
                 res = self.sendMessage(sender, answer)
                 if res is None:
-                    self.banned_messages.add(message['id'])
+                    if 'id' in message:
+                        self.banned_messages.add(message['id'])
                     del self.users[sender]
                     return
                 self.last_message[sender] = (res, 0 if fast == 1 else time.time())
