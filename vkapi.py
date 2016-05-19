@@ -8,6 +8,7 @@ import log
 import captcha
 import accounts
 import args
+from http.client import RemoteDisconnected
 
 class DelayedCall:
 
@@ -119,7 +120,7 @@ class vk_api:
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-            except (urllib.error.URLError, socket.timeout):
+            except (urllib.error.URLError, socket.timeout, RemoteDisconnected):
                 log.warning(method + ' timeout')
                 time.sleep(3)
                 return self.apiCall(method, params)
@@ -248,7 +249,7 @@ class vk_api:
         url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
-        except (socket.timeout, urllib.error.URLError):
+        except (socket.timeout, urllib.error.URLError, RemoteDisconnected):
             log.warning('longpoll timeout')
             time.sleep(1)
             return []
