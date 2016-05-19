@@ -122,9 +122,7 @@ class vk_bot:
         need_extra = []
         result = []
         for i in arr:
-            if i[0] == 51:  # conf params changed
-                pass  # TODO
-            elif i[0] == 4:  # new message
+            if i[0] == 4:  # new message
                 mid = i[1]
                 sender = i[3]
                 ts = i[4]
