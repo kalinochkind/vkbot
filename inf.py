@@ -233,7 +233,7 @@ def reply(message):
         message['body'] = ''
 
     if 'id' not in message:  # friendship request
-        return (getBotReply(message['user_id'], message['message'], 0), 2)
+        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request'), 2)
     message['body'] = preprocessMessage(message)
 
     if message['body']:
