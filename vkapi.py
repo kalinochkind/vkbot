@@ -28,10 +28,16 @@ class DelayedCall:
             return
         args = []
         for i in self.callback_params:
-            if i.startswith('@'):
-                args.append(self.params.get(i[1:]))
+            if isinstance(i, str):
+                if i.startswith('@'):
+                    args.append(self.params.get(i[1:]))
+                else:
+                    args.append(response.get(i))
             else:
-                args.append(response.get(i))
+                try:
+                    args.append(response[i])
+                except IndexError:
+                    args.append(None)
         self.callback_func(*args)
 
 
