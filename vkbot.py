@@ -29,7 +29,7 @@ class vk_bot:
     same_conf_interval = config.get('vkbot.same_conf_interval', 'i')
     typing_interval = config.get('vkbot.typing_interval', 'i')
 
-    def __init__(self, username, password):
+    def __init__(self, username='', password=''):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
