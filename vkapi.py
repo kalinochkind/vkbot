@@ -126,9 +126,9 @@ class vk_api:
             last_get = time.time()
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
-            except (urllib.error.URLError, socket.timeout, RemoteDisconnected):
-                log.warning(method + ' timeout')
-                time.sleep(3)
+            except OSError as e:
+                log.warning(method + ' failed ({})'.format(e))
+                time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
                 if retry:
@@ -255,12 +255,12 @@ class vk_api:
         url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
-        except (socket.timeout, urllib.error.URLError, RemoteDisconnected):
-            log.warning('longpoll timeout')
-            time.sleep(1)
-            return []
         except urllib.error.HTTPError as e:
             log.warning('longpoll http error ' + str(e.code))
+            return []
+        except OSError as e:
+            log.warning('longpoll failed ({})'.format(e))
+            time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:
