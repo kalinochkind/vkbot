@@ -488,7 +488,10 @@ def main_loop():
     try:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
-        vk.replyAll(reply, reply_all)
+        if includeread_interval >= 0:
+            vk.replyAll(reply, reply_all)
+        else:
+            time.sleep(1)
         reply_all = vk.api.captchaError
         vk.api.captchaError = False
         if timeto('addfriends', addfriends_interval):
