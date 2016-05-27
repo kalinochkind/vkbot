@@ -16,29 +16,14 @@ class DelayedCall:
         self.method = method
         self.params = params
         self.callback_func = None
-        self.callback_params = []
 
     def callback(self, func, *p):
         self.callback_func = func
-        self.callback_params = p
         return self
 
     def _called(self, response):
-        if not self.callback_func:
-            return
-        args = []
-        for i in self.callback_params:
-            if isinstance(i, str):
-                if i.startswith('@'):
-                    args.append(self.params.get(i[1:]))
-                else:
-                    args.append(response.get(i))
-            else:
-                try:
-                    args.append(response[i])
-                except IndexError:
-                    args.append(None)
-        self.callback_func(*args)
+        if self.callback_func:
+            self.callback_func(self.params, response)
 
 
 class vk_api:
@@ -78,7 +63,13 @@ class vk_api:
                     def __init__(self, method):
                         self.method = method
                     def __call__(self, **dp):
-                        return handler.apiCall(self.method, dp)
+                        response = None
+                        def cb(req, resp):
+                            nonlocal response
+                            response = resp
+                        self.delayed(**dp).callback(cb)
+                        handler.sync()
+                        return response
                     def delayed(self, **dp):
                         if len(handler.delayed_list) >= handler.max_delayed:
                             handler.sync()
