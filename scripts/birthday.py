@@ -11,5 +11,3 @@ def main(a, args):
     print(d)
     a.account.saveProfileInfo(bdate=d.strftime('%d.%m.%Y'))
 
-if __name__ == '__main__':
-    main()
