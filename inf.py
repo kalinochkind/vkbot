@@ -5,6 +5,7 @@ import log
 import time
 import sys
 from vkbot import vk_bot, CONF_START
+from vkapi import vk_api
 import re
 import check_friend
 from calc import evalExpression
@@ -19,7 +20,25 @@ from server import MessageServer
 import threading
 import db_logger
 from args import args
+import importlib
 
+os.environ['LC_ALL'] = 'ru_RU.utf-8'
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+login = config.get('login.login')
+password = config.get('login.password')
+
+if args['script']:
+    if not args['script'].replace('_', '').isalpha():
+        print('Invalid script')
+        sys.exit()
+    try:
+        main = importlib.import_module('scripts.' + args['script'].lower()).main
+    except ImportError:
+        print('Invalid script')
+        sys.exit()
+    v = vk_api(login, password)
+    main(v, args['args'])
+    sys.exit()
 
 pid_file = accounts.getFile('inf.pid')
 lock_file = accounts.getFile('inf.lock')
@@ -38,11 +57,8 @@ if not single:
 with open(pid_file, 'w') as f:
     f.write(str(os.getpid()))
 
-login = config.get('login.login')
-password = config.get('login.password')
 log.info('Starting vkbot, pid ' + str(os.getpid()))
-os.environ['LC_ALL'] = 'ru_RU.utf-8'
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+
 
 _bot_message = re.compile(r'^\(.+\)')
 def isBotMessage(msg):
