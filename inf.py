@@ -38,6 +38,7 @@ if args['script']:
         sys.exit()
     v = vk_api(login, password)
     main(v, args['args'])
+    v.sync()
     sys.exit()
 
 pid_file = accounts.getFile('inf.pid')
