@@ -31,6 +31,9 @@ offline_allowed = 14
 [user_cache]
 invalidate_interval = 900
 
+[delfriends]
+days_till_unfriend = 365
+
 [db_logger]
 host =
 username =
