@@ -44,6 +44,6 @@ def main(a, args):
     if prepare:
         f.close()
     else:
-        with open(accounts.getFile('ignored.txt'), 'a') as res:
+        with open(accounts.getFile('noadd.txt'), 'a') as res:
             res.write(''.join(to_del))
     log.info('Total: ' + str(cnt))
