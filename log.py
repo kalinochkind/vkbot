@@ -36,6 +36,8 @@ def error(s, need_exc_info=False, fatal=False):
     if not isinstance(s, str):
         s = s[0]
     with errLock:
+        if fatal:
+            s = 'Fatal: ' + s
         write('error', s)
         if need_exc_info:
             with open(logdir + 'error.log', 'a', encoding='utf-8') as f:
