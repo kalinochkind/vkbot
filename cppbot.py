@@ -33,17 +33,20 @@ class cpp_bot:
         self.bot_lock = threading.Lock()
 
     def interact(self, msg, do_log=True):
-        with self.bot_lock:
-            self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
-            self.bot.stdin.flush()
-            answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
-            while True:
-                info = nonBlockRead(self.bot.stderr)
-                if not info:
-                    break
-                info = info.decode().rstrip().split('|', maxsplit=1)
-                if do_log:
-                    log.info(info[1], info[0])
+        try:
+            with self.bot_lock:
+                self.bot.stdin.write(msg.replace('\n', '\a').strip().encode() + b'\n')
+                self.bot.stdin.flush()
+                answer = self.bot.stdout.readline().rstrip().replace(b'\a', b'\n')
+                while True:
+                    info = nonBlockRead(self.bot.stderr)
+                    if not info:
+                        break
+                    info = info.decode().rstrip().split('|', maxsplit=1)
+                    if do_log:
+                        log.info(info[1], info[0])
+        except BrokenPipeError:
+            log.error('Broken pipe', fatal=True)
         return answer.decode().strip()
 
     def build_exe(self):
