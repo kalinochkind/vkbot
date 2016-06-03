@@ -227,7 +227,7 @@ class vk_bot:
         title = self.api.messages.getChat(chat_id=cid).get('title', '')
         if self.bad_conf_title(title):
             self.leaveConf(cid)
-            log.write('conf',  str(cid) + ' (name: {})'.format(title))
+            log.write('conf',  'conf ' + str(cid) + ' (name: {})'.format(title))
             return False
         self.good_conf[cid + CONF_START] = True
         return True
