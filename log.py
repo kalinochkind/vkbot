@@ -44,7 +44,7 @@ def error(s, need_exc_info=False, fatal=False):
                 traceback.print_exc(file=f)
                 print(file=f)
     if fatal:
-        sys.exit()
+        os._exit(0)  # it can be called from any thread
 
 
 datetime_format = '%d.%m.%Y %H:%M:%S'
