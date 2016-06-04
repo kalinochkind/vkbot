@@ -510,6 +510,8 @@ def main_loop():
     try:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
+        if timeto('filtercomments', filtercomments_interval):
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), lambda uid,html:vk.printableSender({'user_id':uid},html)), reason='bad comment')
         if includeread_interval >= 0:
             vk.replyAll(reply, reply_all)
         else:
@@ -520,8 +522,6 @@ def main_loop():
             vk.addFriends(reply, test_friend)
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
-        if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), lambda uid,html:vk.printableSender({'user_id':uid},html)), reason='bad comment')
         if timeto('includeread', includeread_interval):
             reply_all = True
     except Exception as e:
