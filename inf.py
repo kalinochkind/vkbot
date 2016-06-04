@@ -108,6 +108,11 @@ def timeto(name, interval):
         return True
     return False
 
+def renderSmile(s):
+    if re.match('^&#\d+;', s):
+        return chr(int(s[2:-1]))
+    return s
+
 
 _last_reply_lower = set()
 # conf_id == -1: comment
@@ -164,8 +169,8 @@ def getBotReply(uid, message, conf_id, method=''):
 
     if method:
         console_message += ' (' + method + ')'
-    text_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, False), message, answer, console_message)
-    html_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, True), message, answer.replace('&', '&amp;'), console_message)
+    text_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, False), message, renderSmile(answer), console_message)
+    html_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, True), message, renderSmile(answer).replace('&', '&amp;'), console_message)
     log.info((text_msg, html_msg))
     return answer
 
