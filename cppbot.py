@@ -29,8 +29,11 @@ class cpp_bot:
                 self.build_exe()
         except FileNotFoundError:
             self.build_exe()
-        self.bot = Popen(self.path + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.run_exe()
         self.bot_lock = threading.Lock()
+
+    def run_exe(self):
+        self.bot = Popen(self.path + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     def interact(self, msg, do_log=True):
         try:
@@ -46,7 +49,9 @@ class cpp_bot:
                     if do_log:
                         log.info(info[1], info[0])
         except BrokenPipeError:
-            log.error('Broken pipe', fatal=True)
+            log.error('Broken pipe, restarting ' + self.exe_name)
+            self.run_exe()
+            return self.interact(msg, do_log)
         return answer.decode().strip()
 
     def build_exe(self):
