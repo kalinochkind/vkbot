@@ -108,10 +108,9 @@ def timeto(name, interval):
         return True
     return False
 
+_smile_re = re.compile(r'&#(\d+);')
 def renderSmile(s):
-    if re.match('^&#\d+;', s):
-        return chr(int(s[2:-1]))
-    return s
+    return _smile_re.sub(lambda x:chr(int(x.group(1))), s)
 
 
 _last_reply_lower = set()
