@@ -31,6 +31,7 @@ if args['script']:
     if not args['script'].replace('_', '').isalpha():
         print('Invalid script')
         sys.exit()
+    log.script_name = args['script'].lower()
     try:
         main = importlib.import_module('scripts.' + args['script'].lower()).main
     except ImportError:

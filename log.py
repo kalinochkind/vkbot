@@ -7,6 +7,7 @@ import os
 import accounts
 
 errLock = threading.Lock()
+script_name = None
 
 # s = (console message, db message)
 def info(s, color=''):
@@ -55,5 +56,7 @@ if not os.path.isdir(logdir):
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
+    if script_name:
+        s = '({}) {}'.format(script_name, s)
     with open(logdir + log + '.log', 'a', encoding='utf-8') as f:
         f.write('[{}] {}\n'.format(curtime, s))
