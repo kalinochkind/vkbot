@@ -384,6 +384,16 @@ def preprocessReply(s, uid):
         return vk.name[0]
     if s == 'lastname':
         return vk.name[1]
+    if s == 'bf':
+        if vk.bf:
+            return 'https://vk.com/id' + str(vk.bf['id'])
+        else:
+            return ''
+    if s == 'bfname':
+        if vk.bf:
+            return vk.bf['first_name']
+        else:
+            return ''
     log.error('Unknown variable: ' + s)
 
 

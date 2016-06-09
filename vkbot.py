@@ -46,10 +46,11 @@ class vk_bot:
 
     def initSelf(self):
         self.users.clear()
-        res = self.api.users.get(fields='contacts')[0]
+        res = self.api.users.get(fields='contacts,relation')[0]
         self.self_id = res['id']
         self.phone = res.get('mobile_phone', '')
         self.name = (res['first_name'], res['last_name'])
+        self.bf = res.get('relation_partner')
         log.info('My phone: ' + self.phone)
 
     def getSender(self, message):
@@ -392,6 +393,7 @@ class vk_bot:
     def setRelation(self, uid):
         try:
             self.api.account.saveProfileInfo(relation_partner_id=uid)
+            self.bf = self.users[uid]
             log.write('relation', uid)
         except Exception:
             log.write('relation', str(uid) + ' failed')
