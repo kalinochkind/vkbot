@@ -29,7 +29,7 @@ class DelayedCall:
 class vk_api:
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
-    api_version = '5.50'
+    api_version = '5.52'
 
     logging = bool(args.args['logging'])
     if logging:
