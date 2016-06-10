@@ -396,6 +396,11 @@ def preprocessReply(s, uid):
             return vk.bf['first_name']
         else:
             return ''
+    if s == 'bflastname':
+        if vk.bf:
+            return vk.bf['last_name']
+        else:
+            return ''
     log.error('Unknown variable: ' + s)
 
 
