@@ -43,6 +43,7 @@ class vk_bot:
         self.last_message_id = 0
         self.whitelist = None
         self.bad_conf_title = lambda s: False
+        self.admin = None
 
     def initSelf(self):
         self.users.clear()
@@ -198,7 +199,7 @@ class vk_bot:
         cur_delay = (self.delay_on_reply - 1) * random.random() + 1
         send_time = cur_delay + typing_time
         user_delay = 0
-        if sender in self.last_message:
+        if sender in self.last_message and sender != self.admin:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
 
         tl = timeline(max(send_time, user_delay))

@@ -192,7 +192,7 @@ def processCommand(cmd, *p):
         user = vk.getUserId(p[-1])
         if user is None:
             return 'No such user'
-        if user == admin:
+        if user == vk.admin:
             return 'Cannot ban admin!'
         return banign.ban(user)
 
@@ -208,7 +208,7 @@ def processCommand(cmd, *p):
         users = vk.getUserId(p)
         if not users:
             return 'No such users'
-        if admin in users:
+        if vk.admin in users:
             return 'Cannot ignore admin!'
         noaddUsers(users, reason='\\ignore command')
         vk.users.load(users)
@@ -218,7 +218,7 @@ def processCommand(cmd, *p):
         users = vk.getUserId(p)
         if not users:
             return 'No such users'
-        if admin in users:
+        if vk.admin in users:
             return 'Cannot ignore admin!'
         noaddUsers(users, True)
         vk.users.load(users)
@@ -261,7 +261,7 @@ def reply(message):
     if message['body']:
         if message['body'].startswith('\\') and len(message['body']) > 1:
             cmd = message['body'][1:].split()
-            if cmd and message['user_id'] == admin:
+            if cmd and message['user_id'] == vk.admin:
                 return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
@@ -435,7 +435,7 @@ def noaddUsers(users, remove=False, reason=None):
             check_friend.writeNoadd()
         else:
             users -= check_friend.noadd
-            users.discard(admin)
+            users.discard(vk.admin)
             if not users:
                 return
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
@@ -461,10 +461,10 @@ def _onexit(*p):
 signal.signal(signal.SIGTERM, _onexit)
 
 
-admin = config.get('inf.admin', 'i')
 last_message_text = {}
 
 vk = vk_bot(login, password)
+vk.admin = config.get('inf.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
 log.info('My id: ' + str(vk.self_id))
 banign = ban_manager(accounts.getFile('banned.txt'), vk)
