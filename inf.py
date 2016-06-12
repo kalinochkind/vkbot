@@ -492,6 +492,19 @@ def unignoreHandler(user):
     noaddUsers([user], True)
     return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
 
+def banHandler(user):
+    user = vk.getUserId(user)
+    if not user:
+        return 'Invalid user'
+    banign.ban(user)
+    return 'Banned ' + vk.printableName(user, user_fmt='{name}')
+def unbanHandler(user):
+    user = vk.getUserId(user)
+    if not user:
+        return 'Invalid user'
+    banign.unban(user)
+    return 'Unbanned ' + vk.printableName(user, user_fmt='{name}')
+
 def isignoredHandler(user):
     user = vk.getUserId(user)
     if user is None or user > CONF_START:
@@ -516,6 +529,8 @@ if config.get('inf.server', 'b'):
     srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
     srv.addHandler('ignore', ignoreHandler)
     srv.addHandler('unignore', unignoreHandler)
+    srv.addHandler('ban', banHandler)
+    srv.addHandler('unban', unbanHandler)
     srv.addHandler('reload', reload)
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
