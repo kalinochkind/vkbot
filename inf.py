@@ -428,21 +428,24 @@ def test_friend(uid, need_reason=False):
 def noaddUsers(users, remove=False, reason=None):
     users = set(users)
     if not users:
-        return
+        return 0
     with vk.api.api_lock:
         if remove:
+            prev_len = len(check_friend.noadd)
             check_friend.noadd -= users
             check_friend.writeNoadd()
+            return prev_len - len(check_friend.noadd)
         else:
             users -= check_friend.noadd
             users.discard(vk.admin)
             if not users:
-                return
+                return 0
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             log.info((text_msg, html_msg))
             check_friend.appendNoadd(users)
             vk.deleteFriend(users)
+            return len(users)
 
 
 def reload(*p):
@@ -483,14 +486,18 @@ def ignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    noaddUsers([user], reason='external command')
-    return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
+    if noaddUsers([user], reason='external command'):
+        return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
+    else:
+        return vk.printableName(user, user_fmt='{name}') + ' already ignored'
 def unignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    noaddUsers([user], True)
-    return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
+    if noaddUsers([user], True):
+        return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
+    else:
+        return vk.printableName(user, user_fmt='{name}') + ' is not ignored'
 
 def banHandler(user):
     user = vk.getUserId(user)
