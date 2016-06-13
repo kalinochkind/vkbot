@@ -10,6 +10,8 @@ import accounts
 import args
 from http.client import RemoteDisconnected
 
+CALL_INTERVAL = 0.35
+
 class DelayedCall:
 
     def __init__(self, method, params):
@@ -40,6 +42,7 @@ class vk_api:
         self.password = password
         self.captcha_delayed = 0
         self.captcha_sid = ''
+        self.last_call = 0
         self.delayed_list = []
         self.max_delayed = 25
         self.ignored_errors = ignored_errors
@@ -114,7 +117,10 @@ class vk_api:
         with self.api_lock:
             params['v'] = self.api_version
             url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
-            last_get = time.time()
+            now = time.time()
+            if now - self.last_call < CALL_INTERVAL:
+                time.sleep(CALL_INTERVAL - now + self.last_call)
+            self.last_call = now
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except OSError as e:
@@ -138,10 +144,9 @@ class vk_api:
             if self.logging:
                 with open('inf.log', 'a') as f:
                     print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
-            duration = time.time() - last_get
+            duration = time.time() - now
             if duration > self.timeout:
                 log.warning('{} timeout'.format(method))
-            time.sleep(max(0, last_get - time.time() + 0.4))
 
             if data_array is None:
                 return None
