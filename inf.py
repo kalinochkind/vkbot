@@ -278,7 +278,7 @@ def reply(message):
         elif message['user_id'] in bot_users:
             del bot_users[message['user_id']]
 
-        if message['body'] == last_message_text.get(message['user_id'], (0,0,0))[0]:
+        if message['body'] == last_message_text.get(message['user_id'], (0,0,0))[0] and message['body'] != '..':
             last_message_text[message['user_id']][2] += 1
             if last_message_text[message['user_id']][2] >= 5:
                 noaddUsers([message['user_id']], reason='flood')
