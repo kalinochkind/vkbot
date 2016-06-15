@@ -1,9 +1,11 @@
 import check_friend
 import log
+import accounts
 
 def main(a, args):
     a.timeout = 10
     friends = []
+    banned = list(map(int, open(accounts.getFile('banned.txt')).read().split()))
     log.info('Fetching friends')
     for i in range(1000000):
         log.info('page ' + str(i))
@@ -14,7 +16,7 @@ def main(a, args):
 
     log.info('Starting to delete')
     for i in friends:
-        if not check_friend.is_good(i):
+        if not (check_friend.is_good(i) or i['id'] in banned):
             a.friends.delete.delayed(user_id=i['id'])
             log.info('deleted ' + str(i['id']))
 
