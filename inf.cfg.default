@@ -7,6 +7,8 @@ chars_per_second = 5
 same_user_interval = 30
 same_conf_interval = 30
 typing_interval = 5
+forget_interval = 600
+delay_on_first_reply = 10
 
 [vkapi]
 checks_before_antigate = 6

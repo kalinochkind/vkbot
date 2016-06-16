@@ -28,6 +28,8 @@ class vk_bot:
     same_user_interval = config.get('vkbot.same_user_interval', 'i')
     same_conf_interval = config.get('vkbot.same_conf_interval', 'i')
     typing_interval = config.get('vkbot.typing_interval', 'i')
+    forget_interval = config.get('vkbot.forget_interval', 'i')
+    delay_on_first_reply = config.get('vkbot.delay_on_first_reply', 'i')
 
     def __init__(self, username='', password=''):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
@@ -201,9 +203,12 @@ class vk_bot:
         user_delay = 0
         if sender in self.last_message and sender != self.admin:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
-
         tl = timeline(max(send_time, user_delay))
-        if send_time > user_delay:
+        if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
+            tl.sleep(self.delay_on_first_reply)
+            if fast == 0:
+                tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
+        elif send_time > user_delay:
             if fast == 0:
                 self.api.messages.markAsRead.delayed(peer_id=sender)
         else:
