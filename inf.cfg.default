@@ -21,6 +21,7 @@ includeread_interval = 30
 setonline_interval = 90
 unfollow_interval = -1
 filtercomments_interval = -1
+stats_interval = -1
 admin = 0
 server = off
 

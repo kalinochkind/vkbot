@@ -430,3 +430,6 @@ class vk_bot:
 
     def blacklist(self, uid):
         self.api.account.banUser(user_id=uid)
+
+    def dialogCount(self):
+        return  self.api.messages.getDialogs(count=0)['count']

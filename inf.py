@@ -21,6 +21,7 @@ import threading
 import db_logger
 from args import args
 import importlib
+import json
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
@@ -483,6 +484,7 @@ includeread_interval = config.get('inf.includeread_interval', 'i')
 setonline_interval = config.get('inf.setonline_interval', 'i')
 unfollow_interval = config.get('inf.unfollow_interval', 'i')
 filtercomments_interval = config.get('inf.filtercomments_interval', 'i')
+stats_interval = config.get('inf.stats_interval', 'i')
 
 def ignoreHandler(user):
     user = vk.getUserId(user)
@@ -545,9 +547,10 @@ if config.get('inf.server', 'b'):
     srv.addHandler('leave', leaveHandler)
     srv.listen()
 
+dialogs = 0
 reply_all = timeto('includeread', includeread_interval)
 def main_loop():
-    global reply_all
+    global reply_all, dialogs
     try:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
@@ -565,6 +568,12 @@ def main_loop():
             noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('includeread', includeread_interval):
             reply_all = True
+        if timeto('stats', stats_interval):
+            new_dialogs = vk.dialogCount()
+            if dialogs != new_dialogs:
+                dialogs = new_dialogs
+                with open(accounts.getFile('stats.txt'), 'w') as f:
+                    f.write(json.dumps({'dialogs': dialogs}))
     except Exception as e:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
