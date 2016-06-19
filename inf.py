@@ -338,6 +338,8 @@ def preprocessMessage(message, user=None):
             att.append(a['video']['title'])
         elif a['type'] == 'wall':
             att.append(a['wall']['text'])
+            if not a['wall']['text'] and 'copy_history' in a['wall']:
+                att[-1] = a['wall']['copy_history'][0]['text']
         elif a['type'] == 'doc':
             att.append(a['doc']['title'])
         elif a['type'] == 'gift':
