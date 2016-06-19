@@ -60,6 +60,8 @@ def evalExpression(s):
             return None
     if set(s) <= set('0123456789-') and s.lstrip('-').count('-') == 1 and int(res) <= 0:
         return None
+    if s == '50//50':
+        return None
     if isnum(res):
         return res
     else:
