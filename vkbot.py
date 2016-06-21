@@ -38,7 +38,6 @@ class vk_bot:
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = 0
-        self.banned_messages = set()
         self.good_conf = {}
         self.tm = thread_manager()
         self.last_message = {}
@@ -177,9 +176,7 @@ class vk_bot:
             return
 
         if not answer:
-            if 'id' in message:
-                self.banned_messages.add(message['id'])
-                self.api.messages.markAsRead.delayed(peer_id=sender)
+            self.api.messages.markAsRead.delayed(peer_id=sender)
             return
 
         typing_time = 0
@@ -190,8 +187,6 @@ class vk_bot:
             try:
                 res = self.sendMessage(sender, answer)
                 if res is None:
-                    if 'id' in message:
-                        self.banned_messages.add(message['id'])
                     del self.users[sender]
                     return
                 self.last_message[sender] = (res, 0 if fast == 1 else time.time())
