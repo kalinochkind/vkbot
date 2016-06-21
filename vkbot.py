@@ -27,7 +27,7 @@ class vk_bot:
     chars_per_second = config.get('vkbot.chars_per_second', 'i')
     same_user_interval = config.get('vkbot.same_user_interval', 'i')
     same_conf_interval = config.get('vkbot.same_conf_interval', 'i')
-    typing_interval = config.get('vkbot.typing_interval', 'i')
+    typing_interval = 5
     forget_interval = config.get('vkbot.forget_interval', 'i')
     delay_on_first_reply = config.get('vkbot.delay_on_first_reply', 'i')
 

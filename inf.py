@@ -534,7 +534,7 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
-if config.get('inf.server', 'b'):
+if config.get('inf.server_port', 'i'):
     srv = MessageServer()
     srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
     srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
@@ -546,6 +546,7 @@ if config.get('inf.server', 'b'):
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
     srv.listen()
+    log.info('Running TCP server on port ' + config.get('inf.server_port'))
 
 dialogs = 0
 reply_all = timeto('includeread', includeread_interval)

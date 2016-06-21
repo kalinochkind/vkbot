@@ -1,10 +1,11 @@
 import socket
 import threading
 import log
+import config
 
 class MessageServer:
 
-    port = 55555
+    port = config.get('inf.server_port', 'i')
 
     def __init__(self):
         self.handlers = {}
