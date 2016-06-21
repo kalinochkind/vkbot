@@ -167,7 +167,6 @@ class vk_bot:
         self.guid += 1
         return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
-    # message==None: special conf messages, don't need to reply
     # fast==1: no delay
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
@@ -205,8 +204,8 @@ class vk_bot:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
         tl = timeline(max(send_time, user_delay))
         if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
-            tl.sleep(self.delay_on_first_reply)
             if fast == 0:
+                tl.sleep(self.delay_on_first_reply)
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
         elif send_time > user_delay:
             if fast == 0:
