@@ -24,9 +24,7 @@ vector<double> tfnorm;
 map<long long, int> df;
 map<int, userinfo> users;
 set<long long> names;
-
-//wofstream misslog;
-//wofstream alllog;
+map<long long, wstring> context_map;
 
 inline double tfidf(long long &word)
 {
@@ -196,6 +194,8 @@ wstring Say(wstring &line, int id, bool conf)
         }
         req += '|';
         req += to_wstring(mx / norm(words));
+        req += '|';
+        req += context_map[reply[imx]->second];
         return req;
     }
     if(id >= 0)
@@ -255,6 +255,7 @@ shared_ptr<pair<vector<wstring>, long long> > splitReply(const wstring &t)
     if(s.length())
         ans.push_back(s);
     SwapFirst(ans, 1);
+    context_map[phash(ctx)] = ctx;
     return make_shared<pair<vector<wstring>, long long> >(make_pair(ans, phash(ctx)));
 }
 
@@ -287,12 +288,6 @@ const string filenames = "data/names.txt";
 void Load()
 {
     locale loc("");
-    //misslog.close();
-    //misslog.open("miss.log", ofstream::out | ofstream::app);
-    //misslog.imbue(loc);
-    //alllog.close();
-    //alllog.open("all.log", ofstream::out | ofstream::app);
-    //alllog.imbue(loc);
     reply.clear();
     request.clear();
     tf.clear();
@@ -302,6 +297,8 @@ void Load()
     plain_blacklist.clear();
     fixedstem.clear();
     names.clear();
+    context_map.clear();
+    context_map[0] = L"";
     srand(time(0));
     wifstream fin(file);
     wifstream fstem(filestem);
@@ -319,7 +316,6 @@ void Load()
             for(auto &i : s)
                 i = towupper(i);
             fixedstem.push_back(make_pair(phash(s), phash(buf2)));
-        //    wcerr << s << endl;
         }
     }
     fstem.close();
