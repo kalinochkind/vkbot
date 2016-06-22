@@ -8,10 +8,12 @@
 
 struct userinfo
 {
-    int smiles;
+    unsigned smiles;
     int lastReply;
     long long context;
 };
+
+unsigned MAX_SMILES;
 
 vector<wstring> request;
 vector<shared_ptr<pair<vector<wstring>, long long> > > reply;

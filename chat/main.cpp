@@ -1,15 +1,20 @@
-﻿#include <clocale>
+#include <clocale>
 #include "ChatBot.h"
-#include <unistd.h>
 
 using namespace std;
 
-int main()
+extern unsigned MAX_SMILES;
+
+int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "ru_RU.UTF-8");
     Load();
-    char wd[256];
-    getcwd(wd, sizeof(wd));
+    if(argc == 1)
+        MAX_SMILES = (unsigned) -1;
+    else
+    {
+        MAX_SMILES = atoi(argv[1]);
+    }
     wstring s;
     while(1)
     {

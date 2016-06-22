@@ -33,6 +33,9 @@ offline_allowed = 14
 [user_cache]
 invalidate_interval = 900
 
+[cppbot]
+max_smiles = 2
+
 [delfriends]
 days_till_unfriend = 365
 

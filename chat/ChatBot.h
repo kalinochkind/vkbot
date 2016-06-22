@@ -5,7 +5,6 @@
 
 using namespace std;
 
-#define MAX_SMILES 1
 
 wstring Say(wstring &curline, int id, bool conf);
 void Load();

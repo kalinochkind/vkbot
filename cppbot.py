@@ -3,6 +3,7 @@ import fcntl
 import os
 import log
 import threading
+import config
 
 
 def nonBlockRead(output):
@@ -20,6 +21,7 @@ class cpp_bot:
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h']
     exe_name = 'chat.exe'
     path = 'chat/'
+    max_smiles = config.get('cppbot.max_smiles', 'i')
 
     def __init__(self):
         try:
@@ -33,7 +35,7 @@ class cpp_bot:
         self.bot_lock = threading.Lock()
 
     def run_exe(self):
-        self.bot = Popen(self.path + self.exe_name, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.bot = Popen([self.path + self.exe_name, str(self.max_smiles)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     def interact(self, msg, do_log=True):
         try:
