@@ -112,6 +112,18 @@ long long phnamec = phash(L"firstnamec");
 wstring Say(wstring &line, int id, bool conf)
 {
     line += L' ';
+    long long context = users[id].context;
+    if(line[1] == L'$' && id == -2)
+    {
+        wstring ctx;
+        int i;
+        for(i=2;line[i]!=L' ';i++)
+        {
+            ctx += line[i];
+        }
+        line = line.substr(i);
+        context = phash(ctx);
+    }
     auto words_pos = splitWords(line, fixedstem, replaced, names);
     vector<long long> words = PlainWords(words_pos);
     if(conf)
@@ -133,7 +145,6 @@ wstring Say(wstring &line, int id, bool conf)
     }
     double mx = 0;
     int imx = 0;
-    long long context = users[id].context;
     vector<long long> common;
     for(int i=0;i<(int)tf.size();i++)
     {
