@@ -241,7 +241,7 @@ def processCommand(cmd, *p):
 
 
 # returns (text, mode)
-# mode=0: default, mode=1: no delay, mode=2: friendship request
+# mode=0: default, mode=1: no delay, mode=2: friendship request, mode=3: forward previous message
 def reply(message):
     if vk.getSender(message) in banign.banned:
         return None
@@ -304,6 +304,7 @@ def reply(message):
             log.info((text_msg, html_msg))
             log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
+
     if message['body']:
         message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
@@ -313,6 +314,10 @@ def reply(message):
         return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
+    # we work with users here, but sendMessage uses senders, so idk how this shit will work in chats
+    if message['user_id'] in last_message_text and message['body'] == '{' + last_message_text[message['user_id']][0] + '}' and last_message_text[message['user_id']][1] == reply.strip().upper() and not 'chat_id' in message:
+        log.info('lalalalalalalala')  # do not remove this line until this feature is fully tested
+        return ('', 3)
     if reply is not None:
         last_message_text[message['user_id']] = [message['body'], reply.strip().upper(), 1]
     return (reply, 0)

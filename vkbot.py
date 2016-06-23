@@ -165,7 +165,10 @@ class vk_bot:
         if not self.good_conf.get(to, 1):
             return
         self.guid += 1
-        return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
+        if isinstance(msg, str):
+            return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
+        else:
+            return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)  # kostil
 
     # fast==1: no delay
     #       2: no markAsRead
@@ -174,7 +177,7 @@ class vk_bot:
         if 'id' in message and message['id'] <= self.last_message.get(sender, (0, 0))[0]:
             return
 
-        if not answer:
+        if not answer and fast != 3:
             if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
                 tl = timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl)
@@ -219,6 +222,8 @@ class vk_bot:
         if typing_time:
             tl.do_every_for(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
+        if fast == 3:
+            answer = self.last_message[sender][0]
         self.tm.run(sender, tl)
 
     def checkConf(self, cid):
