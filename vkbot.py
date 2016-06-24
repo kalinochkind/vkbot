@@ -40,7 +40,7 @@ class vk_bot:
         self.last_viewed_comment = 0
         self.good_conf = {}
         self.tm = thread_manager()
-        self.last_message = {}
+        self.last_message = {}  # peer_id: (id, time, text)
         self.last_message_id = 0
         self.whitelist = None
         self.bad_conf_title = lambda s: False
@@ -161,11 +161,14 @@ class vk_bot:
                 result.append(i)
         return result
 
-    def sendMessage(self, to, msg):
+    def sendMessage(self, to, msg, resend=False):
         if not self.good_conf.get(to, 1):
             return
         self.guid += 1
-        return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
+        if resend:
+            return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
+        else:
+            return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
     # fast==1: no delay
     #       2: no markAsRead
@@ -180,20 +183,29 @@ class vk_bot:
                 self.tm.run(sender, tl)
             else:
                 self.api.messages.markAsRead.delayed(peer_id=sender)
-            self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time())
+            self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time(), '')
             return
 
         typing_time = 0
         if (fast == 0 or fast == 2) and not answer.startswith('&#'):
             typing_time = len(answer) / self.chars_per_second
 
+        resend = False
+        if sender in self.last_message and self.last_message[sender][2].upper() == answer.upper():
+            log.info('Resending')
+            typing_time = 0
+            resend = True
+
         def _send():
             try:
-                res = self.sendMessage(sender, answer)
+                if resend:
+                    res = self.sendMessage(sender, self.last_message[sender][0], resend=True)
+                else:
+                    res = self.sendMessage(sender, answer)
                 if res is None:
                     del self.users[sender]
                     return
-                self.last_message[sender] = (res, 0 if fast == 1 else time.time())
+                self.last_message[sender] = (res, 0 if fast == 1 else time.time(), answer)
             except Exception as e:
                 log.error('thread {}: {}'.format(e.__class__.__name__, str(e)), True)
 
