@@ -219,11 +219,8 @@ class vk_bot:
             if fast == 0:
                 tl.sleep(self.delay_on_first_reply)
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
-        elif send_time > user_delay:
-            if fast == 0:
-                self.api.messages.markAsRead.delayed(peer_id=sender)
         else:
-            tl.sleep_until(send_time)
+            tl.sleep_until(send_time, (self.delay_on_reply - 1) * random.random() + 1)
             if fast == 0:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 

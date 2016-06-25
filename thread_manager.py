@@ -40,9 +40,9 @@ class timeline:
     def sleep(self, seconds):
         return self.do(lambda: time.sleep(seconds))
 
-    def sleep_until(self, seconds=0):
+    def sleep_until(self, seconds, min_sleep=0):
         def _f():
-            rem = self.endtime - time.time() - seconds
+            rem = max(self.endtime - time.time() - seconds, min_sleep)
             if rem > 0:
                 time.sleep(rem)
         return self.do(_f)
