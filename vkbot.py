@@ -255,7 +255,7 @@ class vk_bot:
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)
         to_rep = []
-        self.loadUsers(data, lambda x:x['items']['user_id'], True)
+        self.loadUsers(data['items'], lambda x:x['user_id'], True)
         for i in data['items']:
             if self.users[i['user_id']].get('blacklisted'):
                 self.api.friends.delete.delayed(user_id=i['user_id'])
