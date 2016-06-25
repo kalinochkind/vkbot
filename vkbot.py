@@ -260,7 +260,7 @@ class vk_bot:
         to_rep = []
         self.loadUsers(data, lambda x:x['items']['user_id'], True)
         for i in data['items']:
-            if self.users[i['user_id']]['blacklisted']:
+            if self.users[i['user_id']].get('blacklisted'):
                 self.api.friends.delete.delayed(user_id=i['user_id'])
                 continue
             res = is_good(i['user_id'], True)
