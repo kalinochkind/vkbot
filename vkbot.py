@@ -34,7 +34,7 @@ class vk_bot:
     def __init__(self, username='', password=''):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
-        self.users = user_cache(self.api, 'sex,photo_id,blacklisted,blacklisted_by_me')
+        self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me')
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = 0
@@ -393,16 +393,12 @@ class vk_bot:
 
     def likeAva(self, uid):
         del self.users[uid]
-        try:
-            if 'photo_id' not in self.users[uid]:
-                log.write('likeava', str(uid) + ' missing')
-                return
-            photo = self.users[uid]['photo_id'].split('_')
-            log.write('likeava', str(uid))
-            self.api.likes.add(type='photo', owner_id=photo[0], item_id=photo[1])
-        except Exception:
-            log.error('likeava failed', True)
-            log.write('likeava', str(uid) + ' failed')
+        if 'crop_photo' not in self.users[uid]:
+            log.write('likeava', str(uid) + ' missing')
+            return
+        photo = self.users[uid]['crop_photo']['photo']
+        log.write('likeava', str(uid))
+        self.api.likes.add(type='photo', owner_id=photo['owner_id'], item_id=photo['id'])
 
     def setRelation(self, uid):
         try:
