@@ -52,7 +52,7 @@ if acc is None:
 if accountExists(acc):
     selectAccount(acc)
 else:
-    if input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
+    if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
         print('Creating new account')
         if not createAccount(acc):
             print('Invalid account name')
