@@ -225,7 +225,7 @@ class vk_api:
         if not self.username or not self.password:
             log.error('I don\'t know your login or password, sorry', fatal=True)
         try:
-            json_string = urllib.request.urlopen(url).read().decode()
+            json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
         except Exception:
             log.error('Authorization failed', fatal=True)
         data = json.loads(json_string)
