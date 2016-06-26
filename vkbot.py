@@ -7,6 +7,7 @@ import config
 import re
 import random
 import html
+import stats
 
 CONF_START = 2000000000
 
@@ -45,6 +46,7 @@ class vk_bot:
         self.whitelist = None
         self.bad_conf_title = lambda s: False
         self.admin = None
+        self.bannedCount = 0
 
     def initSelf(self):
         self.users.clear()
@@ -89,9 +91,9 @@ class vk_bot:
         if ans:
             self.replyMessage(message, ans[0], ans[1])
 
-
     def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
+        self.bannedCount = 0
         if include_read:
             log.info('Include read')
             self.users.gc()
@@ -110,6 +112,7 @@ class vk_bot:
                         continue
                     self.replyOne(cur, gen_reply, 'getDialogs')
                 self.api.sync()
+            stats.update('banned_messages', self.bannedCount)
 
         else:
             messages = self.longpollMessages()
