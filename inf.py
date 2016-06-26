@@ -21,7 +21,7 @@ import threading
 import db_logger
 from args import args
 import importlib
-import json
+import stats
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
@@ -548,7 +548,6 @@ if config.get('inf.server_port', 'i'):
     srv.listen()
     log.info('Running TCP server on port ' + config.get('inf.server_port'))
 
-dialogs = 0
 reply_all = timeto('includeread', includeread_interval)
 def main_loop():
     global reply_all, dialogs
@@ -570,11 +569,7 @@ def main_loop():
         if timeto('includeread', includeread_interval):
             reply_all = True
         if timeto('stats', stats_interval):
-            new_dialogs = vk.dialogCount()
-            if dialogs != new_dialogs:
-                dialogs = new_dialogs
-                with open(accounts.getFile('stats.txt'), 'w') as f:
-                    f.write(json.dumps({'dialogs': dialogs}))
+            stats.update('dialogs', vk.dialogCount())
     except Exception as e:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True
