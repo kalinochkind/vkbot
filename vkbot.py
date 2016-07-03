@@ -208,6 +208,9 @@ class vk_bot:
                     res = self.sendMessage(sender, answer)
                 if res is None:
                     del self.users[sender]
+                    text_msg = 'Failed to send a message to ' + self.printableSender(message, False)
+                    html_msg = 'Failed to send a message to ' + self.printableSender(message, True)
+                    log.info((text_msg, html_msg))
                     return
                 self.last_message[sender] = (res, 0 if fast == 1 else time.time(), answer)
             except Exception as e:
