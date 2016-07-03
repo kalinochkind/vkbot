@@ -74,10 +74,11 @@ class vk_api:
                         handler.sync()
                         return response
                     def delayed(self, **dp):
-                        if len(handler.delayed_list) >= handler.max_delayed:
-                            handler.sync()
-                        dc = DelayedCall(self.method, dp)
-                        handler.delayed_list.append(dc)
+                        with handler.api_lock:
+                            if len(handler.delayed_list) >= handler.max_delayed:
+                                handler.sync()
+                            dc = DelayedCall(self.method, dp)
+                            handler.delayed_list.append(dc)
                         return dc
                 return _method_wrapper(self.group + '.' + item)
         if item not in ['users', 'auth', 'wall', 'photos', 'friends', 'widgets', 'storage', 'status', 'audio', 'pages',
@@ -94,24 +95,25 @@ class vk_api:
         return "API." + s.method + '(' + str(s.params).replace('"', '\\"').replace("'", '"') + ')'
 
     def sync(self):
-        if not self.delayed_list:
-            return
-        dl = self.delayed_list
-        self.delayed_list = []
-        if len(dl) == 1:
-            dc = dl[0]
-            response = self.apiCall(dc.method, dc.params)
-            dc._called(response)
-            return
+        with self.api_lock:
+            if not self.delayed_list:
+                return
+            dl = self.delayed_list
+            self.delayed_list = []
+            if len(dl) == 1:
+                dc = dl[0]
+                response = self.apiCall(dc.method, dc.params)
+                dc._called(response)
+                return
 
-        query = ['return[']
-        for num, i in enumerate(dl):
-            query.append(self.encodeApiCall(i) + ',')
-        query.append('];')
-        query = ''.join(query)
-        response = self.execute(query)
-        for dc, r in zip(dl, response):
-            dc._called(r)
+            query = ['return[']
+            for num, i in enumerate(dl):
+                query.append(self.encodeApiCall(i) + ',')
+            query.append('];')
+            query = ''.join(query)
+            response = self.execute(query)
+            for dc, r in zip(dl, response):
+                dc._called(r)
 
     def apiCall(self, method, params, retry=False):
         with self.api_lock:

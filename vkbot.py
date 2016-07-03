@@ -37,7 +37,7 @@ class vk_bot:
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
-        self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
+        #self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = 0
@@ -105,25 +105,23 @@ class vk_bot:
                 # may sometimes happen because of friendship requests
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
-            with self.api.api_lock:
-                for msg in sorted(messages, key=lambda msg:msg['message']['id']):
-                    cur = msg['message']
-                    if cur['out']:
-                        continue
-                    if self.last_message_id and cur['id'] > self.last_message_id:
-                        continue
-                    self.replyOne(cur, gen_reply, 'getDialogs')
-                self.api.sync()
+            for msg in sorted(messages, key=lambda msg:msg['message']['id']):
+                cur = msg['message']
+                if cur['out']:
+                    continue
+                if self.last_message_id and cur['id'] > self.last_message_id:
+                    continue
+                self.replyOne(cur, gen_reply, 'getDialogs')
+            self.api.sync()
             stats.update('banned_messages', self.bannedCount)
 
         else:
             messages = self.longpollMessages()
             self.loadUsers(messages, lambda x:x['user_id'])
-            with self.api.api_lock:
-                for cur in sorted(messages, key=lambda msg:msg['id']):
-                    self.last_message_id = max(self.last_message_id, cur['id'])
-                    self.replyOne(cur, gen_reply)
-                self.api.sync()
+            for cur in sorted(messages, key=lambda msg:msg['id']):
+                self.last_message_id = max(self.last_message_id, cur['id'])
+                self.replyOne(cur, gen_reply)
+            self.api.sync()
 
     def longpollMessages(self):
         arr = self.api.getLongpoll()
