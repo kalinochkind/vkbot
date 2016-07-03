@@ -8,6 +8,7 @@ import re
 import random
 import html
 import stats
+import check_friend
 
 CONF_START = 2000000000
 
@@ -35,7 +36,7 @@ class vk_bot:
     def __init__(self, username='', password=''):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
-        self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me')
+        self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = 0

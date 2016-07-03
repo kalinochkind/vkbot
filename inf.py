@@ -423,9 +423,8 @@ def applyGender(msg, uid):
     return msg, gender
 
 def test_friend(uid, need_reason=False):
-    try:
-        fr = vk.api.users.get(user_ids=uid, fields=check_friend.fields)[0]
-    except KeyError:
+    fr = vk.users[uid]
+    if fr is None:
         return False
     return check_friend.is_good(fr, need_reason)
 
