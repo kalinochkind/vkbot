@@ -37,6 +37,7 @@ class vk_bot:
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
         self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
+        self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = 0
