@@ -7,6 +7,7 @@ import os
 import accounts
 
 errLock = threading.Lock()
+logLock = threading.Lock()
 script_name = None
 
 # s = (console message, db message)
@@ -14,20 +15,21 @@ def info(s, color=''):
     if isinstance(s, str):
         s = (s, s)
     s = (s[0].replace('`{', '').replace('}`', ''), s[1])
-    if color == 'red':
-        print('\033[38;5;9m' + s[0] + '\033[0m')
-    elif color == 'green':
-        print('\033[38;5;10m' + s[0] + '\033[0m')
-    elif color == 'yellow':
-        print('\033[38;5;11m' + s[0] + '\033[0m')
-    elif color:
-        print('[{}] {}'.format(color.upper(), s[0]))
-    else:
-        print(s[0])
-    if color:
-        s = ('[' + color.upper() + ']' + s[0], s[1])
-    db_logger.log(s[1], color, text_msg=s[0])
-    sys.stdout.flush()
+    with logLock:
+        if color == 'red':
+            print('\033[38;5;9m' + s[0] + '\033[0m')
+        elif color == 'green':
+            print('\033[38;5;10m' + s[0] + '\033[0m')
+        elif color == 'yellow':
+            print('\033[38;5;11m' + s[0] + '\033[0m')
+        elif color:
+            print('[{}] {}'.format(color.upper(), s[0]))
+        else:
+            print(s[0])
+        if color:
+            s = ('[' + color.upper() + ']' + s[0], s[1])
+        db_logger.log(s[1], color, text_msg=s[0])
+        sys.stdout.flush()
 
 def warning(s):
     info(s, 'warning')
