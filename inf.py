@@ -269,9 +269,7 @@ def reply(message):
                 return (processCommand(*cmd), 1)
 
         if isBotMessage(message['body']):
-            text_msg = '({}) {} - ignored (bot message)'.format(vk.printableSender(message, False), message['body'])
-            html_msg = '({}) {} - ignored (bot message)'.format(vk.printableSender(message, True), message['body'])
-            log.info((text_msg, html_msg))
+            vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
             if 'chat_id' in message:
                 bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
                 if bot_users[message['user_id']] >= 3:
@@ -287,32 +285,24 @@ def reply(message):
             if last_message_text[message['user_id']][2] >= 5:
                 noaddUsers([message['user_id']], reason='flood')
             else:
-                text_msg = '({}) {} - ignored (repeated)'.format(vk.printableSender(message, False), message['body'])
-                html_msg = '({}) {} - ignored (repeated)'.format(vk.printableSender(message, True), message['body'])
-                log.info((text_msg, html_msg))
+                vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
             return ('', 0)
 
         if message['body'].strip().upper() == last_message_text.get(message['user_id'], (0,0,0))[1]:
-            text_msg = '({}) {} - ignored (my reply)'.format(vk.printableSender(message, False), message['body'])
-            html_msg = '({}) {} - ignored (my reply)'.format(vk.printableSender(message, True), message['body'])
-            log.info((text_msg, html_msg))
+            vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
             return ('', 0)
 
         t = evalExpression(message['body'])
         if t:
             if getBotReply(None, message['body'], -2):
                 return ('', 0)
-            text_msg = '({}) {} = {} (calculated)'.format(vk.printableSender(message, False), message['body'], t)
-            html_msg = '({}) {} = {} (calculated)'.format(vk.printableSender(message, True), message['body'], t)
-            log.info((text_msg, html_msg))
+            vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
             log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
     if message['body']:
         message['body'] = message['body'].replace('<br>', '<BR>')
     if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
-        text_msg = '({}) {} - ignored (caps)'.format(vk.printableSender(message, False), message['body'])
-        html_msg = '({}) {} - ignored (caps)'.format(vk.printableSender(message, True), message['body'])
-        log.info((text_msg, html_msg))
+        vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
         return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
@@ -558,7 +548,7 @@ def main_loop():
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), lambda uid,html:vk.printableSender({'user_id':uid},html)), reason='bad comment')
+            noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1)), reason='bad comment')
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('addfriends', addfriends_interval):

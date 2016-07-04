@@ -273,17 +273,13 @@ class vk_bot:
             res = is_good(i['user_id'], True)
             if res is None:
                 self.api.friends.add.delayed(user_id=i['user_id'])
-                text_msg = 'Adding ' + self.printableSender(i, False)
-                html_msg = 'Adding ' + self.printableSender(i, True)
-                log.info((text_msg, html_msg))
+                self.logSender('Adding %sender%', i)
                 if 'message' in i:
                     ans = gen_reply(i)
                     to_rep.append((i, ans))
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
-                text_msg = 'Not adding {} ({})'.format(self.printableSender(i, False), res)
-                html_msg = 'Not adding {} ({})'.format(self.printableSender(i, True), res)
-                log.info((text_msg, html_msg))
+                self.logSender('Not adding %sender% ({})'.format(res))
         for i in to_rep:
             self.replyMessage(i[0], i[1][0], i[1][1])
         self.api.sync()
@@ -357,7 +353,7 @@ class vk_bot:
         else:
             self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
 
-    def filterComments(self, test, name_func):
+    def filterComments(self, test):
         data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
         to_del = set()
         to_bl = set()
@@ -376,27 +372,22 @@ class vk_bot:
 
             if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
                 txt = html.escape(rep['feedback']['text'])
+                res = 'good'
                 if self.users[rep['feedback']['from_id']]['blacklisted']:
-                    text_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], False))
-                    html_msg = 'Comment {} (by {}) - blacklisted'.format(txt, name_func(rep['feedback']['from_id'], True))
+                    res = 'blacklisted'
                     log.write('comments', str(rep['feedback']['from_id']) + ' (blacklisted): ' + txt)
                     self.deleteComment(rep)
                     to_bl.add(rep['feedback']['from_id'])
                 elif test(txt):
-                    text_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], False))
-                    html_msg = 'Comment {} (by {}) - bad'.format(txt, name_func(rep['feedback']['from_id'], True))
+                    res = 'bad'
                     log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
                 elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
-                    text_msg = 'Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'], False))
-                    html_msg = 'Comment {} (by {}) - attachment'.format(txt, name_func(rep['feedback']['from_id'], True))
+                    res = 'attachment'
                     log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
-                else:
-                    text_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], False))
-                    html_msg = 'Comment {} (by {}) - good'.format(txt, name_func(rep['feedback']['from_id'], True))
-                log.info((text_msg, html_msg))
+                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id':rep['feedback']['from_id']})
         for i in to_bl:
             self.blacklist(i)
         return to_del
@@ -422,11 +413,16 @@ class vk_bot:
 
     # {name} - first_name last_name
     # {id} - id
-    def printableName(self, pid, user_fmt = '<a href="https://vk.com/id{id}" target="_blank">{name}</a>', conf_fmt = 'Conf {id}'):
+    def printableName(self, pid, user_fmt, conf_fmt='Conf {id}'):
         if pid > CONF_START:
             return conf_fmt.format(id=(pid - CONF_START))
         else:
             return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
+
+    def logSender(self, text, message):
+        text_msg = text.replace('%sender%', self.printableSender(message, False))
+        html_msg = text.replace('%sender%', self.printableSender(message, True))
+        log.info((text_msg, html_msg))
 
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:
