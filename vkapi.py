@@ -33,11 +33,10 @@ class vk_api:
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
     api_version = '5.52'
 
-    logging = bool(args.args['logging'])
-    if logging:
-        log.info('Logging enabled')
-
     def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout', 'i')):
+        self.logging = bool(args.args['logging'])
+        if self.logging:
+            log.info('Logging enabled')
         self.username = username
         self.password = password
         self.captcha_delayed = 0
