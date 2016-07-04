@@ -118,7 +118,7 @@ def renderSmile(s):
 _last_reply_lower = set()
 # conf_id == -1: comment
 # conf_id == -2: flat
-def getBotReply(uid, message, conf_id, method=''):
+def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
     if message is None:
         return None
 
@@ -164,7 +164,7 @@ def getBotReply(uid, message, conf_id, method=''):
 
     if '\\' in answer:
         r = re.compile(r'\\[a-zA-Z]+')
-        res = r.sub(lambda m:preprocessReply(m.group(0)[1:], uid), answer)
+        res = r.sub(lambda m:preprocessReply(m.group(0)[1:], uid, onsend_actions), answer)
         console_message += ' (' + answer + ')'
         answer = res
 
@@ -256,8 +256,10 @@ def reply(message):
     if 'body' not in message:
         message['body'] = ''
 
+    onsend_actions = []
+
     if 'id' not in message:  # friendship request
-        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request'), 2)
+        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request', onsend_actions), 2)
     message['body'] = preprocessMessage(message)
 
     if message['body']:
@@ -313,9 +315,10 @@ def reply(message):
         log.info((text_msg, html_msg))
         return ('', 0)
 
-    reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''))
+    reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
     if reply is not None:
         last_message_text[message['user_id']] = [message['body'], reply.strip().upper(), 1]
+    message['_onsend_actions'] = onsend_actions
     return (reply, 0)
 
 
@@ -369,7 +372,7 @@ def preprocessMessage(message, user=None):
     return result.strip()
 
 
-def preprocessReply(s, uid):
+def preprocessReply(s, uid, onsend_actions):
     if s == 'myname':
         return vk.users[uid]['first_name']
     if s == 'mylastname':
@@ -377,10 +380,10 @@ def preprocessReply(s, uid):
     if s == 'curtime':
         return time.strftime("%H:%M", time.localtime())
     if s == 'likeava':
-        vk.likeAva(uid)
+        onsend_actions.append(lambda: vk.likeAva(uid))
         return ''
     if s == 'gosp':
-        vk.setRelation(uid)
+        onsend_actions.append(lambda: vk.setRelation(uid))
         return ''
     if s == 'phone':
         return vk.phone

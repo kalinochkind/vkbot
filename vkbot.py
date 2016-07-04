@@ -231,6 +231,10 @@ class vk_bot:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 
         tl.sleep(cur_delay)
+        if message.get('_onsend_actions'):
+            for i in message['_onsend_actions']:
+                tl.do(i)
+                tl.sleep(cur_delay)
         if typing_time:
             tl.do_every_for(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
