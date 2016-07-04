@@ -556,16 +556,16 @@ def main_loop():
             vk.setOnline()
         if timeto('filtercomments', filtercomments_interval):
             noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1), lambda uid,html:vk.printableSender({'user_id':uid},html)), reason='bad comment')
+        if timeto('unfollow', unfollow_interval):
+            noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
+        if timeto('addfriends', addfriends_interval):
+            vk.addFriends(reply, test_friend)
         if includeread_interval >= 0:
             vk.replyAll(reply, reply_all)
         else:
             time.sleep(1)
         reply_all = vk.api.captchaError
         vk.api.captchaError = False
-        if timeto('addfriends', addfriends_interval):
-            vk.addFriends(reply, test_friend)
-        if timeto('unfollow', unfollow_interval):
-            noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
         if timeto('includeread', includeread_interval):
             reply_all = True
         if timeto('stats', stats_interval):
