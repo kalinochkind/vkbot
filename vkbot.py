@@ -404,10 +404,8 @@ class vk_bot:
     def likeAva(self, uid):
         del self.users[uid]
         if 'crop_photo' not in self.users[uid]:
-            log.write('likeava', str(uid) + ' missing')
             return
         photo = self.users[uid]['crop_photo']['photo']
-        log.write('likeava', str(uid))
         self.api.likes.add(type='photo', owner_id=photo['owner_id'], item_id=photo['id'])
 
     def setRelation(self, uid):
