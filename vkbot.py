@@ -279,7 +279,7 @@ class vk_bot:
                     to_rep.append((i, ans))
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
-                self.logSender('Not adding %sender% ({})'.format(res))
+                self.logSender('Not adding %sender% ({})'.format(res), i)
         for i in to_rep:
             self.replyMessage(i[0], i[1][0], i[1][1])
         self.api.sync()
