@@ -125,7 +125,10 @@ class vk_api:
             try:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except OSError as e:
-                log.warning(method + ' failed ({})'.format(e))
+                err = str(e)
+                if err.startswith('<urlopen error'):
+                    err = err.split(':')[-1].rstrip('>')
+                log.warning(method + ' failed ({})'.format(err))
                 time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
