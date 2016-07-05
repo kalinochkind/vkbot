@@ -182,6 +182,7 @@ class vk_api:
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
+                        open(accounts.getFile('captcha.txt'), 'w').close()
                         ans = captcha.solve()
                         if ans is None:
                             self.captchaError = True
