@@ -244,7 +244,7 @@ def processCommand(cmd, *p):
 # mode=0: default, mode=1: no delay, mode=2: friendship request
 def reply(message):
     if vk.getSender(message) in banign.banned:
-        vk.bannedCount += 1
+        vk.bannedList.append(vk.getSender(message))
         return None
     if vk.getSender(message) < 0:
         return None

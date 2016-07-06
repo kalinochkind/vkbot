@@ -48,7 +48,7 @@ class vk_bot:
         self.whitelist = None
         self.bad_conf_title = lambda s: False
         self.admin = None
-        self.bannedCount = 0
+        self.bannedList = []
 
     def initSelf(self):
         self.users.clear()
@@ -95,7 +95,7 @@ class vk_bot:
 
     def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
-        self.bannedCount = 0
+        self.bannedList = []
         if include_read:
             log.info('Include read')
             self.users.gc()
@@ -113,7 +113,7 @@ class vk_bot:
                     continue
                 self.replyOne(cur, gen_reply, 'getDialogs')
             self.api.sync()
-            stats.update('banned_messages', self.bannedCount)
+            stats.update('banned_messages', ' '.join(map(str, sorted(self.bannedList))))
 
         else:
             messages = self.longpollMessages()
