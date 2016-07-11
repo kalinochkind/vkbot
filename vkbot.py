@@ -80,7 +80,7 @@ class vk_bot:
             if not self.checkConf(message['chat_id']):
                 self.deleteFriend(message['user_id'])
                 return
-        if self.tm.isBusy(self.getSender(message)):
+        if self.tm.isBusy(self.getSender(message)) and not self.tm.canTerminate(self.getSender(message)):
             return
 
         message['_method'] = method
@@ -181,9 +181,11 @@ class vk_bot:
             return
 
         if not answer:
+            if self.tm.isBusy(sender):
+                return
             if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
                 tl = timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
-                self.tm.run(sender, tl)
+                self.tm.run(sender, tl, tl.terminate)
             else:
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time(), '')

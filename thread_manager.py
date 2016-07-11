@@ -1,18 +1,34 @@
 import threading
 import time
-
+import log
 
 class thread_manager:  # not thread-safe, should be used only from main thread
     def __init__(self):
         self.threads = {}
 
-    def run(self, key, proc):
+    def run(self, key, proc, terminate_func=None):
+        if self.isBusy(key):
+            if self.canTerminate(key):
+                self.terminate(key)
+            else:
+                log.error('Unable to run a new thread with key ' + str(key))
+                return
         t = threading.Thread(target=proc)
+        t.terminate_func = terminate_func
         self.threads[key] = t
         t.start()
 
     def isBusy(self, key):
         return key in self.threads and self.threads[key].is_alive()
+
+    def terminate(self, key):
+        try:
+            self.threads[key].terminate_func()
+        except TypeError:
+            pass
+
+    def canTerminate(self, key):
+        return key in self.threads and self.threads[key].terminate_func is not None
 
     def gc(self):
         to_del = []
@@ -32,6 +48,7 @@ class timeline:
         self.events = []
         self.duration = duration
         self.endtime = 0
+        self.terminated = False
 
     def do(self, func):
         self.events.append(func)
@@ -54,6 +71,8 @@ class timeline:
             end = end_func()
             while time.time() + interval < end:
                 time.sleep(interval)
+                if self.terminated:
+                    return
                 func()
             time.sleep(max(0, end - time.time()))
         return self.do(_f)
@@ -64,7 +83,12 @@ class timeline:
     def do_every_for(self, interval, func, seconds, do_at_start=True):
         return self.do_every(interval, func, lambda:time.time() + seconds, do_at_start)
 
+    def terminate():
+        self.terminated = True
+
     def __call__(self):
         self.endtime = time.time() + self.duration
         for func in self.events:
+            if self.terminated:
+                return
             func()
