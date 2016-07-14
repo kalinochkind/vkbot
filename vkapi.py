@@ -127,7 +127,10 @@ class vk_api:
             except OSError as e:
                 err = str(e)
                 if err.startswith('<urlopen error'):
-                    err = err.split(':')[-1].rstrip('>')
+                    if ':' in err:
+                        err = err.split(':')[-1].rstrip('>')
+                    else:
+                        err = err.split(']')[-1].lstrip().rstrip('>')
                 log.warning(method + ' failed ({})'.format(err))
                 time.sleep(1)
                 return self.apiCall(method, params)
