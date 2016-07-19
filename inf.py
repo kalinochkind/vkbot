@@ -541,6 +541,7 @@ if config.get('inf.server_port', 'i'):
     srv.listen()
     log.info('Running TCP server on port ' + config.get('inf.server_port'))
 
+check_friend.writeNoadd()
 reply_all = timeto('includeread', includeread_interval)
 def main_loop():
     global reply_all, dialogs
