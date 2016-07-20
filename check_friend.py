@@ -1,6 +1,7 @@
 import time
 import config
 import accounts
+import stats
 
 fields = 'photo_50,country,last_seen'
 
@@ -14,11 +15,13 @@ offline_allowed = config.get('check_friend.offline_allowed', 'i')
 def writeNoadd():
     with open(accounts.getFile('noadd.txt'), 'w') as f:
         f.write('\n'.join(map(str, sorted(noadd))))
+    stats.update('ignored', len(noadd))
 
 def appendNoadd(users):
     noadd.update(users)
     with open(accounts.getFile('noadd.txt'), 'a') as f:
         f.write('\n' + '\n'.join(map(str, sorted(users))))
+    stats.update('ignored', len(noadd))
 
 def check_char(c):
     return c in allowed
