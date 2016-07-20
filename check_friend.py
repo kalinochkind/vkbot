@@ -39,7 +39,7 @@ def is_good(fr, need_reason=False):
     for fun, msg in checks:
         if not fun(fr):
             if need_reason:
-                reasons.append(msg)
+                reasons.append(msg.lower() if reasons else msg)
             else:
                 return False
     if need_reason:
