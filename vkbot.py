@@ -9,6 +9,7 @@ import random
 import html
 import stats
 import check_friend
+import threading
 
 CONF_START = 2000000000
 
@@ -49,6 +50,7 @@ class vk_bot:
         self.bad_conf_title = lambda s: False
         self.admin = None
         self.bannedList = []
+        self.message_lock = threading.Lock()
 
     def initSelf(self):
         self.users.clear()
@@ -172,11 +174,13 @@ class vk_bot:
     def sendMessage(self, to, msg, resend=False):
         if not self.good_conf.get(to, 1):
             return
-        self.guid += 1
-        if resend:
-            return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
-        else:
-            return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
+        with self.message_lock:
+            self.guid += 1
+            if resend:
+                return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
+            else:
+                return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
+            time.sleep(1)
 
     # fast==1: no delay
     #       2: no markAsRead
