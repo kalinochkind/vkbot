@@ -208,7 +208,7 @@ class vk_bot:
             typing_time = len(answer) / self.chars_per_second
 
         resend = False
-        if sender in self.last_message and self.last_message[sender][2].upper() == answer.upper():
+        if sender in self.last_message and self.last_message[sender][2].upper() == answer.upper() and fast == 0:
             log.info('Resending')
             typing_time = 0
             resend = True
