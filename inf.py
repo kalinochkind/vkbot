@@ -76,9 +76,8 @@ smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitline
 random.shuffle(noans)
 
 class ban_manager:
-    def __init__(self, filename, vkbot):
+    def __init__(self, filename):
         self.filename = filename
-        self.vkbot = vkbot
         banign = open(filename).read().split()
         self.banned = set(map(int, banign))
 
@@ -89,18 +88,17 @@ class ban_manager:
 
     def ban(self, pid):
         if pid in self.banned:
-            return 'Already banned!'
+            return False
         self.banned.add(pid)
         self.write()
-        return self.vkbot.printableName(pid, user_fmt='[id{id}|{name}]') + ' banned'
+        return True
 
     def unban(self, pid):
         if pid not in self.banned:
-            return 'Not banned!'
-        else:
-            self.banned.discard(pid)
-            self.write()
-            return self.vkbot.printableName(pid, user_fmt='[id{id}|{name}]') + ' unbanned'
+            return False
+        self.banned.discard(pid)
+        self.write()
+        return True
 
 
 _timeto = {}
@@ -195,15 +193,14 @@ def processCommand(cmd, *p):
             return 'No such user'
         if user == vk.admin:
             return 'Cannot ban admin!'
-        return banign.ban(user)
+        return vk.printableName(user, user_fmt='[id{id}|{name}]') + ' banned' if banign.ban(user) else 'Already banned'
 
     elif cmd == 'unban':
         if not p:
             return 'Not enough parameters'
         user = p[-1]
-        if user != '*':
-            user = vk.getUserId(user)
-        return banign.unban(user)
+        user = vk.getUserId(user)
+        return vk.printableName(user, user_fmt='[id{id}|{name}]') + ' unbanned' if banign.unban(user) else 'Not banned'
 
     elif cmd == 'ignore':
         users = vk.getUserId(p)
@@ -466,7 +463,7 @@ vk = vk_bot(login, password)
 vk.admin = config.get('inf.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
 log.info('My id: ' + str(vk.self_id))
-banign = ban_manager(accounts.getFile('banned.txt'), vk)
+banign = ban_manager(accounts.getFile('banned.txt'))
 if args['whitelist']:
     vk.whitelist = vk.getUserId(args['whitelist'].split(','))
     log.info('Whitelist: ' +', '.join(map(lambda x:vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
@@ -500,14 +497,13 @@ def banHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    banign.ban(user)
-    return 'Banned ' + vk.printableName(user, user_fmt='{name}')
+    return ('Banned {}' if banign.ban(user) else '{} already banned').format(vk.printableName(user, user_fmt='{name}'))
+
 def unbanHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    banign.unban(user)
-    return 'Unbanned ' + vk.printableName(user, user_fmt='{name}')
+    return ('Unbanned {}' if banign.unban(user) else '{} is not banned').format(vk.printableName(user, user_fmt='{name}'))
 
 def isignoredHandler(user):
     user = vk.getUserId(user)
