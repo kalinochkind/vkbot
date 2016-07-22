@@ -523,6 +523,14 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
+def banlistHandler(conf):
+    if banign.banned:
+        result = sorted(banign.banned)
+        result = [vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a><br>') for j in result]
+        return '\n'.join(result)
+    else:
+        return 'No one banned!'
+
 if config.get('inf.server_port', 'i'):
     srv = MessageServer()
     srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
@@ -534,6 +542,7 @@ if config.get('inf.server_port', 'i'):
     srv.addHandler('reload', reload)
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
+    srv.addHandler('banlist', banlistHandler)
     srv.listen()
     log.info('Running TCP server on port ' + config.get('inf.server_port'))
 
