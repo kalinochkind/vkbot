@@ -365,7 +365,7 @@ class vk_bot:
             self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
 
     def filterComments(self, test):
-        data = self.api.notifications.get(start_time=self.last_viewed_comment+1)['items']
+        data = self.api.notifications.get(start_time=self.last_viewed_comment+1, count=100)['items']
         to_del = set()
         to_bl = set()
         self.loadUsers(data, lambda x:x['feedback']['from_id'], True)
