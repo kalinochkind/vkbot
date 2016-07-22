@@ -195,8 +195,11 @@ class vk_bot:
             if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
                 tl = timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
-            else:
+            elif answer is None:  # ignored
                 self.api.messages.markAsRead.delayed(peer_id=sender)
+            else:
+                tl = timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                self.tm.run(sender, tl, tl.terminate)
             self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time(), '')
             return
 

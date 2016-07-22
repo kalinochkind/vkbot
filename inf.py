@@ -249,9 +249,9 @@ def reply(message):
     if vk.getSender(message) < 0:
         return None
     if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
-        return ('', 0)
+        return (None, 0)
     if 'deactivated' in vk.users[message['user_id']] or vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
-        return ('', 0)
+        return (None, 0)
 
     if 'body' not in message:
         message['body'] = ''
