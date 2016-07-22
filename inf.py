@@ -465,7 +465,7 @@ vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
 log.info('My id: ' + str(vk.self_id))
 banign = ban_manager(accounts.getFile('banned.txt'))
 if args['whitelist']:
-    vk.whitelist = vk.getUserId(args['whitelist'].split(','))
+    vk.whitelist = [vk.getUserId(i) for i in args['whitelist'].split(',')]
     log.info('Whitelist: ' +', '.join(map(lambda x:vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 

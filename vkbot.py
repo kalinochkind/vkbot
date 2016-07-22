@@ -320,44 +320,19 @@ class vk_bot:
         self.api.account.setOnline()
 
     def getUserId(self, domain):
-        multiple = type(domain) != str
-        if not multiple:
-            domain = [domain]
-        domain = list(map(str.lower, domain))
-        req = []
-        for i in domain:
-            i = str(i).rstrip().rstrip('}').rstrip()  # if id is in a forwarded message
-            conf = re.search('sel=c(\\d+)', i) or re.search('^c(\\d+)$', i) or re.search('chat=(\\d+)', i) or re.search('peer=2(\\d{9})', i)
-            if conf is not None:
-                req.append(int(conf.group(1)) + CONF_START)
-            else:
-                if '=' in i:
-                    i = i.split('=')[-1]
-                if '/' in i:
-                    i = i.split('/')[-1]
-                req.append(int(i) if i.isdigit() else i)
-
-        data = self.api.users.get(user_ids=','.join(i for i in req if type(i) == str), fields='domain')
-        if data is None:
-            return [] if multiple else None
-        if len(req) == 1 and len(data) == 1:
-            req = [data[0]['id']]  # kostil :(
-        else:
-            for i in range(len(req)):
-                if type(req[i]) == str:
-                    if data[0]['domain'] == req[i]:
-                        req[i] = data[0]['id']
-                        data = data[1:]
-                    else:
-                        req[i] = None
-            req = [i for i in req if i is not None]
-        try:
-            if multiple:
-                return req
-            else:
-                return req[0]
-        except TypeError:
+        domain = str(domain).lower().rstrip().rstrip('}').rstrip()
+        conf = re.search('sel=c(\\d+)', domain) or re.search('^c(\\d+)$', domain) or re.search('chat=(\\d+)', domain) or re.search('peer=2(\\d{9})', domain)
+        if conf is not None:
+            return int(conf.group(1)) + CONF_START
+        if '=' in domain:
+            domain = domain.split('=')[-1]
+        if '/' in domain:
+            domain = domain.split('/')[-1]
+        data = self.api.users.get(user_ids=domain)
+        if not data:
             return None
+        return data[0]['id']
+
 
     def deleteComment(self, rep):
         if rep['type'].endswith('photo'):
