@@ -41,7 +41,7 @@ class vk_bot:
         #self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
         self.initSelf()
         self.guid = int(time.time() * 5)
-        self.last_viewed_comment = 0
+        self.last_viewed_comment = stats.get('last_comment', 0)
         self.good_conf = {}
         self.tm = thread_manager()
         self.last_message = {}  # peer_id: (id, time, text)
@@ -372,6 +372,7 @@ class vk_bot:
         for rep in data:
             if rep['date'] != 'i':
                 self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
+                stats.update('last_comment', self.last_viewed_comment)
 
             def _check(s):
                 if 'photo' in s:

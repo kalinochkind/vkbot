@@ -13,3 +13,6 @@ def update(name, value):
     _stats[name] = value
     with open(accounts.getFile('stats.txt'), 'w') as f:
         f.write(json.dumps(_stats))
+
+def get(name, default=None):
+    return _stats.get(name, default)
