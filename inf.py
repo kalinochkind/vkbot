@@ -257,6 +257,19 @@ def reply(message):
 
     if 'id' not in message:  # friendship request
         return (getBotReply(message['user_id'], message['message'], 0, 'friendship request', onsend_actions), 2)
+
+    if isBotMessage(message['body']):
+        vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
+        if 'chat_id' in message:
+            bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
+            if bot_users[message['user_id']] >= 3:
+                log.info('Too many bot messages')
+                log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
+                vk.leaveConf(message['chat_id'])
+        return ('', 0)
+    elif message['user_id'] in bot_users:
+        del bot_users[message['user_id']]
+
     message['body'] = preprocessMessage(message)
 
     if message['body']:
@@ -264,18 +277,6 @@ def reply(message):
             cmd = message['body'][1:].split()
             if cmd and message['user_id'] == vk.admin:
                 return (processCommand(*cmd), 1)
-
-        if isBotMessage(message['body']):
-            vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
-            if 'chat_id' in message:
-                bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
-                if bot_users[message['user_id']] >= 3:
-                    log.info('Too many bot messages')
-                    log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
-                    vk.leaveConf(message['chat_id'])
-            return ('', 0)
-        elif message['user_id'] in bot_users:
-            del bot_users[message['user_id']]
 
         if message['body'] == last_message_text.get(message['user_id'], (0,0,0))[0] and message['body'] != '..':
             last_message_text[message['user_id']][2] += 1
