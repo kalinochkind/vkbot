@@ -131,7 +131,7 @@ class vk_api:
                         err = err.split(':')[-1].rstrip('>')
                     else:
                         err = err.split(']')[-1].lstrip().rstrip('>')
-                log.warning(method + ' failed ({})'.format(err))
+                log.warning(method + ' failed ({})'.format(err.strip()))
                 time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
