@@ -176,11 +176,11 @@ class vk_bot:
             return
         with self.message_lock:
             self.guid += 1
+            time.sleep(1)
             if resend:
                 return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
-            time.sleep(1)
 
     # fast==1: no delay
     #       2: no markAsRead
@@ -244,7 +244,8 @@ class vk_bot:
             if fast == 0:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 
-        tl.sleep(cur_delay)
+        if fast != 1:
+            tl.sleep(cur_delay)
         if message.get('_onsend_actions'):
             for i in message['_onsend_actions']:
                 tl.do(i)
