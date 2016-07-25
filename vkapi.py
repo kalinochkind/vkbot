@@ -209,7 +209,7 @@ class vk_api:
                     self.login()
                     return self.apiCall(method, params)
 
-                elif (data_array['error']['error_code'], method) in self.ignored_errors:
+                elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
                     handler = self.ignored_errors[(data_array['error']['error_code'], method)]
                     if not handler:
                         return None
