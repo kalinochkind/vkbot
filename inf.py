@@ -288,6 +288,7 @@ def reply(message):
 
         if message['body'].strip().upper() == last_message_text.get(message['user_id'], (0,0,0))[1]:
             vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
+            last_message_text[message['user_id']] = [message['body'], message['body'], 1]
             return ('', 0)
 
         t = evalExpression(message['body'])
