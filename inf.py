@@ -63,7 +63,7 @@ with open(pid_file, 'w') as f:
 log.info('Starting vkbot, pid ' + str(os.getpid()))
 
 
-_bot_message = re.compile(r'^\(.+\)')
+_bot_message = re.compile(r'^\(.+\).')
 def isBotMessage(msg):
     return _bot_message.match(msg.strip())
 
