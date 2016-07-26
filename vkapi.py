@@ -9,6 +9,7 @@ import captcha
 import accounts
 import args
 from http.client import RemoteDisconnected
+import html
 
 CALL_INTERVAL = 0.35
 
@@ -126,12 +127,7 @@ class vk_api:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except OSError as e:
                 err = str(e)
-                if err.startswith('<urlopen error'):
-                    if ':' in err:
-                        err = err.split(':')[-1].rstrip('>')
-                    else:
-                        err = err.split(']')[-1].lstrip().rstrip('>')
-                log.warning(method + ' failed ({})'.format(err.strip()))
+                log.warning(method + ' failed ({})'.format(html.escape(err.strip())))
                 time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
