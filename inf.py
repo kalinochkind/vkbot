@@ -137,15 +137,12 @@ def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
         return bl
 
     if answer == '$noans':
-        if conf_id > 0:
-            answer = ''
+        if message.upper() == message.lower() and '?' not in message:
+            answer = random.choice(smiles)
         else:
-            if message.upper() == message.lower() and '?' not in message:
-                answer = random.choice(smiles)
-            else:
-                answer = noans[0]
-                next_ans = random.randint(1, len(noans) - 1)
-                noans[0], noans[next_ans] = noans[next_ans], noans[0]
+            answer = noans[0]
+            next_ans = random.randint(1, len(noans) - 1)
+            noans[0], noans[next_ans] = noans[next_ans], noans[0]
     elif answer == '$blacklisted':
         answer = ''
 

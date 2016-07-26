@@ -168,30 +168,50 @@ wstring Say(wstring &line, int id, bool conf)
             imx = i;
         }
     }
+
     if(mx == 0)
     {
-        wcerr << "yellow|" << line << L"- no match\n";
-        while(line.length() && line[0] == L' ')
+        if(conf)
         {
-            line = line.substr(1);
+            wcerr << "red|" << line << "- no match\n";
+            return L"";
         }
         if(id >= 0 && users[id].smiles >= MAX_SMILES)
         {
-            if(!conf)
-            {
-                wcerr << "red|Too many smiles\n";
-            }
+            wcerr << "red|" << line << "- too many smiles\n";
             return L"";
         }
+        wcerr << "yellow|" << line << L"- no match\n";
         if(id >= 0)
             users[id].smiles++;
         return L"$noans";
     }
+
     common.clear();
     set_intersection(words.begin(), words.end(), tf[imx].first.begin(), tf[imx].first.end(), back_inserter(common));
     Highlight(line, words_pos, common);
     wstring req = request[imx];
     Highlight(req, splitWords(req, fixedstem, replaced, names), common);
+
+    if(id >= 0)
+    {
+        users[id].context = reply[imx]->second;
+        if(users[id].lastReply == imx + 1)
+        {
+            users[id].lastReply = -(imx + 1);
+        }
+        else if(users[id].lastReply == -(imx + 1))
+        {
+            wcerr << "red|" << line << "- repeated\n";
+            return L"";
+        }
+        else
+        {
+            users[id].lastReply = imx + 1;
+        }
+        users[id].smiles = 0;
+    }
+
     wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
     if(reply[imx]->first.size() > 1)
     {
@@ -210,24 +230,6 @@ wstring Say(wstring &line, int id, bool conf)
         req += '|';
         req += context_map[reply[imx]->second];
         return req;
-    }
-    if(id >= 0)
-    {
-        users[id].context = reply[imx]->second;
-        if(users[id].lastReply == imx + 1)
-        {
-            users[id].lastReply = -(imx + 1);
-        }
-        else if(users[id].lastReply == -(imx + 1))
-        {
-            wcerr << "red|Repeated\n";
-            return L"";
-        }
-        else
-        {
-            users[id].lastReply = imx + 1;
-        }
-        users[id].smiles = 0;
     }
     wstring ans = reply[imx]->first[0];
     SwapFirst(reply[imx]->first, 0);
