@@ -28,16 +28,23 @@ sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 login = config.get('login.login')
 password = config.get('login.password')
 
+def availableScripts():
+    print('Available scripts:', ', '.join(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__')))
+    sys.exit()
+
+if args['script'] is None:
+    availableScripts()
+
 if args['script']:
     if not args['script'].replace('_', '').isalpha():
         print('Invalid script')
-        sys.exit()
+        availableScripts()
     log.script_name = args['script'].lower()
     try:
         main = importlib.import_module('scripts.' + args['script'].lower()).main
     except ImportError:
         print('Invalid script')
-        sys.exit()
+        availableScripts()
     v = vk_api(login, password)
     main(v, args['args'])
     v.sync()
