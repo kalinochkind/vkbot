@@ -18,7 +18,7 @@ def nonBlockRead(output):
 
 class cpp_bot:
 
-    source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h']
+    source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h', 'build.sh']
     exe_name = 'chat.exe'
     path = 'chat/'
     max_smiles = config.get('cppbot.max_smiles', 'i')
