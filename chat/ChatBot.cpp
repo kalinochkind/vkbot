@@ -202,7 +202,7 @@ wstring Say(wstring &line, int id, bool conf)
         }
         else if(users[id].lastReply == -(imx + 1))
         {
-            wcerr << "red|" << line << "- repeated\n";
+            wcerr << "red|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")" << " - repeated\n";
             return L"";
         }
         else
