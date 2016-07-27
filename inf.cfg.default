@@ -8,6 +8,7 @@ same_user_interval = 30
 same_conf_interval = 30
 forget_interval = 600
 delay_on_first_reply = 10
+stats_dialog_count = 10
 
 [vkapi]
 checks_before_antigate = 6

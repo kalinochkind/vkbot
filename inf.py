@@ -576,7 +576,12 @@ def main_loop():
         if timeto('includeread', includeread_interval):
             reply_all = True
         if timeto('stats', stats_interval):
-            stats.update('dialogs', vk.dialogCount())
+            count, dialogs = vk.lastDialogs()
+            vk.loadUsers(dialogs, lambda x:x[1])
+            dialogs = [[uid, vk.printableName(uid, '{name}'), cnt] for uid, cnt in dialogs]
+            stats.update('dialogs', count)
+            stats.update('dialogs_list', dialogs)
+
     except Exception as e:
         log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
         reply_all = True

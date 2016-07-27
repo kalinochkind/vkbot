@@ -34,6 +34,7 @@ class vk_bot:
     typing_interval = 5
     forget_interval = config.get('vkbot.forget_interval', 'i')
     delay_on_first_reply = config.get('vkbot.delay_on_first_reply', 'i')
+    stats_dialog_count = config.get('vkbot.stats_dialog_count', 'i')
 
     def __init__(self, username='', password=''):
         self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
@@ -434,5 +435,14 @@ class vk_bot:
     def blacklistedCount(self):
         return self.api.account.getBanned(count=0)['count']
 
-    def dialogCount(self):
-        return  self.api.messages.getDialogs(count=0)['count']
+    def lastDialogs(self):
+
+        def cb(req, resp):
+            d.append((req['peer_id'], resp['count']))
+
+        dialogs = self.api.messages.getDialogs(count=self.stats_dialog_count, preview_length=1)
+        d = []
+        for i in dialogs['items']:
+            self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
+        self.api.sync()
+        return (dialogs['count'], d)
