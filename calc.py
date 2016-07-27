@@ -13,7 +13,8 @@ def isnum(s):
     return s and (s.isdigit() or s[0] == '-' and len(s) > 1 and s[1:].isdigit())
 
 def evalExpression(s):
-    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('\u00d7', '*').replace('*', ' * ').replace('\u00f7', '/').replace('/', ' // ')
+    s = s.replace('\u00d7', '*').replace('\u2022', '*').replace('\u00f7', '/')
+    s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ').replace('/', ' // ')
     prev = s
     if '[' in s:
         return None
