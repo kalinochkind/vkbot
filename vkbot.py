@@ -23,6 +23,7 @@ ignored_errors = {
     (113, 'users.get'): None,
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
     (8, '*'): ('Error code 8', True),
+    (10, '*'): ('Error code 10', True),
 }
 
 class vk_bot:
