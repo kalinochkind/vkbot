@@ -576,9 +576,9 @@ def main_loop():
         if timeto('includeread', includeread_interval):
             reply_all = True
         if timeto('stats', stats_interval):
-            count, dialogs = vk.lastDialogs()
+            count, dialogs, confs = vk.lastDialogs()
             vk.loadUsers(dialogs, lambda x:x[1])
-            dialogs = [[uid, vk.printableName(uid, '{name}'), cnt] for uid, cnt in dialogs]
+            dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid)), cnt] for uid, cnt in dialogs]
             stats.update('dialogs', count)
             stats.update('dialogs_list', dialogs)
 

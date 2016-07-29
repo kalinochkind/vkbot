@@ -443,7 +443,10 @@ class vk_bot:
 
         dialogs = self.api.messages.getDialogs(count=self.stats_dialog_count, preview_length=1)
         d = []
+        confs = {}
         for i in dialogs['items']:
             self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
+            if 'title' in i['message']:
+                confs[self.getSender(i['message'])] = i['message']['title']
         self.api.sync()
-        return (dialogs['count'], d)
+        return (dialogs['count'], d, confs)
