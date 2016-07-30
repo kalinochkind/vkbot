@@ -206,7 +206,10 @@ class vk_api:
                     return self.apiCall(method, params)
 
                 elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
-                    handler = self.ignored_errors[(data_array['error']['error_code'], method)]
+                    try:
+                        handler = self.ignored_errors[(data_array['error']['error_code'], method)]
+                    except KeyError:
+                        handler = self.ignored_errors[(data_array['error']['error_code'], '*')]
                     if not handler:
                         return None
                     if retry or not handler[1]:
