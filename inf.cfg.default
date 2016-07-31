@@ -4,8 +4,8 @@ key =
 [vkbot]
 delay_on_reply = 3
 chars_per_second = 5
-same_user_interval = 30
-same_conf_interval = 30
+same_user_interval = 15
+same_conf_interval = 15
 forget_interval = 600
 delay_on_first_reply = 10
 stats_dialog_count = 10
@@ -16,13 +16,13 @@ captcha_check_interval =  5
 default_timeout = 5
 
 [inf]
-addfriends_interval = -1
+addfriends_interval = 40
 includeread_interval = 30
 setonline_interval = 90
 unfollow_interval = -1
 filtercomments_interval = -1
 stats_interval = -1
-admin = 0
+admin = 62715647
 server_port = 0
 
 [birthday]
@@ -35,7 +35,7 @@ offline_allowed = 14
 invalidate_interval = 900
 
 [cppbot]
-max_smiles = 2
+max_smiles = -1
 
 [delfriends]
 days_till_unfriend = 365
