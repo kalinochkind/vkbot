@@ -13,62 +13,12 @@ import random
 import config
 from cppbot import cpp_bot
 import signal
-import os
-import codecs
-import fcntl
 from server import MessageServer
 import threading
-import db_logger
 from args import args
-import importlib
 import stats
 
-os.environ['LC_ALL'] = 'ru_RU.utf-8'
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-login = config.get('login.login')
-password = config.get('login.password')
-
-def availableScripts():
-    print('Available scripts:', ', '.join(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__')))
-    sys.exit()
-
-if args['script'] is None:
-    availableScripts()
-
-if args['script']:
-    if not args['script'].replace('_', '').isalpha():
-        print('Invalid script')
-        availableScripts()
-    log.script_name = args['script'].lower()
-    try:
-        main = importlib.import_module('scripts.' + args['script'].lower()).main
-    except ImportError:
-        print('Invalid script')
-        availableScripts()
-    v = vk_api(login, password)
-    main(v, args['args'])
-    v.sync()
-    sys.exit()
-
-pid_file = accounts.getFile('inf.pid')
-lock_file = accounts.getFile('inf.lock')
-fp = open(lock_file, 'w')
-single = False
-for i in range(100):
-    try:
-        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        time.sleep(5)
-    else:
-        single = True
-        break
-if not single:
-    sys.exit(0)
-with open(pid_file, 'w') as f:
-    f.write(str(os.getpid()))
-
-log.info('Starting vkbot, pid ' + str(os.getpid()))
-
+from prepare import login, password
 
 _bot_message = re.compile(r'^\(.+\).')
 def isBotMessage(msg):
