@@ -348,6 +348,8 @@ def preprocessMessage(message, user=None):
             att.append(a['market']['description'])
         elif a['type'] == 'sticker':
             return None
+        elif a['type'] == 'photo':
+            result += ' ..'
     for a in att:
         result += ' [' + a.lower() + ']'
     result = result.replace('vkgift', 'Vkgift')
