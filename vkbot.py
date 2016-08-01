@@ -140,9 +140,11 @@ class vk_bot:
                 text = i[6]
                 opt = i[7]
                 flags = i[2]
+                if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
+                    self.good_conf[sender] = False
+                    continue
                 if flags & 2:  # out
                     continue
-
                 for i in range(1, 11):
                     if opt.get('attach{}_type'.format(i)) == 'photo':
                         del opt['attach{}_type'.format(i)]
