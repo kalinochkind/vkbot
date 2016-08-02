@@ -23,21 +23,18 @@ def appendNoadd(users):
         f.write('\n' + '\n'.join(map(str, sorted(users))))
     stats.update('ignored', len(noadd))
 
-def check_char(c):
-    return c in allowed
-
 checks = [
 (lambda fr:'deactivated' not in fr, 'Account is deactivated'),
 (lambda fr:fr['photo_50'] and not fr['photo_50'].endswith('camera_50.png'), 'No avatar'),
 (lambda fr:fr.get('country', {'id':0})['id'] in [0, 1, 2, 3], 'Bad country'),
-(lambda fr:all(check_char(i) for i in fr['first_name'] + fr['last_name']), 'Bad characters in name'),
+(lambda fr:all(i in allowed for i in fr['first_name'] + fr['last_name']), 'Bad characters in name'),
 (lambda fr:'last_seen' in fr and time.time() - fr['last_seen']['time'] < 3600 * 24 * offline_allowed, 'Offline too long'),
 (lambda fr:not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in s), 'Bad substring in name'),
 (lambda fr:fr['id'] not in noadd, 'Ignored'),
 (lambda fr:fr['first_name'] != fr['last_name'], 'First name equal to last name'),
 ]
 
-def is_good(fr, need_reason=False):
+def isGood(fr, need_reason=False):
     reasons = []
     for fun, msg in checks:
         if not fun(fr):

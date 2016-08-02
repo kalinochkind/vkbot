@@ -1,8 +1,8 @@
 import vkapi
 import time
 import log
-from thread_manager import thread_manager, timeline
-from user_cache import user_cache
+from thread_manager import ThreadManager, Timeline
+from user_cache import UserCache
 import config
 import re
 import random
@@ -26,7 +26,7 @@ ignored_errors = {
     (10, '*'): ('Error code 10', True),
 }
 
-class vk_bot:
+class VkBot:
 
     delay_on_reply = config.get('vkbot.delay_on_reply', 'i')
     chars_per_second = config.get('vkbot.chars_per_second', 'i')
@@ -38,21 +38,21 @@ class vk_bot:
     stats_dialog_count = config.get('vkbot.stats_dialog_count', 'i')
 
     def __init__(self, username='', password=''):
-        self.api = vkapi.vk_api(username, password, ignored_errors=ignored_errors)
+        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
-        self.users = user_cache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
+        self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
         #self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
         self.good_conf = {}
-        self.tm = thread_manager()
+        self.tm = ThreadManager()
         self.last_message = {}  # peer_id: (id, time, text)
         self.last_message_id = 0
         self.whitelist = None
         self.bad_conf_title = lambda s: False
         self.admin = None
-        self.bannedList = []
+        self.banned_list = []
         self.message_lock = threading.Lock()
 
     def initSelf(self):
@@ -100,7 +100,7 @@ class vk_bot:
 
     def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
-        self.bannedList = []
+        self.banned_list = []
         if include_read:
             log.info('Include read')
             self.users.gc()
@@ -118,7 +118,7 @@ class vk_bot:
                     continue
                 self.replyOne(cur, gen_reply, 'getDialogs')
             self.api.sync()
-            stats.update('banned_messages', ' '.join(map(str, sorted(self.bannedList))))
+            stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
         else:
             messages = self.longpollMessages()
@@ -198,12 +198,12 @@ class vk_bot:
             if self.tm.isBusy(sender):
                 return
             if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
-                tl = timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             else:
-                tl = timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time(), '')
             return
@@ -239,13 +239,13 @@ class vk_bot:
         user_delay = 0
         if sender in self.last_message and sender != self.admin:
             user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
-        tl = timeline(max(send_time, user_delay))
+        tl = Timeline(max(send_time, user_delay))
         if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
             if fast == 0:
                 tl.sleep(self.delay_on_first_reply)
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
         else:
-            tl.sleep_until(send_time, (self.delay_on_reply - 1) * random.random() + 1)
+            tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
             if fast == 0:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 
@@ -256,7 +256,7 @@ class vk_bot:
                 tl.do(i)
                 tl.sleep(cur_delay)
         if typing_time:
-            tl.do_every_for(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
         self.tm.run(sender, tl)
 

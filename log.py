@@ -6,8 +6,8 @@ import threading
 import os
 import accounts
 
-errLock = threading.Lock()
-logLock = threading.Lock()
+err_lock = threading.Lock()
+log_lock = threading.Lock()
 script_name = None
 
 # s = (console message, db message)
@@ -15,7 +15,7 @@ def info(s, color=''):
     if isinstance(s, str):
         s = (s, s)
     s = (s[0].replace('`{', '').replace('}`', ''), s[1])
-    with logLock:
+    with log_lock:
         if color == 'red':
             print('\033[38;5;9m' + s[0] + '\033[0m')
         elif color == 'green':
@@ -38,7 +38,7 @@ def error(s, need_exc_info=False, fatal=False):
     info(s, 'fatal' if fatal else 'error')
     if not isinstance(s, str):
         s = s[0]
-    with errLock:
+    with err_lock:
         if fatal:
             s = 'Fatal: ' + s
         write('error', s)

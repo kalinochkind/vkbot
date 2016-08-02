@@ -29,7 +29,7 @@ class DelayedCall:
             self.callback_func(self.params, response)
 
 
-class vk_api:
+class VkApi:
     checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
     captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
     api_version = '5.53'
@@ -53,8 +53,8 @@ class vk_api:
         self.api_lock = threading.RLock()
         self.token = None
         self.getToken()
-        self.externalCaptcha = False
-        self.captchaError = False
+        self.external_captcha = False
+        self.captcha_error = False
 
     def __getattr__(self, item):
         handler = self
@@ -154,9 +154,9 @@ class vk_api:
             if data_array is None:
                 return None
             if 'response' in data_array:
-                if self.captcha_delayed or self.externalCaptcha:
+                if self.captcha_delayed or self.external_captcha:
                     self.captcha_delayed = 0
-                    self.externalCaptcha = False
+                    self.external_captcha = False
                     log.info('Captcha no longer needed')
                     self.captcha_sid = ''
                 captcha.delete()
@@ -164,7 +164,7 @@ class vk_api:
 
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
-                    self.externalCaptcha = False
+                    self.external_captcha = False
                     if self.captcha_delayed == 0:
                         log.warning('Captcha needed')
                         self.captcha_sid = data_array['error']['captcha_sid']
@@ -180,14 +180,14 @@ class vk_api:
                             self.captcha_sid = ''
                             captcha.delete()
                             self.captcha_delayed = 0
-                            self.externalCaptcha = True
+                            self.external_captcha = True
                             return self.apiCall(method, params)
                     if self.captcha_delayed == self.checks_before_antigate:
                         log.info('Using antigate')
                         open(accounts.getFile('captcha.txt'), 'w').close()
                         ans = captcha.solve()
                         if ans is None:
-                            self.captchaError = True
+                            self.captcha_error = True
                             time.sleep(5)
                         elif not ans:
                             captcha.receive(data_array['error']['captcha_img'])

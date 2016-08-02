@@ -3,7 +3,7 @@ import time
 import log
 import threading
 
-class user_cache:
+class UserCache:
 
     invalidate_interval = config.get('user_cache.invalidate_interval', 'i')
 

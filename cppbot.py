@@ -16,7 +16,7 @@ def nonBlockRead(output):
         return b''
 
 
-class cpp_bot:
+class CppBot:
 
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h', 'build.sh']
     exe_name = 'chat.exe'
@@ -28,13 +28,13 @@ class cpp_bot:
             exe_time = os.path.getmtime(self.path + self.exe_name)
             src_time = max(os.path.getmtime(self.path + i) for i in self.source_files)
             if src_time > exe_time:
-                self.build_exe()
+                self.buildExe()
         except FileNotFoundError:
-            self.build_exe()
-        self.run_exe()
+            self.buildExe()
+        self.runExe()
         self.bot_lock = threading.Lock()
 
-    def run_exe(self):
+    def runExe(self):
         self.bot = Popen([self.path + self.exe_name, str(self.max_smiles)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     def interact(self, msg, do_log=True):
@@ -52,11 +52,11 @@ class cpp_bot:
                         log.info(info[1], info[0])
         except BrokenPipeError:
             log.error('Broken pipe, restarting ' + self.exe_name)
-            self.run_exe()
+            self.runExe()
             return self.interact(msg, do_log)
         return answer.decode().strip()
 
-    def build_exe(self):
+    def buildExe(self):
         log.info('Rebuilding ' + self.exe_name)
         if os.system(self.path + 'build.sh'):
             log.error('Unable to build', fatal=True)

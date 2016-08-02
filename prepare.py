@@ -8,7 +8,7 @@ from args import args
 import accounts
 import log
 import config
-from vkapi import vk_api
+from vkapi import VkApi
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
@@ -32,7 +32,7 @@ if args['script']:
     except ImportError:
         print('Invalid script')
         availableScripts()
-    v = vk_api(login, password)
+    v = VkApi(login, password)
     main(v, args['args'])
     v.sync()
     sys.exit()

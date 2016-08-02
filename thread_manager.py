@@ -2,7 +2,7 @@ import threading
 import time
 import log
 
-class thread_manager:  # not thread-safe, should be used only from main thread
+class ThreadManager:  # not thread-safe, should be used only from main thread
     def __init__(self):
         self.threads = {}
 
@@ -42,7 +42,7 @@ class thread_manager:  # not thread-safe, should be used only from main thread
         return list(self.threads.values())
 
 
-class timeline:
+class Timeline:
 
     def __init__(self, duration=0):
         self.events = []
@@ -57,14 +57,14 @@ class timeline:
     def sleep(self, seconds):
         return self.do(lambda: time.sleep(seconds))
 
-    def sleep_until(self, seconds, min_sleep=0):
+    def sleepUntil(self, seconds, min_sleep=0):
         def _f():
             rem = max(self.endtime - time.time() - seconds, min_sleep)
             if rem > 0:
                 time.sleep(rem)
         return self.do(_f)
 
-    def do_every(self, interval, func, end_func, do_at_start=True):
+    def doEvery(self, interval, func, end_func, do_at_start=True):
         if do_at_start:
             self.do(func)
         def _f():
@@ -77,11 +77,11 @@ class timeline:
             time.sleep(max(0, end - time.time()))
         return self.do(_f)
 
-    def do_every_until(self, interval, func, seconds=0, do_at_start=True):
-        return self.do_every(interval, func, lambda:self.endtime - seconds, do_at_start)
+    def doEveryUntil(self, interval, func, seconds=0, do_at_start=True):
+        return self.doEvery(interval, func, lambda:self.endtime - seconds, do_at_start)
 
-    def do_every_for(self, interval, func, seconds, do_at_start=True):
-        return self.do_every(interval, func, lambda:time.time() + seconds, do_at_start)
+    def doEveryFor(self, interval, func, seconds, do_at_start=True):
+        return self.doEvery(interval, func, lambda:time.time() + seconds, do_at_start)
 
     def terminate():
         self.terminated = True
