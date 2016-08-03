@@ -250,10 +250,10 @@ def reply(message):
             log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
     if message['body']:
-        message['body'] = message['body'].replace('<br>', '<BR>')
-    if message['body'] and message['body'].upper() == message['body'] and len([i for i in message['body'] if i.isalpha()]) > 1:
-        vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
-        return ('', 0)
+        tbody = message['body'].replace('<br>', '')
+        if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:
+            vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
+            return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
     if reply is not None:
