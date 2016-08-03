@@ -2,8 +2,7 @@ import time
 
 def main(a, args):
     if not args:
-        print('no uid')
-        return
+        args = [input('Enter uid: ')]
     uid = args[0]
     if uid[0] == 'c' and uid[1:].isdigit():
         uid = '2' + uid[1:].rjust(9, '0')

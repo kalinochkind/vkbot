@@ -12,6 +12,7 @@ from vkapi import VkApi
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+sys.stdout.encoding = 'UTF-8'
 login = config.get('login.login')
 password = config.get('login.password')
 
