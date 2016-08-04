@@ -1,18 +1,12 @@
 import check_friend
 import log
 import accounts
+import scriptlib
 
 def main(a, args):
     a.timeout = 10
-    friends = []
     banned = list(map(int, open(accounts.getFile('banned.txt')).read().split()))
-    log.info('Fetching friends')
-    for i in range(1000000):
-        log.info('page ' + str(i))
-        fr = a.friends.get(fields=check_friend.fields, count=1000, offset=i*1000)
-        friends.extend(fr['items'])
-        if len(fr['items']) < 1000:
-            break
+    friends = scriptlib.getFriends(a, fields=check_friend.fields)
 
     log.info('Starting to delete')
     for i in friends:
@@ -20,14 +14,7 @@ def main(a, args):
             a.friends.delete.delayed(user_id=i['id'])
             log.info('deleted ' + str(i['id']))
 
-    log.info('\nFetching followers')
-    foll = []
-    for i in range(1000000):
-        log.info('page ' + str(i))
-        fr = a.users.getFollowers(fields=check_friend.fields, count=1000, offset=i*1000)
-        foll.extend(fr['items'])
-        if len(fr['items']) < 1000:
-            break
+    foll = scriptlib.getFollowers(a, fields=check_friend.fields)
 
     log.info('Starting to add')
     for i in foll:

@@ -1,14 +1,9 @@
 import log
+import scriptlib
 dist1 = {}
 dist2 = {}
 parent = {}
 
-def resolveUid(a, uid):
-    if uid.isdigit():
-        return int(uid)
-    if '/' in uid:
-        uid = uid.split('/')[-1]
-    return a.users.get(user_ids=uid)[0]['id']
 
 def main(a, args):
     a.ignored_errors = {
@@ -47,10 +42,14 @@ def main(a, args):
             dist[i] = dist[uid] + 1
             parent[i] = uid
 
-    start = resolveUid(a, args[0])
-    end = resolveUid(a, args[1])
+    start = scriptlib.resolvePid(a, args[0], False)
+    end = scriptlib.resolvePid(a, args[1], False)
+    if start is None or end is None:
+        print('No such user')
+        return
     if start == end:
         return
+    print(start, end)
     dist1[start] = 0
     dist2[end] = 0
     parent[start] = -1

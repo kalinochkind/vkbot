@@ -4,6 +4,8 @@ import log
 import accounts
 import time
 import config
+import scriptlib
+import check_friend
 
 def main(a, args):
     days = config.get('delfriends.days_till_unfriend', 'i')
@@ -16,14 +18,7 @@ def main(a, args):
         except FileNotFoundError:
             log.info('_delfriends.txt not found')
             return
-    friends = []
-    log.info('Fetching friends')
-    for i in range(1000000):
-        log.info('page ' + str(i+1))
-        fr = a.friends.get(count=1000, offset=i*1000)
-        friends.extend(fr['items'])
-        if len(fr['items']) < 1000:
-            break
+    friends = scriptlib.getFriends(a)
     now = time.time()
     to_del = []
     cnt = 0
@@ -33,7 +28,7 @@ def main(a, args):
             if prepare:
                 f.write(str(req['user_id']) + '\n')
             else:
-                to_del.append(str(req['user_id']) + '\n')
+                to_del.append(str(req['user_id']))
             log.info('Found ' + str(req['user_id']))
             cnt += 1
     for i in friends:
@@ -44,6 +39,5 @@ def main(a, args):
     if prepare:
         f.close()
     else:
-        with open(accounts.getFile('noadd.txt'), 'a') as res:
-            res.write(''.join(to_del))
+        check_friend.appendNoadd(to_del)
     log.info('Total: ' + str(cnt))

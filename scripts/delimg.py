@@ -1,4 +1,5 @@
 import log
+import scriptlib
 
 def enumPhotos(peer):
     st = ''
@@ -23,19 +24,7 @@ def attachments(a, items, next_from, peer_id):
 
 def main(a, args):
     a.timeout = 10
-    dialogs = []
-    log.info('Fetching dialogs')
-    for i in range(1000000):
-        log.info('page ' + str(i))
-        fr = a.messages.getDialogs(count=200, offset=i*200)
-        for t in fr['items']:
-            t = t['message']
-            if 'chat_id' in t:
-                dialogs.append(t['chat_id'] + 2000000000)
-            else:
-                dialogs.append(t['user_id'])
-        if len(fr['items']) < 200:
-            break
+    dialogs = scriptlib.getDialogs(a)
     log.info(str(len(dialogs)) + ' dialogs found')
     global self_id, good
     self_id = a.users.get()[0]['id']
