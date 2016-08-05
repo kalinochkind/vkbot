@@ -8,7 +8,6 @@ import log
 import captcha
 import accounts
 import args
-from http.client import RemoteDisconnected
 import html
 
 CALL_INTERVAL = 0.35
