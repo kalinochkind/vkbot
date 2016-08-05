@@ -1,21 +1,22 @@
 import os
 import args
 import sys
+import getpass
 
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
 
-def forceInput(text):
+def forceInput(text, password=False):
     s = ''
     while not s.strip():
-        s = input(text)
+        s = getpass.getpass(text) if password else input(text)
     return s
 
 def createAccount(name):
     if not name or len(name) > 256 or any(i in name for i in './\\ '):
         return False
     login = forceInput('Login for {}: '.format(name))
-    password = forceInput('Password for {}: '.format(name))
+    password = forceInput('Password for {}: '.format(name), True)
     dirname = 'accounts/' + name + '/'
     os.mkdir(dirname)
     for i in account_files:
