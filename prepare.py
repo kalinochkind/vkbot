@@ -33,6 +33,7 @@ if args['script']:
         print('Invalid script')
         availableScripts()
     v = VkApi(login, password)
+    v.initLongpoll()
     main(v, args['args'])
     v.sync()
     sys.exit()
