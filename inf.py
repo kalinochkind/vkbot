@@ -11,7 +11,6 @@ import check_friend
 from calc import evalExpression
 import random
 import config
-from cppbot import CppBot
 import signal
 from server import MessageServer
 import threading
@@ -19,6 +18,7 @@ from args import args
 import stats
 
 from prepare import login, password
+from cppbot import CppBot  # should go after prepare import
 
 def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
     return regex.match(msg.strip())

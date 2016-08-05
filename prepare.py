@@ -2,7 +2,6 @@ import os
 import sys
 import codecs
 import importlib
-import fcntl
 import time
 from args import args
 import accounts
@@ -38,6 +37,7 @@ if args['script']:
     v.sync()
     sys.exit()
 
+import fcntl
 pid_file = accounts.getFile('inf.pid')
 lock_file = accounts.getFile('inf.lock')
 fp = open(lock_file, 'w')
