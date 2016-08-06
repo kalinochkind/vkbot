@@ -31,8 +31,9 @@ age = 15
 [check_friend]
 offline_allowed = 14
 
-[user_cache]
-invalidate_interval = 900
+[cache]
+user_invalidate_interval = 900
+conf_invalidate_interval = 600
 
 [cppbot]
 max_smiles = -1

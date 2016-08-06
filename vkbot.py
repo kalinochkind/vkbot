@@ -2,7 +2,7 @@ import vkapi
 import time
 import log
 from thread_manager import ThreadManager, Timeline
-from user_cache import UserCache
+from cache import UserCache, ConfCache
 import config
 import re
 import random
@@ -41,7 +41,7 @@ class VkBot:
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors)
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
-        #self.users.lock = self.api.api_lock  # govnocode, but it cures a deadlock
+        self.confs = ConfCache(self.api)
         self.initSelf()
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
@@ -69,14 +69,14 @@ class VkBot:
             return 2000000000 + message['chat_id']
         return message['user_id']
 
-    def loadUsers(self, arr, key, clean=False):
+    def loadUsers(self, arr, key, clean=False, confs=False):
         users = []
         for i in arr:
             try:
                 users.append(key(i))
             except Exception:
                 pass
-        self.users.load(users, clean)
+        (self.confs if confs else self.users).load(users, clean)
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
@@ -110,6 +110,7 @@ class VkBot:
                 # may sometimes happen because of friendship requests
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
+            self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
             for msg in sorted(messages, key=lambda msg:msg['message']['id']):
                 cur = msg['message']
                 if cur['out']:
@@ -123,6 +124,7 @@ class VkBot:
         else:
             messages = self.longpollMessages()
             self.loadUsers(messages, lambda x:x['user_id'])
+            self.loadUsers(messages, lambda x:x['chat_id'], confs=True)
             for cur in sorted(messages, key=lambda msg:msg['id']):
                 self.last_message_id = max(self.last_message_id, cur['id'])
                 self.replyOne(cur, gen_reply)
@@ -409,9 +411,9 @@ class VkBot:
 
     # {name} - first_name last_name
     # {id} - id
-    def printableName(self, pid, user_fmt, conf_fmt='Conf {id}'):
+    def printableName(self, pid, user_fmt, conf_fmt='Conf "{name}"'):
         if pid > CONF_START:
-            return conf_fmt.format(id=(pid - CONF_START))
+            return conf_fmt.format(id=(pid - CONF_START), name=self.confs[pid - CONF_START]['title'])
         else:
             return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
 
@@ -423,9 +425,9 @@ class VkBot:
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:
             if need_html:
-                return self.printableName(message['user_id'], user_fmt='Conf %c, <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', str(message['chat_id']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c", <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', html.escape(self.confs[message['chat_id']]['title']))
             else:
-                return self.printableName(message['user_id'], user_fmt='Conf %c, {name}').replace('%c', str(message['chat_id']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c", {name}').replace('%c', html.escape(self.confs[message['chat_id']]['title']))
         else:
             if need_html:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
