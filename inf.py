@@ -269,9 +269,6 @@ def preprocessMessage(message, user=None):
     if 'action' in message:
         if message['action'] == 'chat_invite_user' and message['action_mid'] == vk.self_id:
             vk.deleteFriend(message['user_id'])
-        if message['action'] == 'chat_title_update' and getBotReply(None, message['action_text'], -2):
-            del vk.good_conf[message['chat_id'] + CONF_START]
-            vk.checkConf(message['chat_id'])
         return None
 
     result = message['body']

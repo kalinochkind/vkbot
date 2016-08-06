@@ -147,6 +147,10 @@ class VkBot:
                     continue
                 if opt.get('source_act') == 'chat_title_update':
                     del self.confs[sender - CONF_START]
+                    if self.bad_conf_title(opt['source_text']):
+                        self.leaveConf(sender - CONF_START)
+                        log.write('conf',  'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
+                        continue
                 if flags & 2:  # out
                     continue
                 for i in range(1, 11):
