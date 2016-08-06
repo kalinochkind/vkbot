@@ -145,6 +145,8 @@ class VkBot:
                 if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
                     self.good_conf[sender] = False
                     continue
+                if opt.get('source_act') == 'chat_title_update':
+                    del self.confs[sender - CONF_START]
                 if flags & 2:  # out
                     continue
                 for i in range(1, 11):
@@ -271,7 +273,7 @@ class VkBot:
                 self.leaveConf(cid)
                 log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
                 return False
-        title = self.api.messages.getChat(chat_id=cid).get('title', '')
+        title = self.confs[cid]['title']
         if self.bad_conf_title(title):
             self.leaveConf(cid)
             log.write('conf',  'conf ' + str(cid) + ' (name: {})'.format(title))
