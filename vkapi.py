@@ -144,7 +144,7 @@ class VkApi:
                 log.error('Invalid JSON')
                 data_array = None
             if self.logging:
-                with open('inf.log', 'a') as f:
+                with open(accounts.getFile('inf.log'), 'a') as f:
                     print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
             duration = time.time() - now
             if duration > self.timeout:
@@ -268,7 +268,7 @@ class VkApi:
             return []
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:
-            with open('inf.log', 'a') as f:
+            with open(accounts.getFile('inf.log'), 'a') as f:
                 print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), url, json.dumps(data_array)), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
