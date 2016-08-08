@@ -186,7 +186,6 @@ def processCommand(cmd, *p):
 
 
 bot_users = {}
-last_message_text = {}
 
 # returns (text, mode)
 # mode=0: default, mode=1: no delay, mode=2: friendship request
@@ -224,22 +223,24 @@ def reply(message):
     message['body'] = preprocessMessage(message)
 
     if message['body']:
+        user_msg = vk.last_message.byUser(message['user_id'])
         if message['body'].startswith('\\') and len(message['body']) > 1:
             cmd = message['body'][1:].split()
             if cmd and message['user_id'] == vk.admin:
                 return (processCommand(*cmd), 1)
 
-        if message['body'] == last_message_text.get(message['user_id'], (0,0,0))[0] and message['body'] != '..':
-            last_message_text[message['user_id']][2] += 1
-            if last_message_text[message['user_id']][2] >= 5:
+        if message['body'] == user_msg.get('text') and message['body'] != '..':
+            user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
+            if user_msg['count'] >= 5:
                 noaddUsers([message['user_id']], reason='flood')
             else:
                 vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
             return ('', 0)
 
-        if message['body'].strip().upper() == last_message_text.get(message['user_id'], (0,0,0))[1]:
+        if 'reply' in user_msg and message['body'].upper() == user_msg['reply'].upper():
             vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
-            last_message_text[message['user_id']] = [message['body'], message['body'], 1]
+            user_msg['text'] = user_msg['reply']  # this modifies the cache entry too
+            #user_msg['count'] = 1  # do we need it?
             return ('', 0)
 
         t = evalExpression(message['body'])
@@ -249,15 +250,12 @@ def reply(message):
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
             log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
             return (t, 0)
-    if message['body']:
         tbody = message['body'].replace('<br>', '')
         if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:
             vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
             return ('', 0)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
-    if reply is not None:
-        last_message_text[message['user_id']] = [message['body'], reply.strip().upper(), 1]
     message['_onsend_actions'] = onsend_actions
     return (reply, 0)
 

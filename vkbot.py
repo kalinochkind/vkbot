@@ -2,7 +2,7 @@ import vkapi
 import time
 import log
 from thread_manager import ThreadManager, Timeline
-from cache import UserCache, ConfCache
+from cache import UserCache, ConfCache, MessageCache
 import config
 import re
 import random
@@ -47,7 +47,7 @@ class VkBot:
         self.last_viewed_comment = stats.get('last_comment', 0)
         self.good_conf = {}
         self.tm = ThreadManager()
-        self.last_message = {}  # peer_id: (id, time, text)
+        self.last_message = MessageCache()
         self.last_message_id = 0
         self.whitelist = None
         self.bad_conf_title = lambda s: False
@@ -201,13 +201,14 @@ class VkBot:
     #       2: no markAsRead
     def replyMessage(self, message, answer, fast=0):
         sender = self.getSender(message)
-        if 'id' in message and message['id'] <= self.last_message.get(sender, (0, 0))[0]:
+        sender_msg = self.last_message.bySender(sender)
+        if 'id' in message and message['id'] <= sender_msg.get('id', 0):
             return
 
         if not answer:
             if self.tm.isBusy(sender):
                 return
-            if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
+            if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
                 tl = Timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
@@ -215,7 +216,7 @@ class VkBot:
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
-            self.last_message[sender] = (self.last_message.get(sender, (0, 0))[0], time.time(), '')
+            self.last_message.updateTime(sender)
             return
 
         typing_time = 0
@@ -223,7 +224,8 @@ class VkBot:
             typing_time = len(answer) / self.chars_per_second
 
         resend = False
-        if sender in self.last_message and self.last_message[sender][2].upper() == answer.upper() and fast == 0:
+        # answer is not empty
+        if fast == 0 and sender_msg.get('reply', '').upper() == answer.upper():
             log.info('Resending')
             typing_time = 0
             resend = True
@@ -231,7 +233,7 @@ class VkBot:
         def _send():
             try:
                 if resend:
-                    res = self.sendMessage(sender, self.last_message[sender][0], resend=True)
+                    res = self.sendMessage(sender, sender_msg['id'], resend=True)
                 else:
                     res = self.sendMessage(sender, answer)
                 if res is None:
@@ -240,17 +242,19 @@ class VkBot:
                     html_msg = 'Failed to send a message to ' + self.printableSender(message, True)
                     log.info((text_msg, html_msg))
                     return
-                self.last_message[sender] = (res, 0 if fast == 1 else time.time(), answer)
+                self.last_message.add(sender, message, res, answer)
+                if fast == 1:
+                    self.last_message.updateTime(sender, 0)
             except Exception as e:
                 log.error('thread {}: {}'.format(e.__class__.__name__, str(e)), True)
 
         cur_delay = (self.delay_on_reply - 1) * random.random() + 1
         send_time = cur_delay + typing_time
         user_delay = 0
-        if sender in self.last_message and sender != self.admin:
-            user_delay = self.last_message[sender][1] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
+        if sender_msg and sender != self.admin:
+            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
         tl = Timeline(max(send_time, user_delay))
-        if sender not in self.last_message or time.time() - self.last_message[sender][1] > self.forget_interval:
+        if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             if fast == 0:
                 tl.sleep(self.delay_on_first_reply)
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))

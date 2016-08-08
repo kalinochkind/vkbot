@@ -79,3 +79,25 @@ class ConfCache(Cache):
 
     def _load(self, ids):
         return self.api.messages.getChat(chat_ids=','.join(map(str, ids)))
+
+
+class MessageCache:
+    def __init__(self):
+        self.user_msg = {}
+        self.sender_msg = {}
+
+    def add(self, sender, message, id, reply):
+        entry = {'id': id, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time()}
+        self.user_msg[message['user_id']] = entry
+        self.sender_msg[sender] = entry
+
+    def byUser(self, uid):
+        return self.user_msg.get(uid, {})
+
+    def bySender(self, pid):
+        return self.sender_msg.get(pid, {})
+
+    def updateTime(self, sender, newtime=None):
+        if newtime is None:
+            newtime = time.time()
+        self.sender_msg.setdefault(sender, {})['time'] = time.time()
