@@ -64,9 +64,10 @@ class VkBot:
         self.bf = res.get('relation_partner')
         log.info('My phone: ' + self.phone)
 
-    def getSender(self, message):
+    @staticmethod
+    def getSender(message):
         if 'chat_id' in message:
-            return 2000000000 + message['chat_id']
+            return CONF_START + message['chat_id']
         return message['user_id']
 
     def loadUsers(self, arr, key, clean=False, confs=False):
