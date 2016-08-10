@@ -265,8 +265,6 @@ def preprocessMessage(message, user=None):
         return None
 
     if 'action' in message:
-        if message['action'] == 'chat_invite_user' and message['action_mid'] == vk.self_id:
-            vk.deleteFriend(message['user_id'])
         return None
 
     result = message['body']

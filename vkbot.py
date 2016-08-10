@@ -153,6 +153,10 @@ class VkBot:
                         self.leaveConf(sender - CONF_START)
                         log.write('conf',  'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
                         continue
+                if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
+                    self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
+                    self.deleteFriend(int(opt['from']))
+                    continue
                 if flags & 2:  # out
                     continue
                 for i in range(1, 11):
