@@ -87,7 +87,7 @@ class MessageCache:
         self.sender_msg = {}
 
     def add(self, sender, message, id, reply):
-        entry = {'id': id, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time()}
+        entry = {'id': id, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time(), 'user_id': message['user_id']}
         self.user_msg[message['user_id']] = entry
         self.sender_msg[sender] = entry
 

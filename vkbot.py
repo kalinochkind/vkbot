@@ -225,7 +225,7 @@ class VkBot:
 
         resend = False
         # answer is not empty
-        if fast == 0 and sender_msg.get('reply', '').upper() == answer.upper():
+        if fast == 0 and sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
             log.info('Resending')
             typing_time = 0
             resend = True
