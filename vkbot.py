@@ -82,9 +82,8 @@ class VkBot:
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
             return
-        if 'chat_id' in message:
-            if not self.checkConf(message['chat_id']):
-                self.deleteFriend(message['user_id'])
+        if 'chat_id' in message and not self.checkConf(message['chat_id']):
+                log.info('[DEBUG] bad conf in replyOne')
                 return
         if self.tm.isBusy(self.getSender(message)) and not self.tm.canTerminate(self.getSender(message)):
             return
@@ -107,8 +106,9 @@ class VkBot:
             self.users.gc()
             try:
                 messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))['items'][::-1]
-            except (KeyError, TypeError):
+            except (KeyError, TypeError) as e:
                 # may sometimes happen because of friendship requests
+                log.info('[DEBUG] "{}" in replyAll'.format(str(e)))
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
             self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
@@ -207,6 +207,7 @@ class VkBot:
         sender = self.getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
+            log.info('[DEBUG] replyMessage: small id')
             return
 
         if not answer:
@@ -412,14 +413,13 @@ class VkBot:
             return
         photo = self.users[uid]['crop_photo']['photo']
         self.api.likes.add(type='photo', owner_id=photo['owner_id'], item_id=photo['id'])
+        self.logSender('Liked %sender%', {'user_id': uid})
 
     def setRelation(self, uid):
-        try:
-            self.api.account.saveProfileInfo(relation_partner_id=uid)
-            self.bf = self.users[uid]
-            log.write('relation', uid)
-        except Exception:
-            log.write('relation', str(uid) + ' failed')
+        self.api.account.saveProfileInfo(relation_partner_id=uid)
+        self.bf = self.users[uid]
+        log.write('relation', uid)
+        self.logSender('Set relationship with %sender%', {'user_id': uid})
 
     def waitAllThreads(self):
         for t in self.tm.all():
