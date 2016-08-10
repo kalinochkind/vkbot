@@ -83,8 +83,7 @@ class VkBot:
         if self.whitelist and self.getSender(message) not in self.whitelist:
             return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
-                log.info('[DEBUG] bad conf in replyOne')
-                return
+            return
         if self.tm.isBusy(self.getSender(message)) and not self.tm.canTerminate(self.getSender(message)):
             return
 
@@ -207,7 +206,6 @@ class VkBot:
         sender = self.getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
-            log.info('[DEBUG] replyMessage: small id')
             return
 
         if not answer:
