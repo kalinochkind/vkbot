@@ -1,4 +1,3 @@
-from vkapi import vk_api
 import datetime 
 import config
 
