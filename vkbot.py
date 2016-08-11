@@ -103,12 +103,7 @@ class VkBot:
         if include_read:
             log.info('Include read')
             self.users.gc()
-            try:
-                messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))['items'][::-1]
-            except (KeyError, TypeError) as e:
-                # may sometimes happen because of friendship requests
-                log.info('[DEBUG] "{}" in replyAll'.format(str(e)))
-                return
+            messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))['items'][::-1]
             self.loadUsers(messages, lambda x:x['message']['user_id'])
             self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
             for msg in sorted(messages, key=lambda msg:msg['message']['id']):
