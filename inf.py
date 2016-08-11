@@ -403,7 +403,7 @@ signal.signal(signal.SIGTERM, onExit)
 
 vk = VkBot(login, password)
 vk.admin = config.get('inf.admin', 'i')
-vk.bad_conf_title = lambda s: getBotReply(None, s, -2)
+vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
 log.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
 if args['whitelist']:
