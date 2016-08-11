@@ -181,9 +181,11 @@ wstring Say(wstring &line, int id, bool conf)
             wcerr << "red|" << line << "- too many smiles\n";
             return L"";
         }
-        wcerr << "yellow|" << line << L"- no match\n";
         if(id >= 0)
+        {
+            wcerr << "yellow|" << line << L"- no match\n";
             users[id].smiles++;
+        }
         return L"$noans";
     }
 
@@ -211,13 +213,15 @@ wstring Say(wstring &line, int id, bool conf)
         }
         users[id].smiles = 0;
     }
-
-    wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
-    if(reply[imx]->first.size() > 1)
+    if(id >= 0)
     {
-        wcerr << L", " << reply[imx]->first.size() << L" replies";
+        wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
+        if(reply[imx]->first.size() > 1)
+        {
+            wcerr << L", " << reply[imx]->first.size() << L" replies";
+        }
+        wcerr << L"\n";
     }
-    wcerr << L"\n";
     if(id == -2)
     {
         for(int i=0;i<(int)reply[imx]->first.size();i++)
