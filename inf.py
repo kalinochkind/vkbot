@@ -490,9 +490,7 @@ if config.get('inf.server_port', 'i'):
 
 check_friend.writeNoadd()
 stats.update('started', time.time())
-reply_all = timeto('includeread', includeread_interval)
 def main_loop():
-    global reply_all, dialogs
     try:
         if timeto('setonline', setonline_interval):
             vk.setOnline()
@@ -504,13 +502,9 @@ def main_loop():
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, testFriend)
         if includeread_interval >= 0:
-            vk.replyAll(reply, reply_all)
+            vk.replyAll(reply, timeto('includeread', includeread_interval))
         else:
             time.sleep(1)
-        reply_all = vk.api.captcha_error
-        vk.api.captcha_error = False
-        if timeto('includeread', includeread_interval):
-            reply_all = True
         if timeto('stats', stats_interval):
             count, dialogs, confs = vk.lastDialogs()
             vk.loadUsers(dialogs, lambda x:x[1])
