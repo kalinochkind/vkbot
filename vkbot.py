@@ -291,7 +291,7 @@ class VkBot:
         return True
 
     def leaveConf(self, cid):
-        log.info('Leaving conf ' + str(cid))
+        log.info('Leaving conf {} ("{}")'.format(cid, self.confs[cid]['title']))
         self.good_conf[cid + CONF_START] = False
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
