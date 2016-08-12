@@ -279,6 +279,7 @@ class VkBot:
         for i in messages:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
+                self.deleteFriend(i['user_id'])
                 log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
                 return False
         title = self.confs[cid]['title']
