@@ -151,11 +151,15 @@ class VkApi:
                 self.ch.reset()
                 return data_array['response']
             elif 'error' in data_array:
-                if data_array['error']['error_code'] == 14: #Captcha needed
+                if data_array['error']['error_code'] == 14:  # Captcha needed
                     self.ch.handle(data_array, params)
                     return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 5: #Auth error
+                elif data_array['error']['error_code'] == 5:  # Auth error
                     self.login()
+                    return self.apiCall(method, params)
+                elif data_array['error']['error_code'] == 6:  # Too many requests per second
+                    log.warning('{}: too many requests per second'.format(method))
+                    time.sleep(2)
                     return self.apiCall(method, params)
                 elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
                     try:
