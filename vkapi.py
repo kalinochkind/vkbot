@@ -29,8 +29,6 @@ class DelayedCall:
 
 
 class VkApi:
-    checks_before_antigate = config.get('vkapi.checks_before_antigate', 'i')
-    captcha_check_interval = config.get('vkapi.captcha_check_interval', 'i')
     api_version = '5.53'
 
     def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout', 'i')):
@@ -39,8 +37,6 @@ class VkApi:
             log.info('Logging enabled')
         self.username = username
         self.password = password
-        self.captcha_delayed = 0
-        self.captcha_sid = ''
         self.last_call = 0
         self.delayed_list = []
         self.max_delayed = 25
@@ -50,10 +46,9 @@ class VkApi:
         self.longpoll_key = ''
         self.longpoll_ts = 0
         self.api_lock = threading.RLock()
+        self.ch = captcha.CaptchaHandler()
         self.token = None
         self.getToken()
-        self.external_captcha = False
-        self.captcha_error = False
 
     def __getattr__(self, item):
         handler = self
@@ -153,57 +148,15 @@ class VkApi:
             if data_array is None:
                 return None
             if 'response' in data_array:
-                if self.captcha_delayed or self.external_captcha:
-                    self.captcha_delayed = 0
-                    self.external_captcha = False
-                    log.info('Captcha no longer needed')
-                    self.captcha_sid = ''
-                captcha.delete()
+                self.ch.reset()
                 return data_array['response']
-
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14: #Captcha needed
-                    self.external_captcha = False
-                    if self.captcha_delayed == 0:
-                        log.warning('Captcha needed')
-                        self.captcha_sid = data_array['error']['captcha_sid']
-                        with open(accounts.getFile('captcha.txt'), 'w') as f:
-                            f.write('sid ' + self.captcha_sid)
-                        captcha.receive(data_array['error']['captcha_img'])
-                    elif self.captcha_sid:
-                        key = open(accounts.getFile('captcha.txt')).read()
-                        if key.startswith('key'):
-                            log.info('Trying a key from captcha.txt')
-                            params['captcha_sid'] = self.captcha_sid
-                            params['captcha_key'] = key.split()[1]
-                            self.captcha_sid = ''
-                            captcha.delete()
-                            self.captcha_delayed = 0
-                            self.external_captcha = True
-                            return self.apiCall(method, params)
-                    if self.captcha_delayed == self.checks_before_antigate:
-                        log.info('Using antigate')
-                        open(accounts.getFile('captcha.txt'), 'w').close()
-                        ans = captcha.solve()
-                        if ans is None:
-                            self.captcha_error = True
-                            time.sleep(5)
-                        elif not ans:
-                            captcha.receive(data_array['error']['captcha_img'])
-                            self.captcha_sid = data_array['error']['captcha_sid']
-                            return self.apiCall(method, params)
-                        else:
-                            params['captcha_sid'] = self.captcha_sid
-                            params['captcha_key'] = ans
-                            self.captcha_delayed = 0
-                    else:
-                        time.sleep(self.captcha_check_interval)
-                        self.captcha_delayed += 1
+                    self.ch.handle(data_array, params)
                     return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 5: #Auth error
                     self.login()
                     return self.apiCall(method, params)
-
                 elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
                     try:
                         handler = self.ignored_errors[(data_array['error']['error_code'], method)]

@@ -1,5 +1,7 @@
-[antigate]
-key =
+[captcha]
+antigate_key =
+checks_before_antigate = 6
+check_interval =  5
 
 [vkbot]
 delay_on_reply = 3
@@ -11,8 +13,6 @@ delay_on_first_reply = 10
 stats_dialog_count = 10
 
 [vkapi]
-checks_before_antigate = 6
-captcha_check_interval =  5
 default_timeout = 5
 
 [inf]
