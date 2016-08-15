@@ -248,7 +248,7 @@ def reply(message):
             if getBotReply(None, message['body'], -2):
                 return ('', 0)
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
-            log.write('calc', '{}: "{}" = {}'.format(message['user_id'], message['body'], t))
+            log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(message['user_id']), message['body'], t))
             return (t, 0)
         tbody = message['body'].replace('<br>', '')
         if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:

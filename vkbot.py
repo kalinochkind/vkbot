@@ -280,7 +280,7 @@ class VkBot:
             if i.get('action') == 'chat_create':
                 self.leaveConf(cid)
                 self.deleteFriend(i['user_id'])
-                log.write('conf', str(i.get('user_id')) + ' ' + str(cid))
+                log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
                 return False
         title = self.confs[cid]['title']
         if self.bad_conf_title(title):
@@ -384,17 +384,17 @@ class VkBot:
                 res = 'good'
                 if self.users[rep['feedback']['from_id']]['blacklisted']:
                     res = 'blacklisted'
-                    log.write('comments', str(rep['feedback']['from_id']) + ' (blacklisted): ' + txt)
+                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (blacklisted): ' + txt)
                     self.deleteComment(rep)
                     to_bl.add(rep['feedback']['from_id'])
                 elif test(txt):
                     res = 'bad'
-                    log.write('comments', str(rep['feedback']['from_id']) + ': ' + txt)
+                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
                 elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
                     res = 'attachment'
-                    log.write('comments', str(rep['feedback']['from_id']) + ' (attachment)')
+                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
                 self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id':rep['feedback']['from_id']})
         for i in to_bl:
@@ -412,7 +412,7 @@ class VkBot:
     def setRelation(self, uid):
         self.api.account.saveProfileInfo(relation_partner_id=uid)
         self.bf = self.users[uid]
-        log.write('relation', uid)
+        log.write('relation', self.loggableName(uid))
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 
     def waitAllThreads(self):
@@ -443,6 +443,9 @@ class VkBot:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
             else:
                 return self.printableName(message['user_id'], user_fmt='{name}')
+
+    def loggableName(self, uid):
+        return self.printableName(uid, '{id} ({name})')
 
     def blacklist(self, uid):
         self.api.account.banUser(user_id=uid)
