@@ -214,6 +214,7 @@ class VkBot:
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
                 self.tm.run(sender, tl, tl.terminate)
+            self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
             return
 
