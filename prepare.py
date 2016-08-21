@@ -16,7 +16,7 @@ login = config.get('login.login')
 password = config.get('login.password')
 
 def availableScripts():
-    print('Available scripts:', ', '.join(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__')))
+    print('Available scripts:', ', '.join(sorted(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__'))))
     sys.exit()
 
 if args['script'] is None:
