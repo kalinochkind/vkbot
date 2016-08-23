@@ -103,7 +103,12 @@ class VkBot:
         if include_read:
             log.info('Include read')
             self.users.gc()
-            messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))['items'][::-1]
+            messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))
+            try:
+                messages = messages['items'][::-1]
+            except LookupError:
+                log.warning('Unable to fetch messages')
+                return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
             self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
             for msg in sorted(messages, key=lambda msg:msg['message']['id']):
