@@ -121,70 +121,6 @@ def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
     log.info((text_msg, html_msg))
     return answer
 
-def processCommand(cmd, *p):
-    if cmd == 'reload':
-        return reloadHandler()
-
-    elif cmd == 'banned':
-        if banign.banned:
-            result = sorted(banign.banned)
-            result = [vk.printableName(j, user_fmt='[id{id}|{name}]') for j in result]
-            return '\n'.join(result)
-        else:
-            return 'No one banned!'
-
-    elif cmd == 'ban':
-        if not p:
-            return 'Not enough parameters'
-        user = vk.getUserId(p[-1])
-        if user is None:
-            return 'No such user'
-        if user == vk.admin:
-            return 'Cannot ban admin!'
-        return vk.printableName(user, user_fmt='[id{id}|{name}]') + ' banned' if banign.ban(user) else 'Already banned'
-
-    elif cmd == 'unban':
-        if not p:
-            return 'Not enough parameters'
-        user = p[-1]
-        user = vk.getUserId(user)
-        return vk.printableName(user, user_fmt='[id{id}|{name}]') + ' unbanned' if banign.unban(user) else 'Not banned'
-
-    elif cmd == 'ignore':
-        users = vk.getUserId(p)
-        if not users:
-            return 'No such users'
-        if vk.admin in users:
-            return 'Cannot ignore admin!'
-        noaddUsers(users, reason='\\ignore command')
-        vk.users.load(users)
-        return 'Ignored ' +  ', '.join(vk.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
-
-    elif cmd == 'unignore':
-        users = vk.getUserId(p)
-        if not users:
-            return 'No such users'
-        if vk.admin in users:
-            return 'Cannot ignore admin!'
-        noaddUsers(users, True)
-        vk.users.load(users)
-        return 'Unignored ' +  ', '.join(vk.printableName(i, user_fmt='[id{id}|{name}]') for i in users)
-
-    elif cmd == 'leave':
-        if not p:
-            return 'Not enough parameters'
-        if not p[-1].isdigit():
-            return 'Invalid conf id'
-        cid = int(p[-1])
-        if vk.leaveConf(cid):
-            return 'Ok'
-        else:
-            return 'Fail'
-
-    else:
-        return 'Unknown command'
-
-
 bot_users = {}
 
 # returns (text, mode)
@@ -224,11 +160,6 @@ def reply(message):
 
     if message['body']:
         user_msg = vk.last_message.byUser(message['user_id'])
-        if message['body'].startswith('\\') and len(message['body']) > 1:
-            cmd = message['body'][1:].split()
-            if cmd and message['user_id'] == vk.admin:
-                return (processCommand(*cmd), 1)
-
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
             if user_msg['count'] >= 5:
