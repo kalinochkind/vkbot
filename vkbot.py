@@ -105,7 +105,6 @@ class VkBot:
         self.tm.gc()
         self.banned_list = []
         if include_read:
-            log.info('Include read')
             self.users.gc()
             messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))
             try:
