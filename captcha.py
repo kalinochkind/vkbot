@@ -1,5 +1,5 @@
 from urllib.request import urlopen
-import log
+import logging
 import socket
 import urllib.error
 import os
@@ -25,11 +25,11 @@ class CaptchaHandler:
         try:
             data = urlopen(url, timeout=self.timeout).read()
         except (urllib.error.URLError, socket.timeout):
-            log.warning('captcha timeout')
+            logging.warning('captcha timeout')
             time.sleep(5)
             self.receive(url)
         except Exception:
-            log.error('captcha.receive error', True)
+            logging.exception('captcha.receive error')
             time.sleep(5)
             self.receive(url)
         else:
@@ -48,22 +48,22 @@ class CaptchaHandler:
 
     def solve(self):
         if not os.path.isfile(self.png_filename):
-            log.warning('captcha.png does not exist')
+            logging.warning('captcha.png does not exist')
             return ''
         import antigate
         try:
             return str(antigate.AntiGate(self.key, self.png_filename)) or None
         except antigate.AntiGateError as e:
-            log.warning(str(e))
+            logging.warning(str(e))
             return None
         except Exception:
-            log.error('captcha.solve error', True)
+            logging.exception('captcha.solve error')
             return ''
 
     def handle(self, data_array, params):
         self.trying_external_key = False
         if self.checks_done == 0:
-            log.warning('Captcha needed')
+            logging.warning('Captcha needed')
             self.sid = data_array['error']['captcha_sid']
             with open(accounts.getFile('captcha.txt'), 'w') as f:
                 f.write('sid ' + self.sid)
@@ -71,7 +71,7 @@ class CaptchaHandler:
         elif self.sid:
             key = open(accounts.getFile('captcha.txt')).read()
             if key.startswith('key'):
-                log.info('Trying a key from captcha.txt')
+                logging.info('Trying a key from captcha.txt')
                 params['captcha_sid'] = self.sid
                 params['captcha_key'] = key.split()[1]
                 self.sid = ''
@@ -81,7 +81,7 @@ class CaptchaHandler:
                 return
 
         if self.checks_done == self.checks_before_antigate:
-            log.info('Using antigate')
+            logging.info('Using antigate')
             open(accounts.getFile('captcha.txt'), 'w').close()
             ans = self.solve()
             if ans is None:
@@ -101,6 +101,6 @@ class CaptchaHandler:
         if self.checks_done or self.trying_external_key:
             self.checks_done = 0
             self.trying_external_key = False
-            log.info('Captcha no longer needed')
+            logging.info('Captcha no longer needed')
             self.sid = ''
         self.delete()

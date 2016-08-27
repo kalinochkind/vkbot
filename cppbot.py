@@ -1,7 +1,7 @@
 from subprocess import Popen, PIPE
 import fcntl
 import os
-import log
+import logging
 import threading
 import config
 
@@ -47,17 +47,17 @@ class CppBot:
                     info = nonBlockRead(self.bot.stderr)
                     if not info:
                         break
-                    info = info.decode().rstrip().split('|', maxsplit=1)
+                    info = info.decode().rstrip()
                     if do_log:
-                        log.info(info[1], info[0])
+                        logging.info(info)
         except BrokenPipeError:
-            log.error('Broken pipe, restarting ' + self.exe_name)
+            logging.error('Broken pipe, restarting ' + self.exe_name)
             self.runExe()
             return self.interact(msg, do_log)
         return answer.decode().strip()
 
     def buildExe(self):
-        log.info('Rebuilding ' + self.exe_name)
+        logging.info('Rebuilding ' + self.exe_name)
         if os.system(self.path + 'build.sh'):
-            log.error('Unable to build', fatal=True)
-        log.info('Build successful')
+            logging.critical('Unable to build')
+        logging.info('Build successful')

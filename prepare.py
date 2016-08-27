@@ -9,6 +9,29 @@ import log
 import config
 from vkapi import VkApi
 import captcha
+import logging
+
+class MyHandler(logging.Handler):
+    def handle(self, record):
+        msg = record.getMessage()
+        lvl = record.levelname
+        if any(msg.lower().startswith(i) for i in ('red|', 'green|', 'yellow|')):
+            color, msg = msg.split('|', maxsplit=1)
+            log.info(msg, color.lower())
+            return
+        db_msg = getattr(record, 'db', None)
+        if db_msg:
+            msg = (msg, db_msg)
+        if lvl == 'CRITICAL':
+            log.error(msg, fatal=True)
+        elif lvl == 'ERROR':
+            log.error(msg, record.exc_info is not None)
+        elif lvl == 'WARNING':
+            log.warning(msg)
+        elif lvl == 'INFO':
+            log.info(msg)
+
+logging.basicConfig(handlers=[MyHandler()], level=logging.INFO)
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
@@ -57,4 +80,4 @@ if not single:
 with open(pid_file, 'w') as f:
     f.write(str(os.getpid()))
 
-log.info('Starting vkbot, pid ' + str(os.getpid()))
+logging.info('Starting vkbot, pid ' + str(os.getpid()))

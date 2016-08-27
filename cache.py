@@ -1,6 +1,6 @@
 import config
 import time
-import log
+import logging
 import threading
 
 
@@ -21,7 +21,7 @@ class Cache:
                     self.load([uid])
                 return self.objects[uid][1]
         except Exception:
-            log.error('Cache error', True)
+            logging.exception('Cache error')
             return None
 
     def __delitem__(self, uid):
@@ -55,7 +55,7 @@ class Cache:
                     for obj in resp:
                         self.objects[obj['id']] = (ctime, obj)
         except Exception:
-            log.error('Cache error', True)
+            logging.exception('Cache error')
 
     def _load(self, ids):
         raise NotImplementedError()

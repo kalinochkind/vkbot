@@ -1,6 +1,6 @@
 import socket
 import threading
-import log
+import logging
 import config
 
 class MessageServer:
@@ -32,7 +32,7 @@ class MessageServer:
                 res = self.handlers[data[0]](data[1])
                 conn.send(res.encode('utf-8'))
             except Exception:
-                log.error('MessageServer error', True)
+                logging.exception('MessageServer error')
                 conn.send(b'error')
 
     def listen(self):

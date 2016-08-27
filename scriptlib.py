@@ -1,11 +1,11 @@
-import log
+import logging
 import accounts
 import itertools
 
 def _getPeople(fun, fields):
     friends = []
     for i in itertools.count():
-        log.info('page ' + str(i+1))
+        logging.info('page ' + str(i+1))
         if fields:
             fr = fun(count=1000, offset=i*1000, fields=fields)
         else:
@@ -18,18 +18,18 @@ def _getPeople(fun, fields):
 
 
 def getFriends(a, fields=None):
-    log.info('Fetching friends')
+    logging.info('Fetching friends')
     return _getPeople(a.friends.get, fields)
 
 def getFollowers(a, fields=None):
-    log.info('Fetching followers')
+    logging.info('Fetching followers')
     return _getPeople(a.users.getFollowers, fields)
 
 def getDialogs(a):
     dialogs = []
-    log.info('Fetching dialogs')
+    logging.info('Fetching dialogs')
     for i in itertools.count():
-        log.info('page ' + str(i+1))
+        logging.info('page ' + str(i+1))
         fr = a.messages.getDialogs(count=200, offset=i*200)
         for t in fr['items']:
             t = t['message']

@@ -1,6 +1,7 @@
 import vkapi
 import time
 import log
+import logging
 from thread_manager import ThreadManager, Timeline
 from cache import UserCache, ConfCache, MessageCache
 import config
@@ -65,7 +66,7 @@ class VkBot:
         self.phone = res.get('mobile_phone', '')
         self.name = (res['first_name'], res['last_name'])
         self.bf = res.get('relation_partner')
-        log.info('My phone: ' + self.phone)
+        logging.info('My phone: ' + self.phone)
 
     @staticmethod
     def getSender(message):
@@ -96,7 +97,7 @@ class VkBot:
             ans = gen_reply(message)
         except Exception as e:
             ans = None
-            log.error('local {}: {}'.format(e.__class__.__name__, str(e)), True)
+            logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
             time.sleep(1)
         if ans:
             self.replyMessage(message, ans[0], ans[1])
@@ -110,7 +111,7 @@ class VkBot:
             try:
                 messages = messages['items'][::-1]
             except TypeError:
-                log.warning('Unable to fetch messages')
+                logging.warning('Unable to fetch messages')
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
             self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
@@ -150,7 +151,7 @@ class VkBot:
                     continue
                 if opt.get('source_act') == 'chat_title_update':
                     del self.confs[sender - CONF_START]
-                    log.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
+                    logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
                     if self.bad_conf_title(opt['source_text']):
                         self.leaveConf(sender - CONF_START)
                         log.write('conf',  'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
@@ -233,7 +234,7 @@ class VkBot:
         resend = False
         # answer is not empty
         if fast == 0 and sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
-            log.info('Resending')
+            logging.info('Resending')
             typing_time = 0
             resend = True
 
@@ -247,13 +248,13 @@ class VkBot:
                     del self.users[sender]
                     text_msg = 'Failed to send a message to ' + self.printableSender(message, False)
                     html_msg = 'Failed to send a message to ' + self.printableSender(message, True)
-                    log.info((text_msg, html_msg))
+                    logging.info(text_msg, extra={'db':html_msg})
                     return
                 self.last_message.add(sender, message, res, answer)
                 if fast == 1:
                     self.last_message.updateTime(sender, 0)
             except Exception as e:
-                log.error('thread {}: {}'.format(e.__class__.__name__, str(e)), True)
+                logging.exception('thread {}: {}'.format(e.__class__.__name__, str(e)))
 
         cur_delay = (self.delay_on_reply - 1) * random.random() + 1
         send_time = cur_delay + typing_time
@@ -300,7 +301,7 @@ class VkBot:
         return True
 
     def leaveConf(self, cid):
-        log.info('Leaving conf {} ("{}")'.format(cid, self.confs[cid]['title']))
+        logging.info('Leaving conf {} ("{}")'.format(cid, self.confs[cid]['title']))
         self.good_conf[cid + CONF_START] = False
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
@@ -439,7 +440,7 @@ class VkBot:
     def logSender(self, text, message):
         text_msg = text.replace('%sender%', self.printableSender(message, False))
         html_msg = text.replace('%sender%', self.printableSender(message, True))
-        log.info((text_msg, html_msg))
+        logging.info(text_msg, extra={'db':html_msg})
 
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:

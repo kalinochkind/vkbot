@@ -3,7 +3,7 @@ import urllib.request
 import json
 import time
 import socket
-import log
+import logging
 import accounts
 import html
 
@@ -31,7 +31,7 @@ class VkApi:
     def __init__(self, username='', password='', *, ignored_errors={}, timeout=5, logging=False, captcha_handler=None):
         self.logging = logging
         if self.logging:
-            log.info('Logging enabled')
+            logging.info('Logging enabled')
         self.username = username
         self.password = password
         self.last_call = 0
@@ -118,29 +118,29 @@ class VkApi:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except OSError as e:
                 err = str(e)
-                log.warning(method + ' failed ({})'.format(html.escape(err.strip())))
+                logging.warning(method + ' failed ({})'.format(html.escape(err.strip())))
                 time.sleep(1)
                 return self.apiCall(method, params)
             except Exception as e:
                 if retry:
-                    log.error('({}) {}: {}'.format(method, e.__class__.__name__, str(e)), True)
+                    logging.exception('({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
                     return None
                 else:
                     time.sleep(1)
-                    log.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
+                    logging.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
                     return self.apiCall(method, params, 1)
 
             try:
                 data_array = json.loads(json_string.decode('utf-8'))
             except json.decoder.JSONDecodeError:
-                log.error('Invalid JSON')
+                logging.error('Invalid JSON')
                 data_array = None
             if self.logging:
                 with open(accounts.getFile('inf.log'), 'a') as f:
-                    print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
+                    print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
             duration = time.time() - now
             if duration > self.timeout:
-                log.warning('{} timeout'.format(method))
+                logging.warning('{} timeout'.format(method))
 
             if data_array is None:
                 return None
@@ -159,7 +159,7 @@ class VkApi:
                     self.login()
                     return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 6:  # Too many requests per second
-                    log.warning('{}: too many requests per second'.format(method))
+                    logging.warning('{}: too many requests per second'.format(method))
                     time.sleep(2)
                     return self.apiCall(method, params)
                 elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
@@ -170,28 +170,28 @@ class VkApi:
                     if not handler:
                         return None
                     if retry or not handler[1]:
-                        log.warning(handler[0])
+                        logging.warning(handler[0])
                         return None
                     else:
-                        log.warning(handler[0] + ', retrying')
+                        logging.warning(handler[0] + ', retrying')
                         time.sleep(3)
                         return self.apiCall(method, params, True)
 
                 else:
-                    log.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
+                    logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
                     return None
             else:
                 return self.apiCall(method, params)
 
     def login(self):
-        log.info('Fetching new token')
+        logging.info('Fetching new token')
         url = 'https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username + '&password=' + self.password
         if not self.username or not self.password:
-            log.error('I don\'t know your login or password, sorry', fatal=True)
+            logging.critical('I don\'t know your login or password, sorry')
         try:
             json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
         except Exception:
-            log.error('Authorization failed', fatal=True)
+            logging.critical('Authorization failed')
         data = json.loads(json_string)
         self.token = data['access_token']
         with open(accounts.getFile('token.txt'), 'w') as f:
@@ -218,16 +218,16 @@ class VkApi:
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except urllib.error.HTTPError as e:
-            log.warning('longpoll http error ' + str(e.code))
+            logging.warning('longpoll http error ' + str(e.code))
             return []
         except OSError as e:
-            log.warning('longpoll failed ({})'.format(e))
+            logging.warning('longpoll failed ({})'.format(e))
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
         if self.logging:
             with open(accounts.getFile('inf.log'), 'a') as f:
-                print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime(log.datetime_format, time.localtime()), url, json.dumps(data_array)), file=f)
+                print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), url, json.dumps(data_array)), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
 

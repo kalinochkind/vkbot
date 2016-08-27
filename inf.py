@@ -2,6 +2,7 @@
 
 import accounts # must be first
 import log
+import logging
 import time
 import sys
 from vkbot import VkBot, CONF_START
@@ -118,7 +119,7 @@ def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
         console_message += ' (' + method + ')'
     text_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, False), message, renderSmile(answer), console_message)
     html_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id':uid, 'chat_id':conf_id}, True), message, renderSmile(answer).replace('&', '&amp;'), console_message)
-    log.info((text_msg, html_msg))
+    logging.info(text_msg, extra={'db':html_msg})
     return answer
 
 bot_users = {}
@@ -149,7 +150,7 @@ def reply(message):
         if 'chat_id' in message:
             bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
             if bot_users[message['user_id']] >= 3:
-                log.info('Too many bot messages')
+                logging.info('Too many bot messages')
                 log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
                 vk.leaveConf(message['chat_id'])
         return ('', 0)
@@ -274,7 +275,7 @@ def preprocessReply(s, uid, onsend_actions):
             return vk.bf['last_name']
         else:
             return ''
-    log.error('Unknown variable: ' + s)
+    logging.error('Unknown variable: ' + s)
 
 
 # 1: female, 2: male
@@ -311,7 +312,7 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
                 return 0
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id':i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
-            log.info((text_msg, html_msg))
+            logging.info(text_msg, extra={'db':html_msg})
             check_friend.appendNoadd(users)
             vk.deleteFriend(users)
             return len(users)
@@ -320,14 +321,15 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
 def reloadHandler(*p):
     bot.interact('reld')
     vk.initSelf()
-    log.info('Reloaded!')
+    logging.info('Reloaded!')
     return 'Reloaded!'
 
 def onExit(*p):
-    log.info('Received SIGTERM')
+    logging.info('Received SIGTERM')
     loop_thread.join(60)
     vk.waitAllThreads()
-    log.info('Bye')
+    logging.info('Bye')
+    logging.shutdown()
     sys.exit()
 signal.signal(signal.SIGTERM, onExit)
 
@@ -335,11 +337,11 @@ signal.signal(signal.SIGTERM, onExit)
 vk = VkBot(login, password)
 vk.admin = config.get('inf.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
-log.info('My id: ' + str(vk.self_id))
+logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
 if args['whitelist']:
     vk.whitelist = [vk.getUserId(i) or i for i in args['whitelist'].split(',')]
-    log.info('Whitelist: ' +', '.join(map(lambda x:x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
+    logging.info('Whitelist: ' +', '.join(map(lambda x:x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 
 addfriends_interval = config.get('inf.addfriends_interval', 'i')
@@ -417,7 +419,7 @@ if config.get('inf.server_port', 'i'):
     srv.addHandler('leave', leaveHandler)
     srv.addHandler('banlist', banlistHandler)
     srv.listen()
-    log.info('Running TCP server on port ' + config.get('inf.server_port'))
+    logging.info('Running TCP server on port ' + config.get('inf.server_port'))
 
 check_friend.writeNoadd()
 stats.update('started', time.time())
@@ -444,7 +446,7 @@ def main_loop():
             stats.update('dialogs_list', dialogs)
 
     except Exception as e:
-        log.error('global {}: {}'.format(e.__class__.__name__, str(e)), True)
+        logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = True
         time.sleep(2)
 

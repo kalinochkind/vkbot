@@ -1,6 +1,6 @@
 import threading
 import time
-import log
+import logging
 
 class ThreadManager:  # not thread-safe, should be used only from main thread
     def __init__(self):
@@ -11,7 +11,7 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
             if self.canTerminate(key):
                 self.terminate(key)
             else:
-                log.error('Unable to run a new thread with key ' + str(key))
+                logging.error('Unable to run a new thread with key ' + str(key))
                 return
         t = threading.Thread(target=proc)
         t.terminate_func = terminate_func
