@@ -3,11 +3,8 @@ import urllib.request
 import json
 import time
 import socket
-import config
 import log
-import captcha
 import accounts
-import args
 import html
 
 CALL_INTERVAL = 0.35
@@ -31,8 +28,8 @@ class DelayedCall:
 class VkApi:
     api_version = '5.53'
 
-    def __init__(self, username='', password='', *, ignored_errors={}, timeout=config.get('vkapi.default_timeout', 'i')):
-        self.logging = bool(args.args['logging'])
+    def __init__(self, username='', password='', *, ignored_errors={}, timeout=5, logging=False, captcha_handler=None):
+        self.logging = logging
         if self.logging:
             log.info('Logging enabled')
         self.username = username
@@ -46,7 +43,7 @@ class VkApi:
         self.longpoll_key = ''
         self.longpoll_ts = 0
         self.api_lock = threading.RLock()
-        self.ch = captcha.CaptchaHandler()
+        self.ch = captcha_handler
         self.token = None
         self.getToken()
 
@@ -148,11 +145,15 @@ class VkApi:
             if data_array is None:
                 return None
             if 'response' in data_array:
-                self.ch.reset()
+                if self.ch:
+                    self.ch.reset()
                 return data_array['response']
             elif 'error' in data_array:
                 if data_array['error']['error_code'] == 14:  # Captcha needed
-                    self.ch.handle(data_array, params)
+                    if self.ch:
+                        self.ch.handle(data_array, params)
+                    else:
+                        time.sleep(5)
                     return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 5:  # Auth error
                     self.login()

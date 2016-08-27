@@ -8,6 +8,7 @@ import accounts
 import log
 import config
 from vkapi import VkApi
+import captcha
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
@@ -32,7 +33,7 @@ if args['script']:
     except ImportError:
         print('Invalid script')
         availableScripts()
-    v = VkApi(login, password)
+    v = VkApi(login, password, timeout=config.get('vkapi.default_timeout', 'i'), logging=bool(args['logging']), captcha_handler=captcha.CaptchaHandler())
     v.initLongpoll()
     main(v, args['args'])
     v.sync()
