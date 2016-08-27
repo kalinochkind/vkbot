@@ -9,7 +9,7 @@ Run: `inf.py [-l] [-d] [-a account] [-w whitelist] [-s script script_args]`
 
 `-d`: logging to MySQL (`mysql.connector` required)
 
-`-w`: reply only to users from the white list (comma-separated list of ids or domains)
+`-w`: reply only to users from the white list (comma-separated list of ids, domains or full names)
 
 `-s`: run a script from `scripts` directory
 
