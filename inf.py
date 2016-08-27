@@ -294,11 +294,11 @@ def testFriend(uid, need_reason=False):
         return False
     return check_friend.isGood(fr, need_reason)
 
-def noaddUsers(users, remove=False, reason=None):
+def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
     users = set(users)
     if not users:
         return 0
-    with vk.api.api_lock:
+    with lock:
         if remove:
             prev_len = len(check_friend.noadd)
             check_friend.noadd -= users
