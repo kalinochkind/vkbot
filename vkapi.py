@@ -4,8 +4,8 @@ import json
 import time
 import socket
 import logging
-import accounts
 import html
+import sys
 
 CALL_INTERVAL = 0.35
 
@@ -28,9 +28,10 @@ class DelayedCall:
 class VkApi:
     api_version = '5.53'
 
-    def __init__(self, username='', password='', *, ignored_errors={}, timeout=5, logging=False, captcha_handler=None):
-        self.logging = logging
-        if self.logging:
+    def __init__(self, username='', password='', *, ignored_errors={}, timeout=5, log_file='', captcha_handler=None, token_file=''):
+        self.log_file = log_file
+        self.token_file = token_file
+        if self.log_file:
             logging.info('Logging enabled')
         self.username = username
         self.password = password
@@ -135,8 +136,8 @@ class VkApi:
             except json.decoder.JSONDecodeError:
                 logging.error('Invalid JSON')
                 data_array = None
-            if self.logging:
-                with open(accounts.getFile('inf.log'), 'a') as f:
+            if self.log_file:
+                with open(self.log_file, 'a') as f:
                     print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
             duration = time.time() - now
             if duration > self.timeout:
@@ -194,13 +195,14 @@ class VkApi:
             logging.critical('Authorization failed')
         data = json.loads(json_string)
         self.token = data['access_token']
-        with open(accounts.getFile('token.txt'), 'w') as f:
-            f.write(self.token)
+        if self.token_file:
+            with open(self.token_file, 'w') as f:
+                f.write(self.token)
 
     def getToken(self):
         if not self.token:
             try:
-                self.token = open(accounts.getFile('token.txt')).read().strip()
+                self.token = open(self.token_file).read().strip()
             except FileNotFoundError:
                 self.token = ''
         return self.token
@@ -225,8 +227,8 @@ class VkApi:
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
-        if self.logging:
-            with open(accounts.getFile('inf.log'), 'a') as f:
+        if self.log_file:
+            with open(self.log_file, 'a') as f:
                 print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), url, json.dumps(data_array)), file=f)
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']

@@ -13,6 +13,7 @@ import check_friend
 import threading
 import args
 import captcha
+import accounts
 
 CONF_START = 2000000000
 
@@ -41,8 +42,8 @@ class VkBot:
     stats_dialog_count = config.get('vkbot.stats_dialog_count', 'i')
 
     def __init__(self, username='', password=''):
-        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkapi.default_timeout', 'i'),
-                               logging=bool(args.args['logging']), captcha_handler=captcha.CaptchaHandler())
+        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkapi.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
+                               log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
         self.confs = ConfCache(self.api)
