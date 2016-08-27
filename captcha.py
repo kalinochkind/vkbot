@@ -16,9 +16,9 @@ class CaptchaHandler:
     check_interval = config.get('captcha.check_interval', 'i')
 
     def __init__(self):
-        self.has_captcha = False
-        self.external = False
-        self.delayed_count = 0
+        self.png_exists = False
+        self.trying_external_key = False
+        self.checks_done = 0
         self.sid = ''
 
     def receive(self, url):
@@ -33,18 +33,18 @@ class CaptchaHandler:
             time.sleep(5)
             self.receive(url)
         else:
-            self.has_captcha = True
+            self.png_exists = True
             with open(self.png_filename, 'wb') as f:
                 f.write(data)
 
     def delete(self):
-        if not self.has_captcha:
+        if not self.png_exists:
             return
         try:
             os.remove(self.png_filename)
         except FileNotFoundError:
             pass
-        self.has_captcha = False
+        self.png_exists = False
 
     def solve(self):
         if not os.path.isfile(self.png_filename):
@@ -61,8 +61,8 @@ class CaptchaHandler:
             return ''
 
     def handle(self, data_array, params):
-        self.external = False
-        if self.delayed_count == 0:
+        self.trying_external_key = False
+        if self.checks_done == 0:
             log.warning('Captcha needed')
             self.sid = data_array['error']['captcha_sid']
             with open(accounts.getFile('captcha.txt'), 'w') as f:
@@ -76,10 +76,11 @@ class CaptchaHandler:
                 params['captcha_key'] = key.split()[1]
                 self.sid = ''
                 self.delete()
-                self.delayed_count = 0
-                self.external = True
+                self.checks_done = 0
+                self.trying_external_key = True
                 return
-        if self.delayed_count == self.checks_before_antigate:
+
+        if self.checks_done == self.checks_before_antigate:
             log.info('Using antigate')
             open(accounts.getFile('captcha.txt'), 'w').close()
             ans = self.solve()
@@ -91,15 +92,15 @@ class CaptchaHandler:
             else:
                 params['captcha_sid'] = self.sid
                 params['captcha_key'] = ans
-                self.delayed_count = 0
+                self.checks_done = 0
         else:
             time.sleep(self.check_interval)
-            self.delayed_count += 1
+            self.checks_done += 1
 
     def reset(self):
-        if self.delayed_count or self.external:
-            self.delayed_count = 0
-            self.external = False
+        if self.checks_done or self.trying_external_key:
+            self.checks_done = 0
+            self.trying_external_key = False
             log.info('Captcha no longer needed')
             self.sid = ''
         self.delete()
