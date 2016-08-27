@@ -86,6 +86,11 @@ class VkApi:
     def encodeApiCall(s):
         return "API." + s.method + '(' + str(s.params).replace('"', '\\"').replace("'", '"') + ')'
 
+    def writeLog(self, msg):
+        if self.log_file:
+            with open(self.log_file, 'a') as f:
+                f.write('[{}]\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime())) + msg + '\n\n')
+
     def sync(self):
         with self.api_lock:
             if not self.delayed_list:
@@ -136,9 +141,7 @@ class VkApi:
             except json.decoder.JSONDecodeError:
                 logging.error('Invalid JSON')
                 data_array = None
-            if self.log_file:
-                with open(self.log_file, 'a') as f:
-                    print('[{}]\nmethod: {}, params: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), method, json.dumps(params), json.dumps(data_array)), file=f)
+            self.writeLog('method: {}, params: {}\nresponse: {}'.format(method, json.dumps(params), json.dumps(data_array)))
             duration = time.time() - now
             if duration > self.timeout:
                 logging.warning('{} timeout'.format(method))
@@ -227,9 +230,7 @@ class VkApi:
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
-        if self.log_file:
-            with open(self.log_file, 'a') as f:
-                print('[{}]\nlongpoll request: {}\nresponse: {}\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime()), url, json.dumps(data_array)), file=f)
+        self.writeLog('longpoll request\nresponse: {}'.format(json.dumps(data_array)))
         if 'ts' in data_array:
             self.longpoll_ts = data_array['ts']
 
