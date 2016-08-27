@@ -106,7 +106,7 @@ class VkBot:
             messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))
             try:
                 messages = messages['items'][::-1]
-            except LookupError:
+            except TypeError:
                 log.warning('Unable to fetch messages')
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
