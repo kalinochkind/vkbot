@@ -338,8 +338,8 @@ vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
 log.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
 if args['whitelist']:
-    vk.whitelist = [vk.getUserId(i) for i in args['whitelist'].split(',')]
-    log.info('Whitelist: ' +', '.join(map(lambda x:vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
+    vk.whitelist = [vk.getUserId(i) or i for i in args['whitelist'].split(',')]
+    log.info('Whitelist: ' +', '.join(map(lambda x:x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 
 addfriends_interval = config.get('inf.addfriends_interval', 'i')

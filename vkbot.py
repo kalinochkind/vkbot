@@ -84,7 +84,8 @@ class VkBot:
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
-            return
+            if self.getSender(message) > CONF_START or self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
+                return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
         if self.tm.isBusy(self.getSender(message)) and not self.tm.canTerminate(self.getSender(message)):
