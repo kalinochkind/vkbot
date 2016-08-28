@@ -124,8 +124,10 @@ def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
 
 bot_users = {}
 
-# returns (text, mode)
-# mode=0: default, mode=1: no delay, mode=2: friendship request
+# returns (text, is_friendship_request)
+# for friendship requests we do not call markAsRead
+# None: just ignore the message
+# (None, False): immediate MarkAsRead
 def reply(message):
     if vk.getSender(message) in banign.banned:
         vk.banned_list.append(vk.getSender(message))
@@ -133,9 +135,9 @@ def reply(message):
     if vk.getSender(message) < 0:
         return None
     if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
-        return (None, 0)
+        return (None, False)
     if 'deactivated' in vk.users[message['user_id']] or vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
-        return (None, 0)
+        return (None, False)
 
     if 'body' not in message:
         message['body'] = ''
@@ -143,7 +145,7 @@ def reply(message):
     onsend_actions = []
 
     if 'id' not in message:  # friendship request
-        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request', onsend_actions), 2)
+        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request', onsend_actions), True)
 
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
@@ -153,7 +155,7 @@ def reply(message):
                 logging.info('Too many bot messages')
                 log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
                 vk.leaveConf(message['chat_id'])
-        return ('', 0)
+        return ('', False)
     elif message['user_id'] in bot_users:
         del bot_users[message['user_id']]
 
@@ -167,29 +169,29 @@ def reply(message):
                 noaddUsers([message['user_id']], reason='flood')
             else:
                 vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
-            return ('', 0)
+            return ('', False)
 
         if 'reply' in user_msg and message['body'].upper() == user_msg['reply'].upper():
             vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
             user_msg['text'] = user_msg['reply']  # this modifies the cache entry too
             #user_msg['count'] = 1  # do we need it?
-            return ('', 0)
+            return ('', False)
 
         t = evalExpression(message['body'])
         if t:
             if getBotReply(None, message['body'], -2):
-                return ('', 0)
+                return ('', False)
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
             log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(message['user_id']), message['body'], t))
-            return (t, 0)
+            return (t, False)
         tbody = message['body'].replace('<br>', '')
         if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:
             vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
-            return ('', 0)
+            return ('', False)
 
     reply = getBotReply(message['user_id'], message['body'] , message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
     message['_onsend_actions'] = onsend_actions
-    return (reply, 0)
+    return (reply, False)
 
 
 def preprocessMessage(message, user=None):

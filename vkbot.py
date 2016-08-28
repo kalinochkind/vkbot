@@ -205,9 +205,7 @@ class VkBot:
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
-    # fast==1: no delay
-    #       2: no markAsRead
-    def replyMessage(self, message, answer, fast=0):
+    def replyMessage(self, message, answer, skip_mark_as_read=False):
         sender = self.getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
@@ -229,12 +227,12 @@ class VkBot:
             return
 
         typing_time = 0
-        if (fast == 0 or fast == 2) and not answer.startswith('&#'):
+        if not answer.startswith('&#'):
             typing_time = len(answer) / self.chars_per_second
 
         resend = False
         # answer is not empty
-        if fast == 0 and sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
+        if sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
             logging.info('Resending')
             typing_time = 0
             resend = True
@@ -252,8 +250,6 @@ class VkBot:
                     logging.info(text_msg, extra={'db':html_msg})
                     return
                 self.last_message.add(sender, message, res, answer)
-                if fast == 1:
-                    self.last_message.updateTime(sender, 0)
             except Exception as e:
                 logging.exception('thread {}: {}'.format(e.__class__.__name__, str(e)))
 
@@ -264,16 +260,15 @@ class VkBot:
             user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
         tl = Timeline(max(send_time, user_delay))
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
-            if fast == 0:
+            if not skip_mark_as_read:
                 tl.sleep(self.delay_on_first_reply)
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
         else:
             tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
-            if fast == 0:
+            if not skip_mark_as_read:
                 tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
 
-        if fast != 1:
-            tl.sleep(cur_delay)
+        tl.sleep(cur_delay)
         if message.get('_onsend_actions'):
             for i in message['_onsend_actions']:
                 tl.do(i)
