@@ -112,7 +112,7 @@ class VkBot:
             try:
                 messages = messages['items'][::-1]
             except TypeError:
-                logging.warning('Unable to fetch messages')
+                logging.warning('Unable to fetch messages ({})'.format(str(messages)))
                 return
             self.loadUsers(messages, lambda x:x['message']['user_id'])
             self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
@@ -467,7 +467,12 @@ class VkBot:
         dialogs = self.api.messages.getDialogs(count=self.stats_dialog_count, preview_length=1)
         d = []
         confs = {}
-        for i in dialogs['items']:
+        try:
+            items = list(dialogs['items'])
+        except TypeError:
+            logging.warning('Unable to fetch dialogs ({})'.format(str(dialogs)))
+            return (None, None, None)
+        for i in items:
             self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
             if 'title' in i['message']:
                 confs[self.getSender(i['message'])] = i['message']['title']

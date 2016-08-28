@@ -442,10 +442,11 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             count, dialogs, confs = vk.lastDialogs()
-            vk.loadUsers(dialogs, lambda x:x[1])
-            dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid)), cnt] for uid, cnt in dialogs]
-            stats.update('dialogs', count)
-            stats.update('dialogs_list', dialogs)
+            if count is not None:
+                vk.loadUsers(dialogs, lambda x:x[1])
+                dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid)), cnt] for uid, cnt in dialogs]
+                stats.update('dialogs', count)
+                stats.update('dialogs_list', dialogs)
 
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
