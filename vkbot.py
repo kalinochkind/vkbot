@@ -20,6 +20,7 @@ CONF_START = 2000000000
 ignored_errors = {
     # (code, method): (message, can_retry)
     (900, 'messages.send'): ('Blacklisted', False),
+    (902, 'messages.send'): ('Unable to reply', False),
     (7, 'messages.send'): ('Banned', True),
     (10, 'messages.send'): ('Unable to reply', True),
     (15, 'friends.delete'): None,
