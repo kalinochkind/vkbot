@@ -1,10 +1,12 @@
 #!/usr/bin/python3
+import os
+import sys
+os.chdir(os.path.dirname(sys.argv[0]))
 
 import accounts # must be first
 import log
 import logging
 import time
-import sys
 from vkbot import VkBot, CONF_START
 from vkapi import VkApi
 import re
