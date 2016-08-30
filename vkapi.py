@@ -33,6 +33,7 @@ class VkApi:
         self.token_file = token_file
         if self.log_file:
             logging.info('Logging enabled')
+            open(self.log_file, 'w').close()
         self.username = username
         self.password = password
         self.last_call = 0
