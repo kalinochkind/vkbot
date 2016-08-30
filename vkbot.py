@@ -56,6 +56,7 @@ class VkBot:
         self.last_message = MessageCache()
         self.last_message_id = 0
         self.whitelist = None
+        self.whitelist_includeread = True
         self.bad_conf_title = lambda s: False
         self.admin = None
         self.banned_list = []
@@ -109,7 +110,11 @@ class VkBot:
         self.banned_list = []
         if include_read:
             self.users.gc()
-            messages = self.api.messages.getDialogs(unread=(0 if self.whitelist else 1), count=(20 if self.whitelist else 200))
+            if self.whitelist:
+                messages = self.api.messages.getDialogs(unread=(0 if self.whitelist_includeread else 1), count=20)
+                self.whitelist_includeread = False
+            else:
+                messages = self.api.messages.getDialogs(unread=1, count=200)
             try:
                 messages = messages['items'][::-1]
             except TypeError:
