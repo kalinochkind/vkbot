@@ -1,7 +1,7 @@
 [captcha]
 antigate_key =
 checks_before_antigate = 6
-check_interval =  5
+check_interval = 5
 
 [vkbot]
 delay_on_reply = 3
@@ -10,20 +10,23 @@ same_user_interval = 15
 same_conf_interval = 15
 forget_interval = 600
 delay_on_first_reply = 10
-stats_dialog_count = 10
-
-[vkapi]
 default_timeout = 5
-
-[inf]
-addfriends_interval = 40
-includeread_interval = 30
-setonline_interval = 90
-unfollow_interval = -1
-filtercomments_interval = -1
-stats_interval = -1
+max_smiles = -1
 admin = 62715647
-server_port = 0
+
+[stats]
+dialog_count = 10
+
+[server]
+port = -1
+
+[intervals]
+addfriends = 40
+includeread = 30
+setonline = 90
+unfollow = -1
+filtercomments = -1
+stats_interval = -1
 
 [birthday]
 age = 15
@@ -34,9 +37,6 @@ offline_allowed = 14
 [cache]
 user_invalidate_interval = 900
 conf_invalidate_interval = 600
-
-[cppbot]
-max_smiles = -1
 
 [delfriends]
 days_till_unfriend = 365

@@ -21,7 +21,7 @@ class CppBot:
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h', 'build.sh']
     exe_name = 'chat.exe'
     path = 'chat/'
-    max_smiles = config.get('cppbot.max_smiles', 'i')
+    max_smiles = config.get('vkbot.max_smiles', 'i')
 
     def __init__(self):
         try:

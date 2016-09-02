@@ -40,10 +40,10 @@ class VkBot:
     typing_interval = 5
     forget_interval = config.get('vkbot.forget_interval', 'i')
     delay_on_first_reply = config.get('vkbot.delay_on_first_reply', 'i')
-    stats_dialog_count = config.get('vkbot.stats_dialog_count', 'i')
+    stats_dialog_count = config.get('stats.dialog_count', 'i')
 
     def __init__(self, username='', password=''):
-        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkapi.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
+        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)

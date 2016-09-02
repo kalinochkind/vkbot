@@ -5,7 +5,7 @@ import config
 
 class MessageServer:
 
-    port = config.get('inf.server_port', 'i')
+    port = config.get('server.port', 'i')
 
     def __init__(self):
         self.handlers = {}

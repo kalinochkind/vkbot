@@ -339,7 +339,7 @@ signal.signal(signal.SIGTERM, onExit)
 
 
 vk = VkBot(login, password)
-vk.admin = config.get('inf.admin', 'i')
+vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
@@ -348,12 +348,12 @@ if args['whitelist']:
     logging.info('Whitelist: ' +', '.join(map(lambda x:x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 
-addfriends_interval = config.get('inf.addfriends_interval', 'i')
-includeread_interval = config.get('inf.includeread_interval', 'i')
-setonline_interval = config.get('inf.setonline_interval', 'i')
-unfollow_interval = config.get('inf.unfollow_interval', 'i')
-filtercomments_interval = config.get('inf.filtercomments_interval', 'i')
-stats_interval = config.get('inf.stats_interval', 'i')
+addfriends_interval = config.get('intervals.addfriends', 'i')
+includeread_interval = config.get('intervals.includeread', 'i')
+setonline_interval = config.get('intervals.setonline', 'i')
+unfollow_interval = config.get('intervals.unfollow', 'i')
+filtercomments_interval = config.get('intervals.filtercomments', 'i')
+stats_interval = config.get('intervals.stats', 'i')
 
 def ignoreHandler(user):
     user = vk.getUserId(user)
@@ -410,7 +410,7 @@ def banlistHandler(conf):
     else:
         return 'No one banned!'
 
-if config.get('inf.server_port', 'i'):
+if config.get('server.port', 'i') > 0:
     srv = MessageServer()
     srv.addHandler('reply', lambda x:bot.interact('flat ' + x, False))
     srv.addHandler('stem', lambda x:bot.interact('stem ' + x, False))
@@ -423,7 +423,7 @@ if config.get('inf.server_port', 'i'):
     srv.addHandler('leave', leaveHandler)
     srv.addHandler('banlist', banlistHandler)
     srv.listen()
-    logging.info('Running TCP server on port ' + config.get('inf.server_port'))
+    logging.info('Running TCP server on port ' + config.get('server.port'))
 
 check_friend.writeNoadd()
 stats.update('started', time.time())
