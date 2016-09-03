@@ -300,6 +300,8 @@ def testFriend(uid, need_reason=False):
     return check_friend.isGood(fr, need_reason)
 
 def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
+    if config.get('vkbot.no_ignore'):
+        return 0
     users = set(users)
     if not users:
         return 0

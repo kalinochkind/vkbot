@@ -13,6 +13,7 @@ delay_on_first_reply = 10
 default_timeout = 5
 max_smiles = -1
 admin = 62715647
+no_ignore = yes
 
 [stats]
 dialog_count = 10
