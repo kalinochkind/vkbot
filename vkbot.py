@@ -48,7 +48,7 @@ class VkBot:
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
         self.confs = ConfCache(self.api)
-        self.initSelf()
+        self.initSelf(True)
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
         self.good_conf = {}
@@ -62,14 +62,19 @@ class VkBot:
         self.banned_list = []
         self.message_lock = threading.Lock()
 
-    def initSelf(self):
+    def initSelf(self, sync=False):
         self.users.clear()
-        res = self.api.users.get(fields='contacts,relation')[0]
-        self.self_id = res['id']
-        self.phone = res.get('mobile_phone', '')
-        self.name = (res['first_name'], res['last_name'])
-        self.bf = res.get('relation_partner')
-        logging.info('My phone: ' + self.phone)
+        def do():
+            res = self.api.users.get(fields='contacts,relation')[0]
+            self.self_id = res['id']
+            self.phone = res.get('mobile_phone', '')
+            self.name = (res['first_name'], res['last_name'])
+            self.bf = res.get('relation_partner')
+            logging.info('My phone: ' + self.phone)
+        if sync:
+            do()
+        else:
+            threading.Thread(target=do).start()
 
     @staticmethod
     def getSender(message):
