@@ -26,7 +26,7 @@ includeread = 30
 setonline = 90
 unfollow = -1
 filtercomments = -1
-stats_interval = -1
+stats = -1
 
 [birthday]
 age = 15
