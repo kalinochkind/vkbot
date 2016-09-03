@@ -22,10 +22,13 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
         return key in self.threads and self.threads[key].is_alive()
 
     def terminate(self, key):
+        if key not in self.threads:
+            return False
         try:
             self.threads[key].terminate_func()
-        except TypeError:
-            pass
+            return True
+        except Exception as e:
+            return False
 
     def canTerminate(self, key):
         return key in self.threads and self.threads[key].terminate_func is not None
@@ -40,6 +43,12 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
 
     def all(self):
         return list(self.threads.values())
+
+    def get(self, key):
+        try:
+            return self.threads[key]._target
+        except Exception:
+            return None
 
 
 class Timeline:
@@ -83,7 +92,7 @@ class Timeline:
     def doEveryFor(self, interval, func, seconds, do_at_start=True):
         return self.doEvery(interval, func, lambda:time.time() + seconds, do_at_start)
 
-    def terminate():
+    def terminate(self):
         self.terminated = True
 
     def __call__(self):

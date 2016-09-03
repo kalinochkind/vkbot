@@ -97,7 +97,7 @@ class VkBot:
                 return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
-        if self.tm.isBusy(self.getSender(message)) and not self.tm.canTerminate(self.getSender(message)):
+        if self.tm.isBusy(self.getSender(message)) and not getattr(self.tm.get(self.getSender(message)), 'unimportant', False):
             return
 
         message['_method'] = method
@@ -173,6 +173,7 @@ class VkBot:
                     self.deleteFriend(int(opt['from']))
                     continue
                 if flags & 2:  # out
+                    self.tm.terminate(sender)
                     continue
                 for i in range(1, 11):
                     if opt.get('attach{}_type'.format(i)) == 'photo':
@@ -227,11 +228,13 @@ class VkBot:
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
                 tl = Timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl.unimportant = True
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl.unimportant = True
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
@@ -287,7 +290,7 @@ class VkBot:
         if typing_time:
             tl.doEveryFor(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send)
-        self.tm.run(sender, tl)
+        self.tm.run(sender, tl, tl.terminate)
 
     def checkConf(self, cid):
         if cid + CONF_START in self.good_conf:
