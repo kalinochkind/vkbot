@@ -14,6 +14,7 @@ import threading
 import args
 import captcha
 import accounts
+import datetime
 
 CONF_START = 2000000000
 
@@ -65,12 +66,16 @@ class VkBot:
     def initSelf(self, sync=False):
         self.users.clear()
         def do():
-            res = self.api.users.get(fields='contacts,relation')[0]
+            res = self.api.users.get(fields='contacts,relation,bdate')[0]
             self.self_id = res['id']
             self.phone = res.get('mobile_phone', '')
             self.name = (res['first_name'], res['last_name'])
             self.bf = res.get('relation_partner')
-            logging.info('My phone: ' + self.phone)
+            bdate = res['bdate'].split('.')
+            today = datetime.date.today()
+            self.age = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
+            if not sync:
+                logging.info('My phone: ' + self.phone)
         if sync:
             do()
         else:

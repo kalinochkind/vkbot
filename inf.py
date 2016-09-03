@@ -259,7 +259,7 @@ def preprocessReply(s, uid, onsend_actions):
     if s == 'phone':
         return vk.phone
     if s == 'age':
-        return config.get('birthday.age')
+        return str(vk.age)
     if s == 'name':
         return vk.name[0]
     if s == 'lastname':
@@ -445,6 +445,7 @@ def main_loop():
         else:
             time.sleep(1)
         if timeto('stats', stats_interval):
+            vk.initSelf(True)
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
                 vk.loadUsers(dialogs, lambda x:x[1])

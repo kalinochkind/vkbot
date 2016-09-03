@@ -29,9 +29,6 @@ unfollow = -1
 filtercomments = -1
 stats = -1
 
-[birthday]
-age = 15
-
 [check_friend]
 offline_allowed = 14
 
