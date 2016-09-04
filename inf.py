@@ -372,6 +372,8 @@ def unignoreHandler(user):
     if noaddUsers([user], True):
         return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
     else:
+        if banign.unban(user):
+            return 'Unbanned ' + vk.printableName(user, user_fmt='{name}')
         return vk.printableName(user, user_fmt='{name}') + ' is not ignored'
 
 def banHandler(user):
