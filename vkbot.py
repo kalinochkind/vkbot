@@ -488,12 +488,12 @@ class VkBot:
         confs = {}
         try:
             items = list(dialogs['items'])
+            for i in items:
+                self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
+                if 'title' in i['message']:
+                    confs[self.getSender(i['message'])] = i['message']['title']
+            self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')
             return (None, None, None)
-        for i in items:
-            self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
-            if 'title' in i['message']:
-                confs[self.getSender(i['message'])] = i['message']['title']
-        self.api.sync()
         return (dialogs['count'], d, confs)
