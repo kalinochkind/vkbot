@@ -62,6 +62,7 @@ class VkBot:
         self.admin = None
         self.banned_list = []
         self.message_lock = threading.Lock()
+        self.friends = None
 
     def initSelf(self, sync=False):
         self.users.clear()
@@ -335,6 +336,8 @@ class VkBot:
                 if 'message' in i:
                     ans = gen_reply(i)
                     to_rep.append((i, ans))
+                if self.friends is not None:
+                    self.friends.add(i['user_id'])
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
                 self.logSender('Not adding %sender% ({})'.format(res), i)
@@ -346,10 +349,12 @@ class VkBot:
         result = []
         requests = self.api.friends.getRequests(out=1)['items'] + self.api.friends.getRequests(suggested=1)['items']
         for i in requests:
+            if self.friends is not None and i not in self.friends:
+                continue
             if i not in banned:
-                self.api.friends.delete.delayed(user_id=i)
                 result.append(i)
-        self.api.sync()
+        self.deleteFriend(result)
+        self.friends = set(self.api.friends.get()['items'])
         return result
 
     def deleteFriend(self, uid):
