@@ -176,7 +176,8 @@ class VkBot:
                         continue
                 if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
                     self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
-                    self.deleteFriend(int(opt['from']))
+                    if int(opt['from']) not in self.banned:
+                        self.deleteFriend(int(opt['from']))
                     continue
                 if flags & 2:  # out
                     self.tm.terminate(sender)
@@ -303,7 +304,7 @@ class VkBot:
             return self.good_conf[cid + CONF_START]
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
-            if i.get('action') == 'chat_create':
+            if i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
                 self.leaveConf(cid)
                 self.deleteFriend(i['user_id'])
                 log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
@@ -345,13 +346,13 @@ class VkBot:
             self.replyMessage(i[0], i[1][0], i[1][1])
         self.api.sync()
 
-    def unfollow(self, banned):
+    def unfollow(self):
         result = []
         requests = self.api.friends.getRequests(out=1)['items'] + self.api.friends.getRequests(suggested=1)['items']
         for i in requests:
             if self.friends is not None and i not in self.friends:
                 continue
-            if i not in banned:
+            if i not in self.banned:
                 result.append(i)
         self.deleteFriend(result)
         self.friends = set(self.api.friends.get()['items'])

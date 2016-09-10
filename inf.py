@@ -345,6 +345,7 @@ vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
+vk.banned = banign.banned
 if args['whitelist']:
     vk.whitelist = [vk.getUserId(i) or i for i in args['whitelist'].split(',')]
     logging.info('Whitelist: ' +', '.join(map(lambda x:x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
@@ -439,7 +440,7 @@ def main_loop():
             noaddUsers(vk.filterComments(lambda s:getBotReply(None, s, -1)), reason='bad comment')
             stats.update('blacklisted', vk.blacklistedCount())
         if timeto('unfollow', unfollow_interval):
-            noaddUsers(vk.unfollow(banign.banned), reason='deleted me')
+            noaddUsers(vk.unfollow(), reason='deleted me')
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, testFriend)
         if includeread_interval >= 0:
