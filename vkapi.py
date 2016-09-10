@@ -158,6 +158,7 @@ class VkApi:
                     if self.ch:
                         self.ch.handle(data_array, params)
                     else:
+                        logging.warning('Captcha needed')
                         time.sleep(5)
                     return self.apiCall(method, params)
                 elif data_array['error']['error_code'] == 5:  # Auth error
