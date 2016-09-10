@@ -184,7 +184,8 @@ class VkBot:
                         self.deleteFriend(int(opt['from']))
                     continue
                 if flags & 2:  # out
-                    self.tm.terminate(sender)
+                    if not opt.get('source_act'):
+                        self.tm.terminate(sender)
                     continue
                 for i in range(1, 11):
                     if opt.get('attach{}_type'.format(i)) == 'photo':
