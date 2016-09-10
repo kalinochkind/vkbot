@@ -209,6 +209,8 @@ class VkBot:
                     msg['user_id'] = int(opt['from'])
                 else:
                     msg['user_id'] = sender
+                if 'chat_id' in msg and msg['user_id'] != getattr(self.tm.get(sender), 'user_id', msg['user_id']):
+                    self.tm.get(sender).reply = True
                 result.append(msg)
 
         if need_extra:
@@ -218,13 +220,15 @@ class VkBot:
                 result.append(i)
         return result
 
-    def sendMessage(self, to, msg, resend=False):
+    def sendMessage(self, to, msg, resend=False, forward=None):
         if not self.good_conf.get(to, 1):
             return
         with self.message_lock:
             self.guid += 1
             time.sleep(1)
-            if resend:
+            if forward:
+                return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid, forward_messages=forward)
+            elif resend:
                 return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
@@ -265,7 +269,9 @@ class VkBot:
 
         def _send():
             try:
-                if resend:
+                if getattr(self.tm.get(sender), 'reply', False):
+                    res = self.sendMessage(sender, answer, forward=message['id'])
+                elif resend:
                     res = self.sendMessage(sender, sender_msg['id'], resend=True)
                 else:
                     res = self.sendMessage(sender, answer)
@@ -285,6 +291,8 @@ class VkBot:
         if sender_msg and sender != self.admin:
             user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
         tl = Timeline(max(send_time, user_delay))
+        if 'chat_id' in message:
+            tl.user_id = message['user_id']
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             if not skip_mark_as_read:
                 tl.sleep(self.delay_on_first_reply)
