@@ -62,7 +62,11 @@ class VkBot:
         self.admin = None
         self.banned_list = []
         self.message_lock = threading.Lock()
-        self.friends = None
+        try:
+            self.friends = set(map(int, open(accounts.getFile('friends.txt')).read().split()))
+        except Exception:
+            logging.info('friends.txt not found')
+            self.friends = None
 
     def initSelf(self, sync=False):
         self.users.clear()
@@ -356,6 +360,7 @@ class VkBot:
                 result.append(i)
         self.deleteFriend(result)
         self.friends = set(self.api.friends.get()['items'])
+        self.writeFriends()
         return result
 
     def deleteFriend(self, uid):
@@ -447,8 +452,13 @@ class VkBot:
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 
     def waitAllThreads(self):
+        self.writeFriends()
         for t in self.tm.all():
             t.join(60)
+
+    def writeFriends(self):
+        with open(accounts.getFile('friends.txt'), 'w') as f:
+            f.write('\n'.join(map(str, sorted(self.friends))))
 
     # {name} - first_name last_name
     # {id} - id
