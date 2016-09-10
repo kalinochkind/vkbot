@@ -55,12 +55,13 @@ class Timeline:
 
     def __init__(self, duration=0):
         self.events = []
+        self.attr = {}
         self.duration = duration
         self.endtime = 0
         self.terminated = False
 
-    def do(self, func):
-        self.events.append(func)
+    def do(self, func, need_attr=False):
+        self.events.append((lambda:func(self.attr)) if need_attr else func)
         return self
 
     def sleep(self, seconds):
@@ -73,24 +74,27 @@ class Timeline:
                 time.sleep(rem)
         return self.do(_f)
 
-    def doEvery(self, interval, func, end_func, do_at_start=True):
+    def doEvery(self, interval, func, end_func, do_at_start=True, need_attr=False):
         if do_at_start:
-            self.do(func)
+            self.do(func, need_attr)
         def _f():
             end = end_func()
             while time.time() + interval < end:
                 time.sleep(interval)
                 if self.terminated:
                     return
-                func()
+                if need_attr:
+                    func(self.attr)
+                else:
+                    func()
             time.sleep(max(0, end - time.time()))
         return self.do(_f)
 
-    def doEveryUntil(self, interval, func, seconds=0, do_at_start=True):
-        return self.doEvery(interval, func, lambda:self.endtime - seconds, do_at_start)
+    def doEveryUntil(self, interval, func, seconds=0, do_at_start=True, need_attr=False):
+        return self.doEvery(interval, func, lambda:self.endtime - seconds, do_at_start, need_attr)
 
-    def doEveryFor(self, interval, func, seconds, do_at_start=True):
-        return self.doEvery(interval, func, lambda:time.time() + seconds, do_at_start)
+    def doEveryFor(self, interval, func, seconds, do_at_start=True, need_attr=False):
+        return self.doEvery(interval, func, lambda:time.time() + seconds, do_at_start, need_attr)
 
     def terminate(self):
         self.terminated = True

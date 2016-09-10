@@ -107,7 +107,10 @@ class VkBot:
                 return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
-        if self.tm.isBusy(self.getSender(message)) and not getattr(self.tm.get(self.getSender(message)), 'unimportant', False):
+        try:
+            if self.tm.isBusy(self.getSender(message)) and not self.tm.get(self.getSender(message)).attr['unimportant']:
+                return
+        except Exception:
             return
 
         message['_method'] = method
@@ -209,8 +212,11 @@ class VkBot:
                     msg['user_id'] = int(opt['from'])
                 else:
                     msg['user_id'] = sender
-                if 'chat_id' in msg and msg['user_id'] != getattr(self.tm.get(sender), 'user_id', msg['user_id']):
-                    self.tm.get(sender).reply = True
+                try:
+                    if 'chat_id' in msg and msg['user_id'] != self.tm.get(sender).attr['user_id']:
+                        self.tm.get(sender).attr['reply'] = True
+                except Exception:
+                    pass
                 result.append(msg)
 
         if need_extra:
@@ -244,13 +250,13 @@ class VkBot:
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
                 tl = Timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
-                tl.unimportant = True
+                tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
-                tl.unimportant = True
+                tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
@@ -267,12 +273,13 @@ class VkBot:
             typing_time = 0
             resend = True
 
-        def _send():
+        def _send(attr):
+            print(attr)
             try:
-                if getattr(self.tm.get(sender), 'reply', False):
-                    res = self.sendMessage(sender, answer, forward=message['id'])
-                elif resend:
+                if resend:
                     res = self.sendMessage(sender, sender_msg['id'], resend=True)
+                elif attr.get('reply'):
+                    res = self.sendMessage(sender, answer, forward=message['id'])
                 else:
                     res = self.sendMessage(sender, answer)
                 if res is None:
@@ -292,7 +299,7 @@ class VkBot:
             user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
         tl = Timeline(max(send_time, user_delay))
         if 'chat_id' in message:
-            tl.user_id = message['user_id']
+            tl.attr['user_id'] = message['user_id']
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             if not skip_mark_as_read:
                 tl.sleep(self.delay_on_first_reply)
@@ -309,7 +316,7 @@ class VkBot:
                 tl.sleep(cur_delay)
         if typing_time:
             tl.doEveryFor(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
-        tl.do(_send)
+        tl.do(_send, True)
         self.tm.run(sender, tl, tl.terminate)
 
     def checkConf(self, cid):
