@@ -202,7 +202,7 @@ class VkBot:
                     continue
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if opt.get('attach1_type') == 'sticker':
-                    msg['body'] = ''
+                    msg['attachments'] = [{'type': 'sticker'}]
 
                 if 'from' in opt:
                     msg['chat_id'] = sender - CONF_START

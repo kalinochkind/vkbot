@@ -73,7 +73,7 @@ _cmd_re = re.compile(r'\\[a-zA-Z]+')
 # conf_id == -2: flat
 def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
     if message is None:
-        return None
+        return ''  # if we return None, markAsRead is done immediately
 
     message = message.replace('\u0401', '\u0415').replace('\u0451', '\u0435')  # yo
     message = message.replace('\u0490', '\u0413').replace('\u0491', '\u0433')  # g
@@ -196,9 +196,9 @@ def reply(message):
     return (reply, False)
 
 
-def preprocessMessage(message, user=None):
-    if user is not None and message.get('user_id') != user:
-        return None
+def preprocessMessage(message):
+    if message.get('user_id') == vk.self_id:
+        return ''
 
     if 'action' in message:
         return None
@@ -230,16 +230,19 @@ def preprocessMessage(message, user=None):
         result += ' [' + a.lower() + ']'
     result = result.replace('vkgift', 'Vkgift')
 
-    for fwd in message.get('fwd_messages', []):
-        if len(message['fwd_messages']) == 1 and fwd.get('user_id') == vk.self_id and result:
-            continue
-        r = preprocessMessage(fwd, message.get('user_id'))
-        if r is None:
+    if 'fwd_messages' in message:
+        fwd_users = {fwd['user_id'] for fwd in message['fwd_messages']}
+        if fwd_users in ({vk.self_id}, {message['user_id'], vk.self_id}):
+            return result.strip() or None
+        elif fwd_users == {message['user_id']}:
+            for fwd in message['fwd_messages']:
+                r = preprocessMessage(fwd)
+                if r is None:
+                    return None
+                result  += ' {' + str(r) + '}'
+        else:
             return None
-        result  += ' {' + str(r) + '}'
 
-    if user is None and 'attachments' not in message and not result:
-        return None
     return result.strip()
 
 
