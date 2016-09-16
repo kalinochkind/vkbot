@@ -492,9 +492,9 @@ class VkBot:
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:
             if need_html:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c", <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
             else:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c", {name}').replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}').replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
         else:
             if need_html:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
