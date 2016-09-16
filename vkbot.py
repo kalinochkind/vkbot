@@ -444,7 +444,7 @@ class VkBot:
                     log.write('comments', self.loggableName(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
-                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link', 'doc', 'sticker'] for i in rep['feedback']['attachments']):
+                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link'] for i in rep['feedback']['attachments']):
                     res = 'attachment'
                     log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
