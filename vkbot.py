@@ -226,7 +226,7 @@ class VkBot:
                 result.append(i)
         return result
 
-    def sendMessage(self, to, msg, resend=False, forward=None):
+    def sendMessage(self, to, msg, forward=None):
         if not self.good_conf.get(to, 1):
             return
         with self.message_lock:
@@ -234,8 +234,6 @@ class VkBot:
             time.sleep(1)
             if forward:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid, forward_messages=forward)
-            elif resend:
-                return self.api.messages.send(peer_id=to, forward_messages=msg, random_id=self.guid)
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
@@ -277,9 +275,9 @@ class VkBot:
             print(attr)
             try:
                 if resend:
-                    res = self.sendMessage(sender, sender_msg['id'], resend=True)
+                    res = self.sendMessage(sender, '', sender_msg['id'])
                 elif attr.get('reply'):
-                    res = self.sendMessage(sender, answer, forward=message['id'])
+                    res = self.sendMessage(sender, answer, message['id'])
                 else:
                     res = self.sendMessage(sender, answer)
                 if res is None:
