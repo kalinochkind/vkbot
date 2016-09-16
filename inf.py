@@ -458,6 +458,8 @@ def main_loop():
                 dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid)), cnt] for uid, cnt in dialogs]
                 stats.update('dialogs', count)
                 stats.update('dialogs_list', dialogs)
+                stats.update('phone', vk.phone)
+                stats.update('bf', vk.printableSender({'user_id': vk.bf['id']}, True))
 
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
