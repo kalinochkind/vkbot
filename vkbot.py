@@ -258,6 +258,8 @@ class VkBot:
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
+            if sender > CONF_START:
+                sender_msg.setdefault('ignored', {})[message['user_id']] = time.time()
             return
 
         typing_time = 0
@@ -272,7 +274,11 @@ class VkBot:
             resend = True
 
         def _send(attr):
-            print(attr)
+            if not set(sender_msg.get('ignored', [])) <= {message['user_id']}:
+                ctime = time.time()
+                for id, ts in sender_msg['ignored'].items():
+                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
+                        attr['reply'] = True
             try:
                 if resend:
                     res = self.sendMessage(sender, '', sender_msg['id'])
@@ -282,9 +288,7 @@ class VkBot:
                     res = self.sendMessage(sender, answer)
                 if res is None:
                     del self.users[sender]
-                    text_msg = 'Failed to send a message to ' + self.printableSender(message, False)
-                    html_msg = 'Failed to send a message to ' + self.printableSender(message, True)
-                    logging.info(text_msg, extra={'db':html_msg})
+                    self.logSender('Failed to send a message to %sender%', message)
                     return
                 self.last_message.add(sender, message, res, answer)
             except Exception as e:
