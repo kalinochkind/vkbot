@@ -535,3 +535,9 @@ class VkBot:
             logging.warning('Unable to fetch dialogs')
             return (None, None, None)
         return (dialogs['count'], d, confs)
+
+    def acceptGroupInvites(self):
+        for i in self.api.groups.getInvites()['items']:
+            logging.info('Joining group "{}"'.format(i['name']))
+            res = self.api.groups.join(group_id = i['id'])
+            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>'.format(self.loggableName(i['invited_by']), i['id'], i['name']))

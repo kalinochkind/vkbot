@@ -28,6 +28,7 @@ setonline = 90
 unfollow = -1
 filtercomments = -1
 stats = -1
+groupinvites = 180
 
 [check_friend]
 offline_allowed = 14

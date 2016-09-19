@@ -360,6 +360,7 @@ setonline_interval = config.get('intervals.setonline', 'i')
 unfollow_interval = config.get('intervals.unfollow', 'i')
 filtercomments_interval = config.get('intervals.filtercomments', 'i')
 stats_interval = config.get('intervals.stats', 'i')
+groupinvites_interval = config.get('intervals.groupinvites', 'i')
 
 def ignoreHandler(user):
     user = vk.getUserId(user)
@@ -460,7 +461,8 @@ def main_loop():
                 stats.update('dialogs_list', dialogs)
                 stats.update('phone', vk.phone)
                 stats.update('bf', vk.printableSender({'user_id': vk.bf['id']}, True))
-
+        if timeto('groupinvites', groupinvites_interval):
+            vk.acceptGroupInvites()
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
         reply_all = True
