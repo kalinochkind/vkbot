@@ -114,12 +114,15 @@ class VkBot:
             return
 
         message['_method'] = method
-        try:
-            ans = gen_reply(message)
-        except Exception as e:
-            ans = None
-            logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
-            time.sleep(1)
+        if message['body'] is None:
+            ans = (None, False)
+        else:
+            try:
+                ans = gen_reply(message)
+            except Exception as e:
+                ans = None
+                logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
+                time.sleep(1)
         if ans:
             self.replyMessage(message, ans[0], ans[1])
 
@@ -185,7 +188,6 @@ class VkBot:
                     self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
                     if int(opt['from']) not in self.banned:
                         self.deleteFriend(int(opt['from']))
-                    continue
                 if flags & 2:  # out
                     if not opt.get('source_act'):
                         self.tm.terminate(sender)
@@ -200,10 +202,12 @@ class VkBot:
                         del opt['attach{}'.format(i)]
                         del opt['attach{}_kind'.format(i)]
                         text += ' ..'
-                if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker'):
+                if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
                     need_extra.append(str(mid))
                     continue
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
+                if opt.get('source_act'):
+                    msg['body'] = None
                 if opt.get('attach1_type') == 'sticker':
                     msg['attachments'] = [{'type': 'sticker'}]
 
@@ -213,7 +217,7 @@ class VkBot:
                 else:
                     msg['user_id'] = sender
                 try:
-                    if 'chat_id' in msg and msg['user_id'] != self.tm.get(sender).attr['user_id']:
+                    if 'chat_id' in msg and msg['user_id'] != self.tm.get(sender).attr['user_id'] and msg['body'] is not None:
                         self.tm.get(sender).attr['reply'] = True
                 except Exception:
                     pass
@@ -258,7 +262,7 @@ class VkBot:
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
-            if sender > CONF_START:
+            if sender > CONF_START and message['body'] is not None:
                 sender_msg.setdefault('ignored', {})[message['user_id']] = time.time()
             return
 
@@ -277,7 +281,7 @@ class VkBot:
             if not set(sender_msg.get('ignored', [])) <= {message['user_id']}:
                 ctime = time.time()
                 for id, ts in sender_msg['ignored'].items():
-                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
+                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 2:
                         attr['reply'] = True
             try:
                 if resend:
