@@ -281,7 +281,7 @@ class VkBot:
             if not set(sender_msg.get('ignored', [])) <= {message['user_id']}:
                 ctime = time.time()
                 for id, ts in sender_msg['ignored'].items():
-                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 2:
+                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
                         attr['reply'] = True
             try:
                 if resend:
