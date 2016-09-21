@@ -92,10 +92,10 @@ class MessageCache:
         self.sender_msg[sender] = entry
 
     def byUser(self, uid):
-        return self.user_msg.get(uid, {})
+        return self.user_msg.setdefault(uid, {})
 
     def bySender(self, pid):
-        return self.sender_msg.get(pid, {})
+        return self.sender_msg.setdefault(pid, {})
 
     def updateTime(self, sender, newtime=None):
         if newtime is None:
