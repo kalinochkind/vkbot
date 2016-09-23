@@ -215,7 +215,10 @@ def preprocessMessage(message):
             if not a['wall']['text'] and 'copy_history' in a['wall']:
                 att[-1] = a['wall']['copy_history'][0]['text']
         elif a['type'] == 'doc':
-            att.append(a['doc']['title'])
+            if a['doc']['type'] == 5:  # voice message
+                result += ' [Voice]'
+            else:
+                att.append(a['doc']['title'])
         elif a['type'] == 'gift':
             att.append('vkgift')
         elif a['type'] == 'link':

@@ -198,11 +198,17 @@ class VkBot:
                         del opt['attach{}_type'.format(i)]
                         del opt['attach{}'.format(i)]
                         text += ' ..'
-                    if opt.get('attach{}_type'.format(i)) == 'doc' and opt.get('attach{}_kind'.format(i)) == 'graffiti':
-                        del opt['attach{}_type'.format(i)]
-                        del opt['attach{}'.format(i)]
-                        del opt['attach{}_kind'.format(i)]
-                        text += ' ..'
+                    if opt.get('attach{}_type'.format(i)) == 'doc':
+                        if opt.get('attach{}_kind'.format(i)) == 'graffiti':
+                            del opt['attach{}_type'.format(i)]
+                            del opt['attach{}'.format(i)]
+                            del opt['attach{}_kind'.format(i)]
+                            text += ' ..'
+                        if opt.get('attach{}_kind'.format(i)) == 'audiomsg':
+                            del opt['attach{}_type'.format(i)]
+                            del opt['attach{}'.format(i)]
+                            del opt['attach{}_kind'.format(i)]
+                            text += ' [Voice]'
                 if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
                     need_extra.append(str(mid))
                     continue
