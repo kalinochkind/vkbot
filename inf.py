@@ -455,7 +455,7 @@ def main_loop():
             vk.initSelf(True)
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
-                vk.loadUsers(dialogs, lambda x:x[1])
+                vk.loadUsers(dialogs, lambda x:x[0])
                 dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid).replace('{', '{{').replace('}', '}}')), cnt] for uid, cnt in dialogs if uid > 0]
                 stats.update('dialogs', count)
                 stats.update('dialogs_list', dialogs)
