@@ -113,7 +113,8 @@ class VkBot:
         except Exception:
             return
 
-        message['_method'] = method
+        if method is not None:
+            message['_method'] = method
         if message['body'] is None:
             ans = (None, False)
         else:
