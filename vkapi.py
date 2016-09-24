@@ -25,6 +25,8 @@ class DelayedCall:
 
 class VkApi:
     api_version = '5.53'
+    methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes', 'market', 'messages', 'newsfeed',
+               'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video', 'wall', 'widgets'}
 
     def __init__(self, username='', password='', *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file
@@ -89,9 +91,7 @@ class VkApi:
 
                 return _MethodWrapper(self.group + '.' + subitem)
 
-        if item not in ['users', 'auth', 'wall', 'photos', 'friends', 'widgets', 'storage', 'status', 'audio', 'pages',
-                        'groups', 'board', 'video', 'notes', 'places', 'account', 'messages', 'newsfeed', 'likes', 'polls',
-                        'docs', 'fave', 'notifications', 'stats', 'search', 'apps', 'utils', 'database', 'gifts', 'market']:
+        if item not in self.methods:
             raise AttributeError(item)
         return _GroupWrapper(item)
 
