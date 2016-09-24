@@ -74,10 +74,18 @@ class VkApi:
                     def delayed(self, **dp):
                         with handler.api_lock:
                             if len(handler.delayed_list) >= handler.max_delayed:
-                                handler.sync()
+                                handler.sync(True)
                             dc = DelayedCall(self.method, dp)
                             handler.delayed_list.append(dc)
                         return dc
+
+                    def walk(self, callback, **dp):
+                        def cb(req, resp):
+                            callback(req, resp)
+                            if 'next_from' in resp:
+                                self.delayed(**req).callback(cb)
+
+                        self.delayed(**dp).callback(cb)
 
                 return _MethodWrapper(self.group + '.' + subitem)
 
@@ -99,26 +107,29 @@ class VkApi:
             with open(self.log_file, 'a') as f:
                 f.write('[{}]\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime())) + msg + '\n\n')
 
-    def sync(self):
+    def sync(self, once=False):
+        if not self.delayed_list:
+            return
         with self.api_lock:
-            if not self.delayed_list:
-                return
-            dl = self.delayed_list
-            self.delayed_list = []
-            if len(dl) == 1:
-                dc = dl[0]
-                response = self.apiCall(dc.method, dc.params)
-                dc.called(response)
-                return
+            while self.delayed_list:
+                dl = self.delayed_list
+                self.delayed_list = []
+                if len(dl) == 1:
+                    dc = dl[0]
+                    response = self.apiCall(dc.method, dc.params)
+                    dc.called(response)
+                    return
 
-            query = ['return[']
-            for num, i in enumerate(dl):
-                query.append(self.encodeApiCall(i) + ',')
-            query.append('];')
-            query = ''.join(query)
-            response = self.execute(query)
-            for dc, r in zip(dl, response):
-                dc.called(r)
+                query = ['return[']
+                for num, i in enumerate(dl):
+                    query.append(self.encodeApiCall(i) + ',')
+                query.append('];')
+                query = ''.join(query)
+                response = self.execute(query)
+                for dc, r in zip(dl, response):
+                    dc.called(r)
+                if once:
+                    break
 
     def apiCall(self, method, params, retry=False):
         with self.api_lock:
