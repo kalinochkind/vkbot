@@ -1,10 +1,9 @@
 import log
-import accounts
-import time
-import config
 import scriptlib
 import check_friend
 
+
+# noinspection PyUnusedLocal
 def main(a, args):
     friends = scriptlib.getFriends(a, fields='can_write_private_message')
     to_del = []

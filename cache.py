@@ -47,9 +47,9 @@ class Cache:
             to_get = []
             with self.lock:
                 ctime = time.time()
-                for id in ids:
-                    if id > 0 and (clean or id not in self.objects or self.objects[id][0] + self.invalidate_interval - 5 < ctime):
-                        to_get.append(id)
+                for uid in ids:
+                    if uid > 0 and (clean or uid not in self.objects or self.objects[uid][0] + self.invalidate_interval - 5 < ctime):
+                        to_get.append(uid)
                 if to_get:
                     resp = self._load(to_get)
                     for obj in resp:
@@ -86,8 +86,8 @@ class MessageCache:
         self.user_msg = {}
         self.sender_msg = {}
 
-    def add(self, sender, message, id, reply):
-        entry = {'id': id, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time(), 'user_id': message['user_id']}
+    def add(self, sender, message, mid, reply):
+        entry = {'id': mid, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time(), 'user_id': message['user_id']}
         self.user_msg[message['user_id']] = entry
         self.sender_msg[sender] = entry
 
@@ -100,4 +100,4 @@ class MessageCache:
     def updateTime(self, sender, newtime=None):
         if newtime is None:
             newtime = time.time()
-        self.sender_msg.setdefault(sender, {})['time'] = time.time()
+        self.sender_msg.setdefault(sender, {})['time'] = newtime

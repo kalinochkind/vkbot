@@ -32,8 +32,8 @@ ignored_errors = {
     (10, '*'): ('Error code 10', True),
 }
 
-class VkBot:
 
+class VkBot:
     delay_on_reply = config.get('vkbot.delay_on_reply', 'i')
     chars_per_second = config.get('vkbot.chars_per_second', 'i')
     same_user_interval = config.get('vkbot.same_user_interval', 'i')
@@ -70,6 +70,7 @@ class VkBot:
 
     def initSelf(self, sync=False):
         self.users.clear()
+
         def do():
             res = self.api.users.get(fields='contacts,relation,bdate')[0]
             self.self_id = res['id']
@@ -81,6 +82,7 @@ class VkBot:
             self.age = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
             if not sync:
                 logging.info('My phone: ' + self.phone)
+
         if sync:
             do()
         else:
@@ -142,9 +144,9 @@ class VkBot:
             except TypeError:
                 logging.warning('Unable to fetch messages')
                 return
-            self.loadUsers(messages, lambda x:x['message']['user_id'])
-            self.loadUsers(messages, lambda x:x['message']['chat_id'], confs=True)
-            for msg in sorted(messages, key=lambda msg:msg['message']['id']):
+            self.loadUsers(messages, lambda x: x['message']['user_id'])
+            self.loadUsers(messages, lambda x: x['message']['chat_id'], confs=True)
+            for msg in sorted(messages, key=lambda m: m['message']['id']):
                 cur = msg['message']
                 if cur['out']:
                     continue
@@ -156,9 +158,9 @@ class VkBot:
 
         else:
             messages = self.longpollMessages()
-            self.loadUsers(messages, lambda x:x['user_id'])
-            self.loadUsers(messages, lambda x:x['chat_id'], confs=True)
-            for cur in sorted(messages, key=lambda msg:msg['id']):
+            self.loadUsers(messages, lambda x: x['user_id'])
+            self.loadUsers(messages, lambda x: x['chat_id'], confs=True)
+            for cur in sorted(messages, key=lambda m: m['id']):
                 self.last_message_id = max(self.last_message_id, cur['id'])
                 self.replyOne(cur, gen_reply)
             self.api.sync()
@@ -183,7 +185,7 @@ class VkBot:
                     logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
                     if self.bad_conf_title(opt['source_text']):
                         self.leaveConf(sender - CONF_START)
-                        log.write('conf',  'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
+                        log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
                         continue
                 if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
                     self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
@@ -193,23 +195,23 @@ class VkBot:
                     if not opt.get('source_act'):
                         self.tm.terminate(sender)
                     continue
-                for i in range(1, 11):
-                    if opt.get('attach{}_type'.format(i)) == 'photo':
-                        del opt['attach{}_type'.format(i)]
-                        del opt['attach{}'.format(i)]
+                for number in range(1, 11):
+                    if opt.get('attach{}_type'.format(number)) == 'photo':
+                        del opt['attach{}_type'.format(number)]
+                        del opt['attach{}'.format(number)]
                         text += ' ..'
-                    if opt.get('attach{}_type'.format(i)) == 'doc':
-                        if opt.get('attach{}_kind'.format(i)) == 'graffiti':
-                            del opt['attach{}_type'.format(i)]
-                            del opt['attach{}'.format(i)]
-                            del opt['attach{}_kind'.format(i)]
+                    if opt.get('attach{}_type'.format(number)) == 'doc':
+                        if opt.get('attach{}_kind'.format(number)) == 'graffiti':
+                            del opt['attach{}_type'.format(number)]
+                            del opt['attach{}'.format(number)]
+                            del opt['attach{}_kind'.format(number)]
                             text += ' ..'
-                        if opt.get('attach{}_kind'.format(i)) == 'audiomsg':
-                            del opt['attach{}_type'.format(i)]
-                            del opt['attach{}'.format(i)]
-                            del opt['attach{}_kind'.format(i)]
+                        if opt.get('attach{}_kind'.format(number)) == 'audiomsg':
+                            del opt['attach{}_type'.format(number)]
+                            del opt['attach{}'.format(number)]
+                            del opt['attach{}_kind'.format(number)]
                             text += ' [Voice]'
-                if  not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
+                if not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
                     need_extra.append(str(mid))
                     continue
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
@@ -258,13 +260,13 @@ class VkBot:
             if self.tm.isBusy(sender):
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
-                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
                 self.api.messages.markAsRead.delayed(peer_id=sender)
             else:
-                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
@@ -287,8 +289,8 @@ class VkBot:
         def _send(attr):
             if not set(sender_msg.get('ignored', [])) <= {message['user_id']}:
                 ctime = time.time()
-                for id, ts in sender_msg['ignored'].items():
-                    if id != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
+                for uid, ts in sender_msg['ignored'].items():
+                    if uid != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
                         attr['reply'] = True
             try:
                 if resend:
@@ -316,11 +318,11 @@ class VkBot:
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             if not skip_mark_as_read:
                 tl.sleep(self.delay_on_first_reply)
-                tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
         else:
             tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
             if not skip_mark_as_read:
-                tl.do(lambda:self.api.messages.markAsRead(peer_id=sender))
+                tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
 
         tl.sleep(cur_delay)
         if message.get('_onsend_actions'):
@@ -328,7 +330,7 @@ class VkBot:
                 tl.do(i)
                 tl.sleep(cur_delay)
         if typing_time:
-            tl.doEveryFor(self.typing_interval, lambda:self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(self.typing_interval, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send, True)
         self.tm.run(sender, tl, tl.terminate)
 
@@ -345,7 +347,7 @@ class VkBot:
         title = self.confs[cid]['title']
         if self.bad_conf_title(title):
             self.leaveConf(cid)
-            log.write('conf',  'conf ' + str(cid) + ' (name: {})'.format(title))
+            log.write('conf', 'conf ' + str(cid) + ' (name: {})'.format(title))
             return False
         self.good_conf[cid + CONF_START] = True
         return True
@@ -358,7 +360,7 @@ class VkBot:
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)
         to_rep = []
-        self.loadUsers(data['items'], lambda x:x['user_id'], True)
+        self.loadUsers(data['items'], lambda x: x['user_id'], True)
         for i in data['items']:
             if self.users[i['user_id']].get('blacklisted'):
                 self.api.friends.delete.delayed(user_id=i['user_id'])
@@ -417,7 +419,6 @@ class VkBot:
             return None
         return data[0]['id']
 
-
     def deleteComment(self, rep):
         if rep['type'].endswith('photo'):
             self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
@@ -427,10 +428,10 @@ class VkBot:
             self.api.wall.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
 
     def filterComments(self, test):
-        data = self.api.notifications.get(start_time=self.last_viewed_comment+1, count=100)['items']
+        data = self.api.notifications.get(start_time=self.last_viewed_comment + 1, count=100)['items']
         to_del = set()
         to_bl = set()
-        self.loadUsers(data, lambda x:x['feedback']['from_id'], True)
+        self.loadUsers(data, lambda x: x['feedback']['from_id'], True)
         for rep in data:
             if rep['date'] != 'i':
                 self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
@@ -457,11 +458,11 @@ class VkBot:
                     log.write('comments', self.loggableName(rep['feedback']['from_id']) + ': ' + txt)
                     self.deleteComment(rep)
                     to_del.add(rep['feedback']['from_id'])
-                elif 'attachments' in rep['feedback'] and  any(i.get('type') in ['video', 'link'] for i in rep['feedback']['attachments']):
+                elif 'attachments' in rep['feedback'] and any(i.get('type') in ['video', 'link'] for i in rep['feedback']['attachments']):
                     res = 'attachment'
                     log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (attachment)')
                     self.deleteComment(rep)
-                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id':rep['feedback']['from_id']})
+                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id': rep['feedback']['from_id']})
         for i in to_bl:
             self.blacklist(i)
         return to_del
@@ -495,19 +496,21 @@ class VkBot:
         if pid > CONF_START:
             return conf_fmt.format(id=(pid - CONF_START), name=self.confs[pid - CONF_START]['title'])
         else:
-            return user_fmt.format(id=(pid), name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
+            return user_fmt.format(id=pid, name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
 
     def logSender(self, text, message):
         text_msg = text.replace('%sender%', self.printableSender(message, False))
         html_msg = text.replace('%sender%', self.printableSender(message, True))
-        logging.info(text_msg, extra={'db':html_msg})
+        logging.info(text_msg, extra={'db': html_msg})
 
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:
             if need_html:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%i', str(
+                    message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
             else:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}').replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}').replace('%i', str(message['chat_id'])).replace('%c', html.escape(
+                    self.confs[message['chat_id']]['title']))
         else:
             if need_html:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
@@ -546,5 +549,6 @@ class VkBot:
     def acceptGroupInvites(self):
         for i in self.api.groups.getInvites()['items']:
             logging.info('Joining group "{}"'.format(i['name']))
-            res = self.api.groups.join(group_id = i['id'])
-            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(self.loggableName(i['invited_by']), i['id'], i['name'], ['', ' (closed)', ' (private)'][i['is_closed']]))
+            self.api.groups.join(group_id=i['id'])
+            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(self.loggableName(i['invited_by']), i['id'], i['name'],
+                                                                                                      ['', ' (closed)', ' (private)'][i['is_closed']]))

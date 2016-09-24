@@ -7,8 +7,8 @@ import time
 import config
 import accounts
 
-class CaptchaHandler:
 
+class CaptchaHandler:
     key = config.get('captcha.antigate_key')
     png_filename = accounts.getFile('captcha.png')
     timeout = 10

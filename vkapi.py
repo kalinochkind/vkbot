@@ -2,25 +2,23 @@ import threading
 import urllib.request
 import json
 import time
-import socket
 import logging
 import html
-import sys
 
 CALL_INTERVAL = 0.35
 
-class DelayedCall:
 
+class DelayedCall:
     def __init__(self, method, params):
         self.method = method
         self.params = params
         self.callback_func = None
 
-    def callback(self, func, *p):
+    def callback(self, func):
         self.callback_func = func
         return self
 
-    def _called(self, response):
+    def called(self, response):
         if self.callback_func:
             self.callback_func(self.params, response)
 
@@ -28,7 +26,7 @@ class DelayedCall:
 class VkApi:
     api_version = '5.53'
 
-    def __init__(self, username='', password='', *, ignored_errors={}, timeout=5, log_file='', captcha_handler=None, token_file=''):
+    def __init__(self, username='', password='', *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file
         self.token_file = token_file
         if self.log_file:
@@ -39,7 +37,7 @@ class VkApi:
         self.last_call = 0
         self.delayed_list = []
         self.max_delayed = 25
-        self.ignored_errors = ignored_errors
+        self.ignored_errors = ignored_errors or {}
         self.timeout = timeout
         self.longpoll_server = ''
         self.longpoll_key = ''
@@ -51,21 +49,28 @@ class VkApi:
 
     def __getattr__(self, item):
         handler = self
-        class _group_wrapper:
+
+        class _GroupWrapper:
             def __init__(self, group):
                 self.group = group
-            def __getattr__(self, item):
-                class _method_wrapper:
+
+            def __getattr__(self, subitem):
+                class _MethodWrapper:
                     def __init__(self, method):
                         self.method = method
+
                     def __call__(self, **dp):
                         response = None
+
+                        # noinspection PyUnusedLocal
                         def cb(req, resp):
                             nonlocal response
                             response = resp
+
                         self.delayed(**dp).callback(cb)
                         handler.sync()
                         return response
+
                     def delayed(self, **dp):
                         with handler.api_lock:
                             if len(handler.delayed_list) >= handler.max_delayed:
@@ -73,12 +78,14 @@ class VkApi:
                             dc = DelayedCall(self.method, dp)
                             handler.delayed_list.append(dc)
                         return dc
-                return _method_wrapper(self.group + '.' + item)
+
+                return _MethodWrapper(self.group + '.' + subitem)
+
         if item not in ['users', 'auth', 'wall', 'photos', 'friends', 'widgets', 'storage', 'status', 'audio', 'pages',
-                    'groups', 'board', 'video', 'notes', 'places', 'account', 'messages', 'newsfeed', 'likes', 'polls',
-                    'docs', 'fave', 'notifications', 'stats', 'search', 'apps', 'utils', 'database', 'gifts', 'market']:
+                        'groups', 'board', 'video', 'notes', 'places', 'account', 'messages', 'newsfeed', 'likes', 'polls',
+                        'docs', 'fave', 'notifications', 'stats', 'search', 'apps', 'utils', 'database', 'gifts', 'market']:
             raise AttributeError(item)
-        return _group_wrapper(item)
+        return _GroupWrapper(item)
 
     def execute(self, code):
         return self.apiCall('execute', {"code": code})
@@ -101,7 +108,7 @@ class VkApi:
             if len(dl) == 1:
                 dc = dl[0]
                 response = self.apiCall(dc.method, dc.params)
-                dc._called(response)
+                dc.called(response)
                 return
 
             query = ['return[']
@@ -111,7 +118,7 @@ class VkApi:
             query = ''.join(query)
             response = self.execute(query)
             for dc, r in zip(dl, response):
-                dc._called(r)
+                dc.called(r)
 
     def apiCall(self, method, params, retry=False):
         with self.api_lock:
@@ -135,7 +142,7 @@ class VkApi:
                 else:
                     time.sleep(1)
                     logging.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
-                    return self.apiCall(method, params, 1)
+                    return self.apiCall(method, params, True)
 
             try:
                 data_array = json.loads(json_string.decode('utf-8'))

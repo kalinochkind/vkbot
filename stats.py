@@ -9,6 +9,7 @@ try:
 except Exception:
     _stats = {}
 
+
 def update(name, value):
     with lock:
         if name in _stats and _stats[name] == value:
@@ -16,6 +17,7 @@ def update(name, value):
         _stats[name] = value
         with open(accounts.getFile('stats.txt'), 'w') as f:
             f.write(json.dumps(_stats))
+
 
 def get(name, default=None):
     with lock:

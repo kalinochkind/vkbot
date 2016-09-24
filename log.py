@@ -10,6 +10,7 @@ err_lock = threading.Lock()
 log_lock = threading.Lock()
 script_name = None
 
+
 # s = (console message, db message)
 def info(s, color=''):
     if isinstance(s, str):
@@ -31,8 +32,10 @@ def info(s, color=''):
         db_logger.log(s[1], color, text_msg=s[0])
         sys.stdout.flush()
 
+
 def warning(s):
     info(s, 'warning')
+
 
 def error(s, need_exc_info=False, fatal=False):
     info(s, 'fatal' if fatal else 'error')
@@ -55,6 +58,7 @@ datetime_format = '%d.%m.%Y %H:%M:%S'
 logdir = 'accounts/{}/logs/'.format(accounts.current_account)
 if not os.path.isdir(logdir):
     os.mkdir(logdir)
+
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())

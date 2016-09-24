@@ -7,6 +7,7 @@ import config
 import scriptlib
 import check_friend
 
+
 def main(a, args):
     days = config.get('delfriends.days_till_unfriend', 'i')
     prepare = 'prepare' in args
@@ -22,6 +23,7 @@ def main(a, args):
     now = time.time()
     to_del = []
     cnt = 0
+
     def checkHistory(req, resp):
         nonlocal cnt
         if resp['count'] == 0 or now - resp['items'][0]['date'] > 3600 * 24 * days:
@@ -31,6 +33,7 @@ def main(a, args):
                 to_del.append(str(req['user_id']))
             log.info('Found ' + str(req['user_id']))
             cnt += 1
+
     for i in friends:
         if not prepare and i not in f:
             continue

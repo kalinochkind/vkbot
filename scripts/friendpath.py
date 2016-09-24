@@ -1,5 +1,6 @@
 import log
 import scriptlib
+
 dist1 = {}
 dist2 = {}
 parent = {}
@@ -9,9 +10,11 @@ def main(a, args):
     a.ignored_errors = {
         (15, 'friends.get'): None,
     }
+
     def getName(u):
         r = a.users.get(user_ids=u)[0]
         return r['first_name'] + ' ' + r['last_name']
+
     def addFriends(uid):
         dist = dist1 if uid in dist1 else dist2
         try:
@@ -36,8 +39,8 @@ def main(a, args):
                 chain = chain1[::-1] + chain2
                 if chain[0] == end:
                     chain = chain[::-1]
-                for i in chain:
-                    print('https://vk.com/id{} ({})'.format(i, getName(i)))
+                for j in chain:
+                    print('https://vk.com/id{} ({})'.format(j, getName(j)))
                 exit()
             dist[i] = dist[uid] + 1
             parent[i] = uid

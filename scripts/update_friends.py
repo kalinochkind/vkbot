@@ -3,6 +3,8 @@ import log
 import accounts
 import scriptlib
 
+
+# noinspection PyUnusedLocal
 def main(a, args):
     a.timeout = 10
     banned = list(map(int, open(accounts.getFile('banned.txt')).read().split()))

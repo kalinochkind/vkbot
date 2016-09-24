@@ -1,5 +1,4 @@
 import datetime 
-import config
 
 
 def main(a, args):

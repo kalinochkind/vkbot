@@ -6,11 +6,13 @@ import getpass
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
 
+
 def forceInput(text, password=False):
     s = ''
     while not s.strip():
         s = getpass.getpass(text) if password else input(text)
     return s
+
 
 def createAccount(name):
     if not name or len(name) > 256 or any(i in name for i in './\\ '):
@@ -26,23 +28,28 @@ def createAccount(name):
     selectAccount(name)
     return True
 
+
 def getFile(filename):
     local = 'accounts/{}/{}'.format(current_account, filename)
     if current_account and (os.path.isfile(local) or not os.path.isfile('data/' + filename)):
         return local
     return 'data/' + filename
 
+
 def selectAccount(name):
     global current_account
     current_account = name
+
 
 def accountExists(name):
     if not name or len(name) > 256 or any(i in name for i in './\\ '):
         return False
     return os.path.isdir('accounts/' + name)
 
+
 def listAccounts():
     return ', '.join(os.listdir('accounts'))
+
 
 if not os.path.isdir('accounts'):
     os.mkdir('accounts')

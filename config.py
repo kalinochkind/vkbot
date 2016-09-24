@@ -4,13 +4,14 @@ import accounts
 cp = configparser.ConfigParser()
 cp.read(accounts.getFile('inf.cfg'))
 
-def get(param, type='s'):
+
+def get(param, typename='s'):
     param = param.split('.')
-    if type == 's':
+    if typename == 's':
         return cp[param[0]].get(param[1])
-    elif type == 'i':
+    elif typename == 'i':
         return cp[param[0]].getint(param[1])
-    elif type == 'f':
+    elif typename == 'f':
         return cp[param[0]].getfloat(param[1])
-    elif type == 'b':
+    elif typename == 'b':
         return cp[param[0]].getboolean(param[1])

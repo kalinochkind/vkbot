@@ -11,7 +11,11 @@ from vkapi import VkApi
 import captcha
 import logging
 
+
 class MyHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
     def handle(self, record):
         msg = record.getMessage()
         lvl = record.levelname
@@ -31,6 +35,7 @@ class MyHandler(logging.Handler):
         elif lvl == 'INFO':
             log.info(msg)
 
+
 logging.basicConfig(handlers=[MyHandler()], level=logging.INFO)
 logging.getLogger('antigate').setLevel(logging.CRITICAL)
 
@@ -40,9 +45,11 @@ sys.stdout.encoding = 'UTF-8'
 login = config.get('login.login')
 password = config.get('login.password')
 
+
 def availableScripts():
     print('Available scripts:', ', '.join(sorted(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__'))))
     sys.exit()
+
 
 if args['script'] is None:
     availableScripts()
@@ -65,11 +72,12 @@ if args['script']:
     sys.exit()
 
 import fcntl
+
 pid_file = accounts.getFile('inf.pid')
 lock_file = accounts.getFile('inf.lock')
 fp = open(lock_file, 'w')
 single = False
-for i in range(100):
+for attempt in range(100):
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:

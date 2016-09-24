@@ -1,6 +1,7 @@
 import time
 import scriptlib
 
+
 def main(a, args):
     if not args:
         args = [input('Enter uid: ')]

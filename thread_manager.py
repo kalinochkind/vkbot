@@ -2,6 +2,7 @@ import threading
 import time
 import logging
 
+
 class ThreadManager:  # not thread-safe, should be used only from main thread
     def __init__(self):
         self.threads = {}
@@ -27,7 +28,7 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
         try:
             self.threads[key].terminate_func()
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def canTerminate(self, key):
@@ -52,7 +53,6 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
 
 
 class Timeline:
-
     def __init__(self, duration=0):
         self.events = []
         self.attr = {}
@@ -61,7 +61,7 @@ class Timeline:
         self.terminated = False
 
     def do(self, func, need_attr=False):
-        self.events.append((lambda:func(self.attr)) if need_attr else func)
+        self.events.append((lambda: func(self.attr)) if need_attr else func)
         return self
 
     def sleep(self, seconds):
@@ -72,11 +72,13 @@ class Timeline:
             rem = max(self.endtime - time.time() - seconds, min_sleep)
             if rem > 0:
                 time.sleep(rem)
+
         return self.do(_f)
 
     def doEvery(self, interval, func, end_func, do_at_start=True, need_attr=False):
         if do_at_start:
             self.do(func, need_attr)
+
         def _f():
             end = end_func()
             while time.time() + interval < end:
@@ -88,13 +90,14 @@ class Timeline:
                 else:
                     func()
             time.sleep(max(0, end - time.time()))
+
         return self.do(_f)
 
     def doEveryUntil(self, interval, func, seconds=0, do_at_start=True, need_attr=False):
-        return self.doEvery(interval, func, lambda:self.endtime - seconds, do_at_start, need_attr)
+        return self.doEvery(interval, func, lambda: self.endtime - seconds, do_at_start, need_attr)
 
     def doEveryFor(self, interval, func, seconds, do_at_start=True, need_attr=False):
-        return self.doEvery(interval, func, lambda:time.time() + seconds, do_at_start, need_attr)
+        return self.doEvery(interval, func, lambda: time.time() + seconds, do_at_start, need_attr)
 
     def terminate(self):
         self.terminated = True
