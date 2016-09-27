@@ -62,7 +62,8 @@ if not os.path.isdir(logdir):
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
-    if script_name:
+    # if the name starts with _, it must be a special script log
+    if script_name and not log.startswith('_'):
         s = '({}) {}'.format(script_name, s)
     with open(logdir + log + '.log', 'a', encoding='utf-8') as f:
         f.write('[{}] {}\n'.format(curtime, s))
