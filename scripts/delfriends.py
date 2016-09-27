@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import log
+import logging
 import accounts
 import time
 import config
@@ -17,7 +17,7 @@ def main(a, args):
         try:
             f = set(map(int, open(accounts.getFile('_delfriends.txt')).read().split()))
         except FileNotFoundError:
-            log.info('_delfriends.txt not found')
+            logging.info('_delfriends.txt not found')
             return
     friends = scriptlib.getFriends(a)
     now = time.time()
@@ -31,7 +31,7 @@ def main(a, args):
                 f.write(str(req['user_id']) + '\n')
             else:
                 to_del.append(str(req['user_id']))
-            log.info('Found ' + str(req['user_id']))
+            logging.info('Found ' + str(req['user_id']))
             cnt += 1
 
     for i in friends:
@@ -43,4 +43,4 @@ def main(a, args):
         f.close()
     else:
         check_friend.appendNoadd(to_del)
-    log.info('Total: ' + str(cnt))
+    logging.info('Total: ' + str(cnt))

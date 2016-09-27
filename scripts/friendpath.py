@@ -1,4 +1,4 @@
-import log
+import logging
 import scriptlib
 
 dist1 = {}
@@ -21,7 +21,7 @@ def main(a, args):
             friends = a.friends.get(user_id=uid)['items']
         except TypeError:
             return
-        log.info('Scanning ' + str(uid))
+        logging.info('Scanning ' + str(uid))
         for i in friends:
             if i in parent:
                 if i in dist:
