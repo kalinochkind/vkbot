@@ -24,7 +24,7 @@ class DelayedCall:
 
 
 class VkApi:
-    api_version = '5.53'
+    api_version = '5.56'
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes', 'market', 'messages', 'newsfeed',
                'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video', 'wall', 'widgets'}
 
