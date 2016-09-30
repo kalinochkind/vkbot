@@ -51,7 +51,7 @@ class CppBot:
                     if do_log:
                         logging.info(info)
         except BrokenPipeError:
-            logging.error('Broken pipe, restarting ' + self.exe_name)
+            logging.warning('Broken pipe, restarting ' + self.exe_name)
             self.runExe()
             return self.interact(msg, do_log)
         return answer.decode().strip()
