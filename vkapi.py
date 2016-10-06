@@ -133,9 +133,9 @@ class VkApi:
                     break
 
     def apiCall(self, method, params, retry=False):
+        params['v'] = self.api_version
+        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
         with self.api_lock:
-            params['v'] = self.api_version
-            url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
             now = time.time()
             if now - self.last_call < CALL_INTERVAL:
                 time.sleep(CALL_INTERVAL - now + self.last_call)
@@ -166,50 +166,50 @@ class VkApi:
             if duration > self.timeout:
                 logging.warning('{} timeout'.format(method))
 
-            if data_array is None:
-                return None
-            if 'response' in data_array:
+        if data_array is None:
+            return None
+        if 'response' in data_array:
+            if self.ch:
+                self.ch.reset()
+            return data_array['response']
+        elif 'error' in data_array:
+            if data_array['error']['error_code'] == 14:  # Captcha needed
                 if self.ch:
-                    self.ch.reset()
-                return data_array['response']
-            elif 'error' in data_array:
-                if data_array['error']['error_code'] == 14:  # Captcha needed
-                    if self.ch:
-                        self.ch.handle(data_array, params)
-                    else:
-                        logging.warning('Captcha needed')
-                        time.sleep(5)
-                    return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 5:  # Auth error
-                    self.login()
-                    return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 6:  # Too many requests per second
-                    logging.warning('{}: too many requests per second'.format(method))
-                    time.sleep(2)
-                    return self.apiCall(method, params)
-                elif data_array['error']['error_code'] == 17:  #Validation required
-                    print(data_array['error']['redirect_uri'])
-                    sys.exit(0)
-                elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
-                    try:
-                        handler = self.ignored_errors[(data_array['error']['error_code'], method)]
-                    except KeyError:
-                        handler = self.ignored_errors[(data_array['error']['error_code'], '*')]
-                    if not handler:
-                        return None
-                    if retry or not handler[1]:
-                        logging.warning(handler[0])
-                        return None
-                    else:
-                        logging.warning(handler[0] + ', retrying')
-                        time.sleep(3)
-                        return self.apiCall(method, params, True)
-
+                    self.ch.handle(data_array, params)
                 else:
-                    logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
-                    return None
-            else:
+                    logging.warning('Captcha needed')
+                    time.sleep(5)
                 return self.apiCall(method, params)
+            elif data_array['error']['error_code'] == 5:  # Auth error
+                self.login()
+                return self.apiCall(method, params)
+            elif data_array['error']['error_code'] == 6:  # Too many requests per second
+                logging.warning('{}: too many requests per second'.format(method))
+                time.sleep(2)
+                return self.apiCall(method, params)
+            elif data_array['error']['error_code'] == 17:  #Validation required
+                print(data_array['error']['redirect_uri'])
+                sys.exit(0)
+            elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
+                try:
+                    handler = self.ignored_errors[(data_array['error']['error_code'], method)]
+                except KeyError:
+                    handler = self.ignored_errors[(data_array['error']['error_code'], '*')]
+                if not handler:
+                    return None
+                if retry or not handler[1]:
+                    logging.warning(handler[0])
+                    return None
+                else:
+                    logging.warning(handler[0] + ', retrying')
+                    time.sleep(3)
+                    return self.apiCall(method, params, True)
+
+            else:
+                logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
+                return None
+        else:
+            return self.apiCall(method, params)
 
     def login(self):
         logging.info('Fetching new token')
