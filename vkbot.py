@@ -65,7 +65,6 @@ class VkBot:
         try:
             self.friends = set(map(int, open(accounts.getFile('friends.txt')).read().split()))
         except Exception:
-            logging.info('friends.txt not found')
             self.friends = None
 
     def initSelf(self, sync=False):
