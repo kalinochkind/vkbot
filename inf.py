@@ -164,7 +164,7 @@ def reply(message):
             bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
             if bot_users[message['user_id']] >= 3:
                 logging.info('Too many bot messages')
-                log.write('conf', str(message['user_id']) + ' ' + str(message['chat_id']) + ' (bot messages)')
+                log.write('conf', 'conf ' + str(message['chat_id']) + ' (bot messages)')
                 vk.leaveConf(message['chat_id'])
         return ('', False)
     elif message['user_id'] in bot_users:
