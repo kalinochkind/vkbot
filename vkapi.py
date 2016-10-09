@@ -134,7 +134,7 @@ class VkApi:
 
     def apiCall(self, method, params, retry=False):
         params['v'] = self.api_version
-        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(params) + '&access_token=' + self.getToken()
+        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode({i:params[i] for i in params if not i.startswith('_')}) + '&access_token=' + self.getToken()
         with self.api_lock:
             now = time.time()
             if now - self.last_call < CALL_INTERVAL:
@@ -170,7 +170,7 @@ class VkApi:
             return None
         if 'response' in data_array:
             if self.ch:
-                self.ch.reset()
+                self.ch.reset(params)
             return data_array['response']
         elif 'error' in data_array:
             if data_array['error']['error_code'] == 14:  # Captcha needed

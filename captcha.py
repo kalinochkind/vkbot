@@ -17,9 +17,6 @@ class CaptchaHandler:
 
     def __init__(self):
         self.png_exists = False
-        self.trying_external_key = False
-        self.checks_done = 0
-        self.sid = ''
 
     def receive(self, url):
         try:
@@ -61,26 +58,26 @@ class CaptchaHandler:
             return ''
 
     def handle(self, data_array, params):
-        self.trying_external_key = False
-        if self.checks_done == 0:
+        params['_trying_external_key'] = False
+        if params.get('_checks_done', 0) == 0:
             logging.warning('Captcha needed')
-            self.sid = data_array['error']['captcha_sid']
+            params['_sid'] = data_array['error']['captcha_sid']
             with open(accounts.getFile('captcha.txt'), 'w') as f:
-                f.write('sid ' + self.sid)
+                f.write('sid ' + params['_sid'])
             self.receive(data_array['error']['captcha_img'])
-        elif self.sid:
+        elif params.get('_sid'):
             key = open(accounts.getFile('captcha.txt')).read()
             if key.startswith('key'):
                 logging.info('Trying a key from captcha.txt')
-                params['captcha_sid'] = self.sid
+                params['captcha_sid'] = params['_sid']
                 params['captcha_key'] = key.split()[1]
-                self.sid = ''
+                del params['_sid']
                 self.delete()
-                self.checks_done = 0
-                self.trying_external_key = True
+                params['_checks_done'] = 0
+                params['_trying_external_key'] = True
                 return
 
-        if self.checks_done == self.checks_before_antigate:
+        if self.key and params.get('_checks_done') == self.checks_before_antigate:
             logging.info('Using antigate')
             open(accounts.getFile('captcha.txt'), 'w').close()
             ans = self.solve()
@@ -88,19 +85,19 @@ class CaptchaHandler:
                 time.sleep(5)
             elif not ans:
                 self.receive(data_array['error']['captcha_img'])
-                self.sid = data_array['error']['captcha_sid']
+                params['_sid'] = data_array['error']['captcha_sid']
             else:
-                params['captcha_sid'] = self.sid
+                params['captcha_sid'] = params['_sid']
                 params['captcha_key'] = ans
-                self.checks_done = 0
+                params['_checks_done'] = 0
         else:
             time.sleep(self.check_interval)
-            self.checks_done += 1
+            params['_checks_done'] = params.get('_checks_done', 0) + 1
 
-    def reset(self):
-        if self.checks_done or self.trying_external_key:
-            self.checks_done = 0
-            self.trying_external_key = False
+    def reset(self, params):
+        if params.get('_checks_done') or params.get('_trying_external_key'):
+            params['_checks_done'] = 0
+            params['_trying_external_key'] = False
+            params['_sid'] = ''
             logging.info('Captcha no longer needed')
-            self.sid = ''
-        self.delete()
+            self.delete()
