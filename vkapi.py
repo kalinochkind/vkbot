@@ -109,28 +109,28 @@ class VkApi:
                 f.write('[{}]\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime())) + msg + '\n\n')
 
     def sync(self, once=False):
-        if not self.delayed_list:
-            return
-        with self.api_lock:
-            while self.delayed_list:
+        while True:
+            with self.api_lock:
                 dl = self.delayed_list
                 self.delayed_list = []
-                if len(dl) == 1:
-                    dc = dl[0]
-                    response = self.apiCall(dc.method, dc.params)
-                    dc.called(response)
-                    return
+            if not dl:
+                return
+            if len(dl) == 1:
+                dc = dl[0]
+                response = self.apiCall(dc.method, dc.params)
+                dc.called(response)
+                return
 
-                query = ['return[']
-                for num, i in enumerate(dl):
-                    query.append(self.encodeApiCall(i) + ',')
-                query.append('];')
-                query = ''.join(query)
-                response = self.execute(query)
-                for dc, r in zip(dl, response):
-                    dc.called(r)
-                if once:
-                    break
+            query = ['return[']
+            for num, i in enumerate(dl):
+                query.append(self.encodeApiCall(i) + ',')
+            query.append('];')
+            query = ''.join(query)
+            response = self.execute(query)
+            for dc, r in zip(dl, response):
+                dc.called(r)
+            if once:
+                return
 
     def apiCall(self, method, params, retry=False):
         params['v'] = self.api_version
