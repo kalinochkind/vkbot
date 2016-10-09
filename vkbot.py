@@ -62,10 +62,6 @@ class VkBot:
         self.admin = None
         self.banned_list = []
         self.message_lock = threading.Lock()
-        try:
-            self.friends = set(map(int, open(accounts.getFile('friends.txt')).read().split()))
-        except Exception:
-            self.friends = None
 
     def initSelf(self, sync=False):
         self.users.clear()
@@ -371,8 +367,6 @@ class VkBot:
                 if 'message' in i:
                     ans = gen_reply(i)
                     to_rep.append((i, ans))
-                if self.friends is not None:
-                    self.friends.add(i['user_id'])
             else:
                 self.api.friends.delete.delayed(user_id=i['user_id'])
                 self.logSender('Not adding %sender% ({})'.format(res), i)
@@ -382,15 +376,14 @@ class VkBot:
 
     def unfollow(self):
         result = []
-        requests = self.api.friends.getRequests(out=1)['items'] + self.api.friends.getRequests(suggested=1)['items']
+        requests = self.api.friends.getRequests(out=1)['items']
+        suggested = self.api.friends.getRequests(suggested=1)['items']
         for i in requests:
-            if self.friends is not None and i not in self.friends:
-                continue
             if i not in self.banned:
                 result.append(i)
+        for i in suggested:
+            self.api.friends.delete.delayed(user_id=i)
         self.deleteFriend(result)
-        self.friends = set(self.api.friends.get()['items'])
-        self.writeFriends()
         return result
 
     def deleteFriend(self, uid):
@@ -484,10 +477,6 @@ class VkBot:
         self.writeFriends()
         for t in self.tm.all():
             t.join(60)
-
-    def writeFriends(self):
-        with open(accounts.getFile('friends.txt'), 'w') as f:
-            f.write('\n'.join(map(str, sorted(self.friends))))
 
     # {name} - first_name last_name
     # {id} - id
