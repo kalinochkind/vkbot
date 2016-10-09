@@ -15,7 +15,7 @@ def isnum(s):
 
 
 def evalExpression(s):
-    s = s.replace('\u00d7', '*').replace('\u2022', '*').replace('\u00f7', '/')
+    s = s.replace('\u00d7', '*').replace('\u2022', '*').replace('\u00f7', '/').replace(':', '/')
     s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ').replace('/', ' // ')
     if '[' in s:
         return None
