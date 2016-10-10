@@ -14,6 +14,7 @@ struct userinfo
 };
 
 unsigned MAX_SMILES;
+int myName;
 
 vector<wstring> request;
 vector<shared_ptr<pair<vector<wstring>, long long> > > reply;
@@ -365,15 +366,28 @@ void Load()
     fbl.close();
     wifstream fnm(filenames);
     fnm.imbue(loc);
-    while(fnm.getline(buf1, 10000))
+    for(int l=0;fnm.getline(buf1, 10000);l++)
     {
+        if(l == myName)
+            continue;
+        int j = 0;
         for(int i=0;buf1[i];i++)
         {
-            buf1[i] = towupper(buf1[i]);
+            if(buf1[i] <= L' ')
+            {
+                buf2[j] = 0;
+                names.insert(phash(buf2));
+                j = 0;
+            }
+            else
+            {
+                buf2[j++] = towupper(buf1[i]);
+            }
         }
-        names.insert(phash(buf1));
+        buf2[j] = 0;
+        names.insert(phash(buf2));
     }
-    fbl.close();
+    fnm.close();
     for(auto &i : users)
     {
         i.second.lastReply = 0;

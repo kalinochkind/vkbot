@@ -14,4 +14,5 @@ long long phash(const wstring &s);
 long long stem(const wstring &word);
 wstring sstem(const wstring &wrd);
 
+extern int myName;
 extern long long phname;

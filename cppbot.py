@@ -23,7 +23,7 @@ class CppBot:
     path = 'chat/'
     max_smiles = config.get('vkbot.max_smiles', 'i')
 
-    def __init__(self):
+    def __init__(self, name):
         try:
             exe_time = os.path.getmtime(self.path + self.exe_name)
             src_time = max(os.path.getmtime(self.path + i) for i in self.source_files)
@@ -31,11 +31,12 @@ class CppBot:
                 self.buildExe()
         except FileNotFoundError:
             self.buildExe()
+        self.name = name
         self.runExe()
         self.bot_lock = threading.Lock()
 
     def runExe(self):
-        self.bot = Popen([self.path + self.exe_name, str(self.max_smiles)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.bot = Popen([self.path + self.exe_name, str(self.max_smiles), str(self.name)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     def interact(self, msg, do_log=True):
         try:

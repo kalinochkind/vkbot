@@ -1,20 +1,26 @@
 #include <clocale>
+#include <cstring>
 #include "ChatBot.h"
 
 using namespace std;
 
 extern unsigned MAX_SMILES;
+extern int myName;
 
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "ru_RU.UTF-8");
-    Load();
-    if(argc == 1)
-        MAX_SMILES = (unsigned) -1;
-    else
+    if(argc >= 3)
     {
         MAX_SMILES = atoi(argv[1]);
+        myName = atoi(argv[2]);
     }
+    else
+    {
+        MAX_SMILES = -1;
+        myName = -1;
+    }
+    Load();
     wstring s;
     while(1)
     {

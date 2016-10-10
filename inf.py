@@ -28,8 +28,6 @@ def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
     return regex.match(msg.strip())
 
 
-bot = CppBot()
-
 noans = open(accounts.getFile('noans.txt'), encoding='utf-8').read().splitlines()
 smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitlines()
 random.shuffle(noans)
@@ -358,12 +356,23 @@ def onExit(*p):
     logging.shutdown()
     sys.exit()
 
+def getNameIndex(name):
+    names = open('data/names.txt', encoding='utf-8').readlines()
+    for i, n in enumerate(names):
+        if name.upper() in n.upper().split():
+            return i
+    return -1
+
 
 signal.signal(signal.SIGTERM, onExit)
 
 vk = VkBot(login, password)
 vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
+
+logging.info('My name: ' + vk.name[0])
+bot = CppBot(getNameIndex(vk.name[0]))
+
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
 vk.banned = banign.banned
