@@ -339,9 +339,8 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
 
 # noinspection PyUnusedLocal
 def reloadHandler(*p):
-    bot.interact('reld')
+    bot.reload()
     vk.initSelf()
-    logging.info('Reloaded!')
     return 'Reloaded!'
 
 
@@ -489,6 +488,7 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
+            bot.reloadIfChanged()
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
                 vk.loadUsers(dialogs, lambda x: x[0])

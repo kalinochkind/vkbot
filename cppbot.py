@@ -4,6 +4,7 @@ import os
 import logging
 import threading
 import config
+import time
 
 
 def nonBlockRead(output):
@@ -21,6 +22,8 @@ class CppBot:
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h', 'build.sh']
     exe_name = 'chat.exe'
     path = 'chat/'
+    data_path = 'data/'
+    data_files = ['bot.txt', 'blacklist.txt', 'fixedstem.txt', 'names.txt']
     max_smiles = config.get('vkbot.max_smiles', 'i')
 
     def __init__(self, name):
@@ -32,6 +35,7 @@ class CppBot:
         except FileNotFoundError:
             self.buildExe()
         self.name = name
+        self.start_time = time.time()
         self.runExe()
         self.bot_lock = threading.Lock()
 
@@ -62,3 +66,13 @@ class CppBot:
         if os.system(self.path + 'build.sh'):
             logging.critical('Unable to build')
         logging.info('Build successful')
+
+    def reload(self):
+        self.interact('reld')
+        logging.info('Reloaded!')
+        self.start_time = time.time()
+
+    def reloadIfChanged(self):
+        data_time = max(os.path.getmtime(self.data_path + i) for i in self.data_files)
+        if data_time > self.start_time:
+            self.reload()
