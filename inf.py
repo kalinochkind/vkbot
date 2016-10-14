@@ -138,10 +138,8 @@ bot_users = {}
 # None: just ignore the message
 # (None, False): immediate MarkAsRead
 def reply(message):
-    if vk.getSender(message) in banign.banned:
+    if vk.getSender(message) in banign.banned or vk.getSender(message) < 0:
         vk.banned_list.append(vk.getSender(message))
-        return None
-    if vk.getSender(message) < 0:
         return None
     if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
         return (None, False)
