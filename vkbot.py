@@ -15,6 +15,7 @@ import args
 import captcha
 import accounts
 import datetime
+import json
 
 CONF_START = 2000000000
 
@@ -49,6 +50,7 @@ class VkBot:
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
         self.confs = ConfCache(self.api)
+        self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))
         self.initSelf(True)
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
@@ -69,14 +71,14 @@ class VkBot:
         def do():
             res = self.api.users.get(fields='contacts,relation,bdate')[0]
             self.self_id = res['id']
-            self.phone = res.get('mobile_phone', '')
-            self.name = (res['first_name'], res['last_name'])
-            self.bf = res.get('relation_partner')
+            self.vars['phone'] = res.get('mobile_phone', self.vars['phone'])
+            self.vars['name'] = (res['first_name'], res['last_name'])
+            self.vars['bf'] = res.get('relation_partner', self.vars['bf'])
             bdate = res['bdate'].split('.')
             today = datetime.date.today()
-            self.age = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
+            self.vars['age'] = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
             if not sync:
-                logging.info('My phone: ' + self.phone)
+                logging.info('My phone: ' + self.vars['phone'])
 
         if sync:
             do()
@@ -469,7 +471,7 @@ class VkBot:
 
     def setRelation(self, uid):
         self.api.account.saveProfileInfo(relation_partner_id=uid)
-        self.bf = self.users[uid]
+        self.vars['bf'] = self.users[uid]
         log.write('relation', self.loggableName(uid))
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 

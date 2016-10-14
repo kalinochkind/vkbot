@@ -268,26 +268,26 @@ def preprocessReply(s, uid, onsend_actions):
         onsend_actions.append(lambda: vk.setRelation(uid))
         return ''
     if s == 'phone':
-        return vk.phone
+        return vk.vars['phone']
     if s == 'age':
-        return str(vk.age)
+        return str(vk.vars['age'])
     if s == 'name':
-        return vk.name[0]
+        return vk.vars['name'][0]
     if s == 'lastname':
-        return vk.name[1]
+        return vk.vars['name'][1]
     if s == 'bf':
-        if vk.bf:
-            return 'https://vk.com/id' + str(vk.bf['id'])
+        if vk.vars['bf']:
+            return 'https://vk.com/id' + str(vk.vars['bf']['id'])
         else:
             return ''
     if s == 'bfname':
-        if vk.bf:
-            return vk.bf['first_name']
+        if vk.vars['bf']:
+            return vk.vars['bf']['first_name']
         else:
             return ''
     if s == 'bflastname':
-        if vk.bf:
-            return vk.bf['last_name']
+        if vk.vars['bf']:
+            return vk.vars['bf']['last_name']
         else:
             return ''
     logging.error('Unknown variable: ' + s)
@@ -367,8 +367,8 @@ vk = VkBot(login, password)
 vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
 
-logging.info('My name: ' + vk.name[0])
-bot = CppBot(getNameIndex(vk.name[0]))
+logging.info('My name: ' + vk.vars['name'][0])
+bot = CppBot(getNameIndex(vk.vars['name'][0]))
 
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
@@ -496,8 +496,8 @@ def main_loop():
                            uid > 0]
                 stats.update('dialogs', count)
                 stats.update('dialogs_list', dialogs)
-                stats.update('phone', vk.phone)
-                stats.update('bf', vk.printableSender({'user_id': vk.bf['id']}, True))
+                stats.update('phone', vk.vars['phone'])
+                stats.update('bf', vk.printableSender({'user_id': vk.vars['bf']['id']}, True))
         if timeto('groupinvites', groupinvites_interval):
             vk.acceptGroupInvites()
     except Exception as e:
