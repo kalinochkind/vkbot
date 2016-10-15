@@ -366,17 +366,19 @@ void Load()
     fbl.close();
     wifstream fnm(filenames);
     fnm.imbue(loc);
+    long long phmyname = phash(L"а");
     for(int l=0;fnm.getline(buf1, 10000);l++)
     {
-        if(l == myName)
-            continue;
         int j = 0;
         for(int i=0;buf1[i];i++)
         {
             if(buf1[i] <= L' ')
             {
                 buf2[j] = 0;
-                names.insert(phash(buf2));
+                if(l == myName)
+                    fixedstem.push_back(make_pair(phash(buf2), phmyname));
+                else
+                    names.insert(phash(buf2));
                 j = 0;
             }
             else
@@ -385,7 +387,10 @@ void Load()
             }
         }
         buf2[j] = 0;
-        names.insert(phash(buf2));
+        if(l == myName)
+            fixedstem.push_back(make_pair(phash(buf2), phmyname));
+        else
+            names.insert(phash(buf2));
     }
     fnm.close();
     for(auto &i : users)
