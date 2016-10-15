@@ -71,9 +71,9 @@ class VkBot:
         def do():
             res = self.api.users.get(fields='contacts,relation,bdate')[0]
             self.self_id = res['id']
-            self.vars['phone'] = res.get('mobile_phone', self.vars['phone'])
+            self.vars['phone'] = res.get('mobile_phone') or self.vars['phone']
             self.vars['name'] = (res['first_name'], res['last_name'])
-            self.vars['bf'] = res.get('relation_partner', self.vars['bf'])
+            self.vars['bf'] = res.get('relation_partner') or self.vars['bf']
             bdate = res['bdate'].split('.')
             today = datetime.date.today()
             self.vars['age'] = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
