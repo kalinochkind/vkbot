@@ -23,8 +23,12 @@ def _connect():
 
 
 def log(message, kind, text_msg=None):
-    global connected
+    global connected, enabled
     if enabled:
+        if not config.get('db_logger.host') or not config.get('db_logger.database'):
+            print('Incorrect database configuration!')
+            enabled = False
+            return
         with db_lock:
             try:
                 _connect()
