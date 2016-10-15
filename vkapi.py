@@ -23,6 +23,9 @@ class DelayedCall:
         if self.callback_func:
             self.callback_func(self.params, response)
 
+    def __eq__(self, a):
+        return self.method == a.method and self.params == a.params and self.callback_func is None and a.callback_func is None
+
 
 class VkApi:
     api_version = '5.56'
@@ -74,12 +77,13 @@ class VkApi:
                         handler.sync()
                         return response
 
-                    def delayed(self, **dp):
+                    def delayed(self, *, _once=False, **dp):
                         with handler.api_lock:
                             if len(handler.delayed_list) >= handler.max_delayed:
                                 handler.sync(True)
                             dc = DelayedCall(self.method, dp)
-                            handler.delayed_list.append(dc)
+                            if not _once or dc not in handler.delayed_list:
+                                handler.delayed_list.append(dc)
                         return dc
 
                     def walk(self, callback, **dp):

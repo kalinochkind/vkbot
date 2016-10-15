@@ -150,7 +150,6 @@ class VkBot:
                 if self.last_message_id and cur['id'] > self.last_message_id:
                     continue
                 self.replyOne(cur, gen_reply, 'getDialogs')
-            self.api.sync()
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
         else:
@@ -160,7 +159,6 @@ class VkBot:
             for cur in sorted(messages, key=lambda m: m['id']):
                 self.last_message_id = max(self.last_message_id, cur['id'])
                 self.replyOne(cur, gen_reply)
-            self.api.sync()
 
     def longpollMessages(self):
         arr = self.api.getLongpoll()
@@ -261,7 +259,7 @@ class VkBot:
                 tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
-                self.api.messages.markAsRead.delayed(peer_id=sender)
+                self.api.messages.markAsRead.delayed(peer_id=sender, _once=True)
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
