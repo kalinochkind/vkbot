@@ -5,7 +5,7 @@ import stats
 
 fields = 'photo_50,country,last_seen'
 
-noadd = set() if config.get('vkbot.no_ignore') else set(map(int, open(accounts.getFile('noadd.txt')).read().split()))
+noadd = set(map(int, open(accounts.getFile('noadd.txt')).read().split()))
 
 line1, line2 = open(accounts.getFile('allowed.txt'), encoding='utf-8').readlines()
 allowed = set(line1 + ' ')
