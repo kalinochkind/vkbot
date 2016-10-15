@@ -2,6 +2,7 @@ import config
 import threading
 import args
 import time
+import accounts
 
 enabled = bool(args.args['database'])
 if enabled:
@@ -34,7 +35,7 @@ def log(message, kind, text_msg=None):
                 _connect()
                 if text_msg is None:
                     text_msg = message
-                cur.execute('INSERT INTO vkbot_logmessage VALUES (NULL, %s, %s, NOW(), %s)', (message, kind, text_msg))
+                cur.execute('INSERT INTO vkbot_logmessage VALUES (NULL, %s, %s, NOW(), %s, %s)', (message, kind, text_msg, accounts.current_account))
                 conn.commit()
             except mysql.connector.errors.Error:
                 time.sleep(5)
