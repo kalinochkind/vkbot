@@ -376,7 +376,7 @@ void Load()
             {
                 buf2[j] = 0;
                 if(l == myName)
-                    fixedstem.push_back(make_pair(phash(buf2), phmyname));
+                    replaced.push_back(make_pair(stem(buf2), phmyname));
                 else
                     names.insert(phash(buf2));
                 j = 0;
