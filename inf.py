@@ -477,7 +477,6 @@ def main_loop():
             vk.setOnline()
         if timeto('filtercomments', filtercomments_interval):
             noaddUsers(vk.filterComments(lambda s: getBotReply(None, s, -1)), reason='bad comment')
-            stats.update('blacklisted', vk.blacklistedCount())
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(), reason='deleted me')
         if timeto('addfriends', addfriends_interval):
@@ -489,6 +488,7 @@ def main_loop():
         if timeto('stats', stats_interval):
             vk.initSelf(True)
             bot.reloadIfChanged()
+            stats.update('blacklisted', vk.blacklistedCount())
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
                 vk.loadUsers(dialogs, lambda x: x[0])
