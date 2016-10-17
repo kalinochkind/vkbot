@@ -15,6 +15,7 @@ max_smiles = -1
 admin = 62715647
 no_ignore = yes
 add_everyone = yes
+no_leave_conf = yes
 
 [stats]
 dialog_count = 10

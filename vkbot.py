@@ -178,7 +178,7 @@ class VkBot:
                 if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
                     self.good_conf[sender] = False
                     continue
-                if opt.get('source_act') == 'chat_title_update':
+                if opt.get('source_act') == 'chat_title_update' and not config.get('vkbot.no_leave_conf'):
                     del self.confs[sender - CONF_START]
                     logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
                     if self.bad_conf_title(opt['source_text']):
@@ -333,6 +333,8 @@ class VkBot:
         self.tm.run(sender, tl, tl.terminate)
 
     def checkConf(self, cid):
+        if config.get('vkbot.no_leave_conf'):
+            return True
         if cid + CONF_START in self.good_conf:
             return self.good_conf[cid + CONF_START]
         messages = self.api.messages.getHistory(chat_id=cid)['items']

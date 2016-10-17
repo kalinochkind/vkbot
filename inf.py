@@ -156,7 +156,7 @@ def reply(message):
 
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
-        if 'chat_id' in message:
+        if 'chat_id' in message and not config.get('vkbot.no_leave_conf'):
             bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
             if bot_users[message['user_id']] >= 3:
                 logging.info('Too many bot messages')
