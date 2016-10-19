@@ -479,7 +479,6 @@ class VkBot:
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 
     def waitAllThreads(self):
-        self.writeFriends()
         for t in self.tm.all():
             t.join(60)
 
