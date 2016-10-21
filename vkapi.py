@@ -193,7 +193,7 @@ class VkApi:
                 return self.apiCall(method, params)
             elif data_array['error']['error_code'] == 17:  #Validation required
                 print(data_array['error']['redirect_uri'])
-                sys.exit(0)
+                logging.critical('Validation required')
             elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
                 try:
                     handler = self.ignored_errors[(data_array['error']['error_code'], method)]
