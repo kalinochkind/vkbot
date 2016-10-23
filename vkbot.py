@@ -16,6 +16,8 @@ import captcha
 import accounts
 import datetime
 import json
+import threading
+import queue
 
 CONF_START = 2000000000
 
@@ -63,6 +65,7 @@ class VkBot:
         self.bad_conf_title = lambda s: False
         self.admin = None
         self.banned_list = []
+        self.longpoll_queue = queue.Queue()
         self.message_lock = threading.Lock()
 
     def initSelf(self, sync=False):
@@ -164,6 +167,12 @@ class VkBot:
                 self.replyOne(cur, gen_reply)
 
     def longpollMessages(self):
+        res = []
+        while not self.longpoll_queue.empty():
+            res.append(self.longpoll_queue.get())
+        return res
+
+    def getLongpoll(self):
         arr = self.api.getLongpoll()
         need_extra = []
         result = []
@@ -236,6 +245,14 @@ class VkBot:
                 i['_method'] = 'getById'
                 result.append(i)
         return result
+
+    def monitorLongpoll(self):
+        def _monitor():
+            while True:
+                for i in self.getLongpoll():
+                    self.longpoll_queue.put(i)
+        self.longpoll_thread = threading.Thread(target=_monitor, daemon=True)
+        self.longpoll_thread.start()
 
     def sendMessage(self, to, msg, forward=None):
         if not self.good_conf.get(to, 1):

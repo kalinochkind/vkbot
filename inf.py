@@ -469,6 +469,7 @@ if config.get('server.port', 'i') > 0:
 
 check_friend.writeNoadd()
 stats.update('started', time.time())
+vk.monitorLongpoll()
 
 
 def main_loop():
