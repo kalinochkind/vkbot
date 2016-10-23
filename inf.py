@@ -509,4 +509,5 @@ def main_loop():
 while True:
     loop_thread = threading.Thread(target=main_loop)
     loop_thread.start()
+    time.sleep(1)
     loop_thread.join()
