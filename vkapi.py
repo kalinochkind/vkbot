@@ -115,7 +115,7 @@ class VkApi:
     def sync(self, once=False):
         while True:
             with self.api_lock:
-                dl = self.delayed_list
+                dl = self.delayed_list[:]
                 self.delayed_list = []
             if not dl:
                 return
