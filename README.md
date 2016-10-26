@@ -7,7 +7,7 @@ Run: `inf.py [-l] [-d] [-a account] [-w whitelist] [-s script script_args]`
 
 `-l`: write all VK api requests to inf.log
 
-`-d`: logging to MySQL (`mysql.connector` required)
+`-d`: logging to MySQL (`mysqlclient` required)
 
 `-w`: reply only to users from the white list (comma-separated list of ids, domains or full names)
 
