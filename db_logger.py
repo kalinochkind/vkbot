@@ -18,7 +18,7 @@ def _connect():
     global conn, cur, connected
     if not connected:
         conn = MySQLdb.connect(host=config.get('db_logger.host'), user=config.get('db_logger.username'), password=config.get('db_logger.password'),
-                                       database=config.get('db_logger.database'), charset='utf8')
+                                       database=config.get('db_logger.database'), charset='utf8mb4')
         cur = conn.cursor()
         connected = True
 
