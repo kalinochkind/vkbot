@@ -1,0 +1,2 @@
+antigate>=1.4.0
+mysqlclient
