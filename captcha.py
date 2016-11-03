@@ -89,13 +89,16 @@ class CaptchaHandler:
             else:
                 params['captcha_sid'] = params['_sid']
                 params['captcha_key'] = ans
-                params['_checks_done'] = 0
+                params['_checks_done'] = 1
         else:
             time.sleep(self.check_interval)
             params['_checks_done'] = params.get('_checks_done', 0) + 1
 
     def reset(self, params):
         if params.get('_checks_done') or params.get('_trying_external_key'):
+            if 'captcha_key' in params:
+                with open(accounts.getFile('captcha.txt'), 'w') as f:
+                    f.write('cor ' + params['captcha_key'])
             params['_checks_done'] = 0
             params['_trying_external_key'] = False
             params['_sid'] = ''
