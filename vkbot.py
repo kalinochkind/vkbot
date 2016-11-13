@@ -81,8 +81,8 @@ class VkBot:
                 bdate = res['bdate'].split('.')
                 today = datetime.date.today()
                 self.vars['age'] = today.year - int(bdate[2]) - ((today.month, today.day) < (int(bdate[1]), int(bdate[0])))
-            except KeyError:
-                self.vars['age'] = 18
+            except LookupError:
+                pass
             if not sync:
                 logging.info('My phone: ' + self.vars['phone'])
 
