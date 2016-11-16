@@ -120,15 +120,12 @@ class VkBot:
 
         if method is not None:
             message['_method'] = method
-        if message['body'] is None:
-            ans = (None, False)
-        else:
-            try:
-                ans = gen_reply(message)
-            except Exception as e:
-                ans = None
-                logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
-                time.sleep(1)
+        try:
+            ans = gen_reply(message)
+        except Exception as e:
+            ans = None
+            logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
+            time.sleep(1)
         if ans:
             self.replyMessage(message, ans[0], ans[1])
 
@@ -187,10 +184,10 @@ class VkBot:
                 if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
                     self.good_conf[sender] = False
                     continue
-                if opt.get('source_act') == 'chat_title_update' and not config.get('vkbot.no_leave_conf'):
+                if opt.get('source_act') == 'chat_title_update':
                     del self.confs[sender - CONF_START]
                     logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
-                    if self.bad_conf_title(opt['source_text']):
+                    if not config.get('vkbot.no_leave_conf') and self.bad_conf_title(opt['source_text']):
                         self.leaveConf(sender - CONF_START)
                         log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
                         continue
