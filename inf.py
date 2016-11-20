@@ -490,7 +490,6 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
-            bot.reloadIfChanged()
             stats.update('blacklisted', vk.blacklistedCount())
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
@@ -503,6 +502,7 @@ def main_loop():
                 stats.update('bf', vk.printableSender({'user_id': vk.vars['bf']['id']}, True))
         if timeto('groupinvites', groupinvites_interval):
             vk.acceptGroupInvites()
+        bot.reloadIfChanged()
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
         time.sleep(2)

@@ -68,11 +68,11 @@ class CppBot:
         logging.info('Build successful')
 
     def reload(self):
+        self.start_time = time.time()
         self.interact('reld')
         logging.info('Reloaded!')
-        self.start_time = time.time()
 
     def reloadIfChanged(self):
         data_time = max(os.path.getmtime(self.data_path + i) for i in self.data_files)
-        if data_time > self.start_time:
+        if data_time > self.start_time and time.time() > data_time + 5:
             self.reload()
