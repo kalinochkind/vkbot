@@ -315,7 +315,9 @@ def testFriend(uid, need_reason=False):
 
 
 def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
-    if config.get('vkbot.no_ignore'):
+    if config.get('vkbot.no_ignore') and reason != 'external command':
+        for i in users:
+            vk.logSender('Wanted to ignore %sender% ({})'.format(reason), {'user_id': i})
         return 0
     users = set(users)
     if not users:
