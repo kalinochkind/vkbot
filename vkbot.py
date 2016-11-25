@@ -193,7 +193,7 @@ class VkBot:
                         continue
                 if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
                     self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
-                    if int(opt['from']) not in self.banned:
+                    if not config.get('vkbot.no_leave_conf') and int(opt['from']) not in self.banned:
                         self.deleteFriend(int(opt['from']))
                 if flags & 2:  # out
                     if not opt.get('source_act'):
