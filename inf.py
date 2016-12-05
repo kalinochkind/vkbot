@@ -171,6 +171,9 @@ def reply(message):
     message['body'] = preprocessMessage(message)
 
     if message['body']:
+        if message.get('_is_sticker'):
+            vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
+            return ('', False)
         user_msg = vk.last_message.byUser(message['user_id'])
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
@@ -233,7 +236,8 @@ def preprocessMessage(message):
         elif a['type'] == 'market':
             att.append(a['market']['description'])
         elif a['type'] == 'sticker':
-            return None
+            message['_is_sticker'] = True
+            result += ' [Sticker]'
         elif a['type'] == 'photo':
             result += ' ..'
     for a in att:
