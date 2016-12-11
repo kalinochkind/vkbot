@@ -145,10 +145,10 @@ def reply(message):
     if 'deactivated' in vk.users[message['user_id']] or vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
         return (None, False)
 
-    if message['body'] is None:
-        return (None, False)
     if 'body' not in message:
         message['body'] = ''
+    if message['body'] is None:
+        return (None, False)
 
     onsend_actions = []
 
