@@ -171,7 +171,7 @@ def reply(message):
     message['body'] = preprocessMessage(message)
 
     if message['body']:
-        if message.get('_is_sticker'):
+        if message.get('_is_sticker') and config.get('vkbot.ignore_stickers'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
         user_msg = vk.last_message.byUser(message['user_id'])
