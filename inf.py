@@ -68,35 +68,31 @@ def timeto(name, interval, d={}):
 def renderSmile(s, regex=re.compile(r'&#(\d+);')):
     return regex.sub(lambda x: chr(int(x.group(1))), s)
 
-
-last_reply_lower = set()
-_cmd_re = re.compile(r'\\[a-zA-Z]+')
-
-
-# conf_id == -1: comment
-# conf_id == -2: flat
-def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
-    if message is None:
-        return ''  # if we return None, markAsRead is done immediately
-
+def escape(message):
     message = message.replace('\u0401', '\u0415').replace('\u0451', '\u0435')  # yo
     message = message.replace('\u0490', '\u0413').replace('\u0491', '\u0433')  # g
     message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
     message = message.replace("`", "'")
+    return message
 
-    if conf_id == 0:
-        answer = bot.interact('user {} {}'.format(uid, message))
-    elif conf_id in (-1, -2):
-        answer = bot.interact('{} {}'.format('comm' if conf_id == -1 else 'flat 0', message))
-        bl = (answer == '$blacklisted')
-        return bl
-    else:
-        answer = bot.interact('conf {} {}'.format(uid, message))
+
+last_reply_lower = set()
+_cmd_re = re.compile(r'\\[a-zA-Z]+')
+
+def getBotReplyComment(message):
+    return bot.interact('comm ' + escape(message)) == '$blacklisted'
+
+def getBotReplyFlat(message):
+    return bot.interact('flat 0 ' + escape(message)) == '$blacklisted'
+
+def getBotReply(message):
+    message['body'] = escape(message['body'])
+    answer = bot.interact('{} {} {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], message['body']))
 
     if answer == '$noans':
-        if message.upper() == message.lower() and '?' not in message:
+        if message['body'].upper() == message['body'].lower() and '?' not in message['body']:
             answer = random.choice(smiles)
         else:
             answer = noans[0]
@@ -105,26 +101,29 @@ def getBotReply(uid, message, conf_id, method='', onsend_actions=None):
     elif answer == '$blacklisted':
         answer = ''
 
-    if message == message.lower() and message != message.upper() or message.upper() == message.lower() and uid in last_reply_lower:
-        last_reply_lower.add(uid)
-        answer = answer.lower()
-    else:
-        last_reply_lower.discard(uid)
     console_message = ''
 
     if '{' in answer:
-        answer, gender = applyGender(answer, uid)
+        answer, gender = applyGender(answer, message['user_id'])
         console_message += ' (' + gender + ')'
 
     if '\\' in answer:
-        res = _cmd_re.sub(lambda m: preprocessReply(m.group(0)[1:], uid, onsend_actions), answer)
+        res = _cmd_re.sub(lambda m: preprocessReply(m.group(0)[1:], message['user_id'], message.setdefault('_onsend_actions', [])), answer)
         console_message += ' (' + answer + ')'
         answer = res
 
-    if method:
-        console_message += ' (' + method + ')'
-    text_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id': uid, 'chat_id': conf_id}, False), message, renderSmile(answer), console_message)
-    html_msg = '({}) {} : {}{}'.format(vk.printableSender({'user_id': uid, 'chat_id': conf_id}, True), message, renderSmile(answer).replace('&', '&amp;'), console_message)
+    if message['_old_body'] == message['_old_body'].lower() and message['_old_body'] != message['_old_body'].upper():
+        last_reply_lower.add(message['user_id'])
+        answer = answer.lower()
+    elif message['_old_body'].upper() == message['_old_body'].lower() and message['user_id'] in last_reply_lower:
+        answer = answer.lower()
+    else:
+        last_reply_lower.discard(message['user_id'])
+
+    if message.get('_method'):
+        console_message += ' (' + message['_method'] + ')'
+    text_msg = '({}) {} : {}{}'.format(vk.printableSender(message, False), message['body'], renderSmile(answer), console_message)
+    html_msg = '({}) {} : {}{}'.format(vk.printableSender(message, True), message['body'], renderSmile(answer).replace('&', '&amp;'), console_message)
     logging.info(text_msg, extra={'db': html_msg})
     return answer
 
@@ -153,7 +152,9 @@ def reply(message):
     onsend_actions = []
 
     if 'id' not in message:  # friendship request
-        return (getBotReply(message['user_id'], message['message'], 0, 'friendship request', onsend_actions), True)
+        message['body'] = message['message']
+        message['_method'] = 'friendship request'
+        return (getBotReply(message), True)
 
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
@@ -168,6 +169,9 @@ def reply(message):
         del bot_users[message['user_id']]
 
     message['body'] = preprocessMessage(message)
+
+    if message['body'] is None:
+        return ('', False)
 
     if message['body']:
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers'):
@@ -190,7 +194,7 @@ def reply(message):
 
         t = evalExpression(message['body'])
         if t:
-            if getBotReply(None, message['body'], -2):
+            if getBotReplyFlat(message['body']):
                 return ('', False)
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
             log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(message['user_id']), message['body'], t))
@@ -200,12 +204,11 @@ def reply(message):
             vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
             return ('', False)
 
-    bot_reply = getBotReply(message['user_id'], message['body'], message.get('chat_id', 0), message.get('_method', ''), onsend_actions)
-    message['_onsend_actions'] = onsend_actions
-    return (bot_reply, False)
+    return (getBotReply(message), False)
 
 
 def preprocessMessage(message):
+    message['_old_body'] = message.get('body')
     if message.get('user_id') == vk.self_id:
         return ''
 
@@ -368,7 +371,7 @@ def getNameIndex(name):
 
 vk = VkBot(login, password)
 vk.admin = config.get('vkbot.admin', 'i')
-vk.bad_conf_title = lambda s: getBotReply(None, ' ' + s, -2)
+vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('My name: ' + vk.vars['name'][0])
 bot = CppBot(getNameIndex(vk.vars['name'][0]))
@@ -485,7 +488,7 @@ def main_loop():
         if timeto('setonline', setonline_interval):
             vk.setOnline()
         if timeto('filtercomments', filtercomments_interval):
-            noaddUsers(vk.filterComments(lambda s: getBotReply(None, s, -1)), reason='bad comment')
+            noaddUsers(vk.filterComments(lambda s: getBotReplyComment(s)), reason='bad comment')
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(), reason='deleted me')
         if timeto('addfriends', addfriends_interval):
