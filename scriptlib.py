@@ -55,3 +55,14 @@ def resolvePid(a, pid, conf_allowed=True):
         return a.users.get(user_ids=pid)[0]['id']
     except Exception:
         return None
+
+def resolveDomain(a, name):
+    if name.lstrip('-').isdigit():
+        return int(name)
+    id = a.utils.resolveScreenName(screen_name=name)
+    if not id:
+        return None
+    if id['type'] == 'user':
+        return id['object_id']
+    else:
+        return -id['object_id']
