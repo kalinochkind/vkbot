@@ -73,8 +73,9 @@ class VkApi:
                             nonlocal response
                             response = resp
 
-                        self.delayed(**dp).callback(cb)
-                        handler.sync()
+                        with handler.api_lock:
+                            self.delayed(**dp).callback(cb)
+                            handler.sync()
                         return response
 
                     def delayed(self, *, _once=False, **dp):
@@ -171,6 +172,7 @@ class VkApi:
                 logging.warning('{} timeout'.format(method))
 
         if data_array is None:
+            logging.error('data_array is None')
             return None
         if 'response' in data_array:
             if self.ch:
