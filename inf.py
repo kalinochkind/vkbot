@@ -182,6 +182,8 @@ def reply(message):
         user_msg = vk.last_message.byUser(message['user_id'])
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
+            if message.get('_is_sticker'):
+                return ('', False)
             if user_msg['count'] == 5:
                 noaddUsers([message['user_id']], reason='flood')
             elif user_msg['count'] < 5:
