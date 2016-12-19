@@ -5,6 +5,7 @@ import time
 import logging
 import html
 import sys
+import re
 
 CALL_INTERVAL = 0.35
 
@@ -194,8 +195,10 @@ class VkApi:
                 time.sleep(2)
                 return self.apiCall(method, params)
             elif data_array['error']['error_code'] == 17:  #Validation required
-                print(data_array['error']['redirect_uri'])
-                logging.critical('Validation required')
+                logging.warning('Validation required')
+                self.validate(data_array['error']['redirect_uri'])
+                time.sleep(1)
+                return self.apiCall(method, params)
             elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
                 try:
                     handler = self.ignored_errors[(data_array['error']['error_code'], method)]
@@ -271,3 +274,12 @@ class VkApi:
             return []
         else:
             return self.getLongpoll(mode)
+
+    def validate(self, url):
+        if not self.username or '@' in self.username:
+            logging.critical("I don't know your phone number")
+        page = urllib.request.urlopen(url).read().decode()
+        url_re = re.compile(r'/(login.php\?act=security_check&[^"]+)"')
+        post_url = 'https://m.vk.com/' + url_re.search(page).group(1)
+        phone = self.username[-10:-2]
+        urllib.request.urlopen(post_url, ('code='+ phone).encode('utf-8'))
