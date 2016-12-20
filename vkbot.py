@@ -215,9 +215,6 @@ class VkBot:
                             del opt['attach{}'.format(number)]
                             del opt['attach{}_kind'.format(number)]
                             text += ' [Voice]'
-                if not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
-                    need_extra.append(str(mid))
-                    continue
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if opt.get('source_act'):
                     msg['body'] = None
@@ -234,6 +231,9 @@ class VkBot:
                         self.tm.get(sender).attr['reply'] = True
                 except Exception:
                     pass
+                if not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
+                    need_extra.append(str(mid))
+                    continue
                 result.append(msg)
 
         if need_extra:
