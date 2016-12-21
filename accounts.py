@@ -13,10 +13,10 @@ def forceInput(text, password=False):
         s = getpass.getpass(text) if password else input(text)
     return s
 
+def validateName(name):
+    return name and len(name) <= 256 and not any(i in name for i in './\\ ')
 
 def createAccount(name):
-    if not name or len(name) > 256 or any(i in name for i in './\\ '):
-        return False
     login = forceInput('Login for {}: '.format(name))
     password = forceInput('Password for {}: '.format(name), True)
     dirname = 'accounts/' + name + '/'
@@ -42,8 +42,6 @@ def selectAccount(name):
 
 
 def accountExists(name):
-    if not name or len(name) > 256 or any(i in name for i in './\\ '):
-        return False
     return os.path.isdir('accounts/' + name)
 
 
@@ -57,13 +55,14 @@ acc = args.args['account']
 if acc is None:
     acc = forceInput('Enter account name ({}): '.format(listAccounts() or 'no existing accounts'))
 
+if not validateName(acc):
+    print('Invalid account name')
+    sys.exit()
 if accountExists(acc):
     selectAccount(acc)
 else:
     if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
         print('Creating new account')
-        if not createAccount(acc):
-            print('Invalid account name')
-            sys.exit()
+        createAccount(acc)
     else:
         sys.exit()
