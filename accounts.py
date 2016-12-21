@@ -50,7 +50,11 @@ def listAccounts():
 
 
 if not os.path.isdir('accounts'):
-    os.mkdir('accounts')
+    try:
+        os.mkdir('accounts')
+    except PermissionError:
+        print('Unable to create accounts directory')
+        sys.exit()
 acc = args.args['account']
 if acc is None:
     acc = forceInput('Enter account name ({}): '.format(listAccounts() or 'no existing accounts'))
