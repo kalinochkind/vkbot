@@ -20,6 +20,7 @@ import threading
 import queue
 
 CONF_START = 2000000000
+TYPING_INTERVAL = 5
 
 ignored_errors = {
     # (code, method): (message, can_retry)
@@ -37,17 +38,17 @@ ignored_errors = {
 
 
 class VkBot:
-    delay_on_reply = config.get('vkbot.delay_on_reply', 'i')
-    chars_per_second = config.get('vkbot.chars_per_second', 'i')
-    same_user_interval = config.get('vkbot.same_user_interval', 'i')
-    same_conf_interval = config.get('vkbot.same_conf_interval', 'i')
-    typing_interval = 5
-    forget_interval = config.get('vkbot.forget_interval', 'i')
-    delay_on_first_reply = config.get('vkbot.delay_on_first_reply', 'i')
+
+    delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
+    chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
+    same_user_interval = config.get('vkbot_timing.same_user_interval', 'i')
+    same_conf_interval = config.get('vkbot_timing.same_conf_interval', 'i')
+    forget_interval = config.get('vkbot_timing.forget_interval', 'i')
+    delay_on_first_reply = config.get('vkbot_timing.delay_on_first_reply', 'i')
     stats_dialog_count = config.get('stats.dialog_count', 'i')
 
     def __init__(self, username='', password=''):
-        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
+        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
@@ -342,7 +343,7 @@ class VkBot:
                 tl.do(i)
                 tl.sleep(cur_delay)
         if typing_time:
-            tl.doEveryFor(self.typing_interval, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send, True)
         self.tm.run(sender, tl, tl.terminate)
 

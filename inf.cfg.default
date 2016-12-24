@@ -3,7 +3,7 @@ antigate_key =
 checks_before_antigate = 6
 check_interval = 5
 
-[vkbot]
+[vkbot_timing]
 delay_on_reply = 3
 chars_per_second = 5
 same_user_interval = 15
@@ -11,6 +11,8 @@ same_conf_interval = 15
 forget_interval = 600
 delay_on_first_reply = 10
 default_timeout = 5
+
+[vkbot]
 max_smiles = -1
 admin = 62715647
 no_ignore = yes

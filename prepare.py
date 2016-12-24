@@ -65,7 +65,7 @@ if args['script']:
     except ImportError:
         print('Invalid script')
         availableScripts()
-    v = VkApi(login, password, timeout=config.get('vkbot.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
+    v = VkApi(login, password, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
               log_file=accounts.getFile('inf.log') if args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
     v.initLongpoll()
     main(v, args['args'])
