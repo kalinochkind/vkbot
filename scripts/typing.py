@@ -11,4 +11,4 @@ def main(a, args):
         return
     while True:
         a.messages.setActivity(type='typing', user_id=uid)
-        time.sleep(5)
+        time.sleep(scriptlib.TYPING_INTERVAL)

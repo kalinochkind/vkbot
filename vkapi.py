@@ -8,7 +8,8 @@ import sys
 import re
 
 CALL_INTERVAL = 0.35
-
+TYPING_INTERVAL = 5
+CONF_START = 2000000000
 
 class DelayedCall:
     def __init__(self, method, params):

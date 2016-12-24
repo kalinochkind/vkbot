@@ -18,9 +18,8 @@ import datetime
 import json
 import threading
 import queue
+from vkapi import CONF_START
 
-CONF_START = 2000000000
-TYPING_INTERVAL = 5
 
 ignored_errors = {
     # (code, method): (message, can_retry)
@@ -324,7 +323,7 @@ class VkBot:
         send_time = cur_delay + typing_time
         user_delay = 0
         if sender_msg and sender != self.admin:
-            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < 2000000000 else self.same_conf_interval)  # can be negative
+            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < CONF_START else self.same_conf_interval)  # can be negative
         tl = Timeline(max(send_time, user_delay))
         if 'chat_id' in message:
             tl.attr['user_id'] = message['user_id']
@@ -343,7 +342,7 @@ class VkBot:
                 tl.do(i)
                 tl.sleep(cur_delay)
         if typing_time:
-            tl.doEveryFor(TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(vkapi.TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send, True)
         self.tm.run(sender, tl, tl.terminate)
 

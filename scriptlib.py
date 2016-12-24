@@ -1,5 +1,6 @@
 import logging
 import itertools
+from vkapi import CONF_START, TYPING_INTERVAL
 
 
 def _getPeople(fun, fields):
@@ -35,7 +36,7 @@ def getDialogs(a):
         for t in fr['items']:
             t = t['message']
             if 'chat_id' in t:
-                dialogs.append(t['chat_id'] + 2000000000)
+                dialogs.append(t['chat_id'] + CONF_START)
             else:
                 dialogs.append(t['user_id'])
         if len(fr['items']) < 200:
@@ -48,7 +49,7 @@ def resolvePid(a, pid, conf_allowed=True):
         if pid.isdigit():
             return int(pid)
         if pid.startswith('c') and pid[1:].isdigit():
-            return 2000000000 + int(pid[1:])
+            return CONF_START + int(pid[1:])
     if '/' in pid:
         pid = pid.split('/')[-1]
     try:
