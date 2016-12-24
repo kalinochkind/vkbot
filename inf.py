@@ -14,6 +14,7 @@ import check_friend
 from calc import evalExpression
 import random
 import config
+import signal
 from server import MessageServer
 import threading
 from args import args
@@ -360,9 +361,12 @@ def reloadHandler(*p):
 
 # noinspection PyUnusedLocal
 def onExit(*p):
-    logging.info('Terminating')
-    global running
-    running = False
+    logging.info('Received SIGTERM')
+    loop_thread.join(60)
+    vk.waitAllThreads()
+    logging.info('Bye')
+    logging.shutdown()
+    sys.exit()
 
 def getNameIndex(name):
     names = open('data/names.txt', encoding='utf-8').readlines()
@@ -372,6 +376,7 @@ def getNameIndex(name):
     return -1
 
 
+signal.signal(signal.SIGTERM, onExit)
 
 vk = VkBot(login, password)
 vk.admin = config.get('vkbot.admin', 'i')
@@ -461,13 +466,9 @@ def banlistHandler(*p):
     else:
         return 'No one banned!'
 
-def restartHandler(*p):
-    onExit()
-    return 'Ok'
 
-
-srv = MessageServer()
 if config.get('server.port', 'i') > 0:
+    srv = MessageServer()
     srv.addHandler('reply', lambda x: bot.interact('flat ' + x, False))
     srv.addHandler('stem', lambda x: bot.interact('stem ' + x, False))
     srv.addHandler('ignore', ignoreHandler)
@@ -478,7 +479,6 @@ if config.get('server.port', 'i') > 0:
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
     srv.addHandler('banlist', banlistHandler)
-    srv.addHandler('restart', restartHandler)
     srv.listen()
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
@@ -520,13 +520,9 @@ def main_loop():
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
         time.sleep(2)
 
-running = True
-while running:
+
+while True:
     loop_thread = threading.Thread(target=main_loop)
     loop_thread.start()
     time.sleep(1)
     loop_thread.join()
-
-vk.waitAllThreads()
-logging.info('Bye')
-logging.shutdown()
