@@ -2,7 +2,6 @@ import time
 import scriptlib
 import logging
 
-# TODO like only one post from each user
 
 def main(a, args):
     if not args:
@@ -31,3 +30,4 @@ def main(a, args):
         logging.info('Like ' + str(i['id']))
         a.likes.add(owner_id=i['owner_id'], item_id=i['id'], type='post')
         time.sleep(3)
+    logging.info('Total: {}'.format(len(liked)))
