@@ -2,6 +2,7 @@ import os
 import args
 import sys
 import getpass
+import pack
 
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
@@ -48,6 +49,15 @@ def accountExists(name):
 def listAccounts():
     return ', '.join(os.listdir('accounts'))
 
+if args.args.get('pack'):
+    pack.pack(args.args['pack'])
+    sys.exit()
+if args.args.get('pack_data'):
+    pack.pack_data(args.args['pack_data'])
+    sys.exit()
+if args.args.get('unpack'):
+    pack.unpack(args.args['unpack'])
+    sys.exit()
 
 if not os.path.isdir('accounts'):
     try:
