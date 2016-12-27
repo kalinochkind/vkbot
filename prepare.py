@@ -6,11 +6,11 @@ import sys
 import time
 
 import accounts
-import captcha
 import config
 import log
 from args import args
 from vkapi import VkApi
+from vkbot import createCaptchaHandler
 
 class MyHandler(logging.Handler):
     def emit(self, record):
@@ -64,7 +64,7 @@ if args['script']:
         availableScripts()
         sys.exit()
     v = VkApi(login, password, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
-              log_file=accounts.getFile('inf.log') if args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
+              log_file=accounts.getFile('inf.log') if args['logging'] else '', captcha_handler=createCaptchaHandler())
     v.initLongpoll()
     main(v, args['args'])
     v.sync()

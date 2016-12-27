@@ -5,18 +5,16 @@ import time
 import urllib.error
 from urllib.request import urlopen
 
-import accounts
-import config
-
 class CaptchaHandler:
-    key = config.get('captcha.antigate_key')
-    png_filename = accounts.getFile('captcha.png')
-    timeout = 10
-    checks_before_antigate = config.get('captcha.checks_before_antigate', 'i')
-    check_interval = config.get('captcha.check_interval', 'i')
 
-    def __init__(self):
+    def __init__(self, params):
         self.png_exists = False
+        self.key = params.get('antigate_key')
+        self.png_filename = params.get('png_filename', 'captcha.png')
+        self.txt_filename = params.get('txt_filename', 'captcha.txt')
+        self.timeout = params.get('timeout', 10)
+        self.checks_before_antigate = params.get('checks_before_antigate', 1)
+        self.check_interval = params.get('check_interval', 5)
 
     def receive(self, url):
         try:
@@ -62,11 +60,11 @@ class CaptchaHandler:
         if params.get('_checks_done', 0) == 0:
             logging.warning('Captcha needed')
             params['_sid'] = data_array['error']['captcha_sid']
-            with open(accounts.getFile('captcha.txt'), 'w') as f:
+            with open(self.txt_filename, 'w') as f:
                 f.write('sid ' + params['_sid'])
             self.receive(data_array['error']['captcha_img'])
         elif params.get('_sid'):
-            key = open(accounts.getFile('captcha.txt')).read()
+            key = open(self.txt_filename).read()
             if key.startswith('key'):
                 logging.info('Trying a key from captcha.txt')
                 params['captcha_sid'] = params['_sid']
@@ -77,9 +75,9 @@ class CaptchaHandler:
                 params['_trying_external_key'] = True
                 return
 
-        if self.key and params.get('_checks_done') == self.checks_before_antigate:
+        if self.key and params.get('_checks_done', 0) == self.checks_before_antigate:
             logging.info('Using antigate')
-            open(accounts.getFile('captcha.txt'), 'w').close()
+            open(self.txt_filename, 'w').close()
             ans = self.solve()
             if ans is None:
                 time.sleep(5)
@@ -97,7 +95,7 @@ class CaptchaHandler:
     def reset(self, params):
         if params.get('_checks_done') or params.get('_trying_external_key'):
             if 'captcha_key' in params:
-                with open(accounts.getFile('captcha.txt'), 'w') as f:
+                with open(self.txt_filename, 'w') as f:
                     f.write('cor ' + params['captcha_key'])
             params['_checks_done'] = 0
             params['_trying_external_key'] = False

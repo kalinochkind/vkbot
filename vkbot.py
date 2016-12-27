@@ -34,6 +34,16 @@ ignored_errors = {
     (10, '*'): ('Error code 10', True),
 }
 
+def createCaptchaHandler():
+    captcha_params = {
+        'antigate_key': config.get('captcha.antigate_key'),
+        'png_filename': accounts.getFile('captcha.png'),
+        'txt_filename': accounts.getFile('captcha.txt'),
+        'checks_before_antigate': config.get('captcha.checks_before_antigate', 'i'),
+        'check_interval': config.get('captcha.check_interval', 'i'),
+    }
+    return captcha.CaptchaHandler(captcha_params)
+
 class VkBot:
     delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
     chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
@@ -44,9 +54,10 @@ class VkBot:
     stats_dialog_count = config.get('stats.dialog_count', 'i')
 
     def __init__(self, username='', password=''):
+
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
                                token_file=accounts.getFile('token.txt'),
-                               log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
+                               log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields,
                                config.get('cache.user_invalidate_interval', 'i'))
