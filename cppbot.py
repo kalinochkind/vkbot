@@ -21,7 +21,7 @@ class CppBot:
     exe_name = 'chat.exe'
     path = 'chat/'
     data_path = 'data/'
-    data_files = ['bot.txt', 'blacklist.txt', 'fixedstem.txt', 'names.txt']
+    data_files = ['bot.txt', 'blacklist.txt', 'fixedstem.txt', 'names.txt', 'noans.txt', 'smiles.txt']
     max_smiles = config.get('vkbot.max_smiles', 'i')
 
     def __init__(self, name):
