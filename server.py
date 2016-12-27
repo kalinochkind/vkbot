@@ -2,13 +2,10 @@ import logging
 import socket
 import threading
 
-import config
-
 class MessageServer:
-    port = config.get('server.port', 'i')
-
-    def __init__(self):
+    def __init__(self, port):
         self.handlers = {}
+        self.port = port
 
     def addHandler(self, name, proc):
         self.handlers[name] = proc

@@ -446,7 +446,7 @@ def banlistHandler(*p):
         return 'No one banned!'
 
 if config.get('server.port', 'i') > 0:
-    srv = MessageServer()
+    srv = MessageServer(config.get('server.port', 'i'))
     srv.addHandler('reply', lambda x: bot.interact('flat ' + x, False))
     srv.addHandler('stem', lambda x: bot.interact('stem ' + x, False))
     srv.addHandler('ignore', ignoreHandler)
