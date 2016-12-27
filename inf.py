@@ -147,8 +147,6 @@ def reply(message):
     if message['body'] is None:
         return (None, False)
 
-    onsend_actions = []
-
     if 'id' not in message:  # friendship request
         message['body'] = message['message']
         message['_method'] = 'friendship request'

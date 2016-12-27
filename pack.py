@@ -7,8 +7,8 @@ COMPRESSION_MODE = 'gz'
 def pack_dirs(filename, dirs):
     try:
         with tarfile.open(filename, 'w:' + COMPRESSION_MODE) as f:
-            for dir in dirs:
-                f.add(dir)
+            for d in dirs:
+                f.add(d)
     except Exception as e:
         print(e)
 

@@ -225,13 +225,15 @@ class VkApi:
 
     def login(self):
         logging.info('Fetching new token')
-        url = 'https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username + '&password=' + self.password
+        url = ('https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username +
+               '&password=' + self.password)
         if not self.username or not self.password:
             logging.critical('I don\'t know your login or password, sorry')
         try:
             json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
         except Exception:
             logging.critical('Authorization failed')
+            return
         data = json.loads(json_string)
         self.token = data['access_token']
         if self.token_file:

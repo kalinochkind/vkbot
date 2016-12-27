@@ -1,7 +1,7 @@
 import itertools
 import logging
 
-from vkapi import CONF_START
+from vkapi import CONF_START, TYPING_INTERVAL
 
 def _getPeople(fun, fields):
     friends = []
@@ -56,10 +56,10 @@ def resolvePid(a, pid, conf_allowed=True):
 def resolveDomain(a, name):
     if name.lstrip('-').isdigit():
         return int(name)
-    id = a.utils.resolveScreenName(screen_name=name)
-    if not id:
+    pid = a.utils.resolveScreenName(screen_name=name)
+    if not pid:
         return None
-    if id['type'] == 'user':
-        return id['object_id']
+    if pid['type'] == 'user':
+        return pid['object_id']
     else:
-        return -id['object_id']
+        return -pid['object_id']

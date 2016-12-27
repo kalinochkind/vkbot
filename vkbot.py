@@ -65,6 +65,8 @@ class VkBot:
         self.banned_list = []
         self.longpoll_queue = queue.Queue()
         self.message_lock = threading.Lock()
+        self.longpoll_thread = None
+        self.banned = set()
 
     def initSelf(self, sync=False):
         self.users.clear()
@@ -545,10 +547,10 @@ class VkBot:
         confs = {}
         try:
             items = list(dialogs['items'])
-            for i in items:
-                self.api.messages.getHistory.delayed(peer_id=self.getSender(i['message']), count=0).callback(cb)
-                if 'title' in i['message']:
-                    confs[self.getSender(i['message'])] = i['message']['title']
+            for dialog in items:
+                self.api.messages.getHistory.delayed(peer_id=self.getSender(dialog['message']), count=0).callback(cb)
+                if 'title' in dialog['message']:
+                    confs[self.getSender(dialog['message'])] = dialog['message']['title']
             self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')

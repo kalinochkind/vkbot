@@ -39,8 +39,8 @@ def main(a, args):
                 chain = chain1[::-1] + chain2
                 if chain[0] == end:
                     chain = chain[::-1]
-                for j in chain:
-                    print('https://vk.com/id{} ({})'.format(j, getName(j)))
+                for uid in chain:
+                    print('https://vk.com/id{} ({})'.format(uid, getName(uid)))
                 exit()
             dist[i] = dist[uid] + 1
             parent[i] = uid
@@ -59,7 +59,7 @@ def main(a, args):
     parent[end] = -1
     addFriends(start)
     addFriends(end)
-    for i in range(1, 10):
+    for d in range(1, 10):
         for j in list(parent):
-            if dist1.get(j) == i or dist2.get(j) == i:
+            if dist1.get(j) == d or dist2.get(j) == d:
                 addFriends(j)

@@ -34,6 +34,7 @@ class CppBot:
             self.buildExe()
         self.name = name
         self.start_time = time.time()
+        self.bot = None
         self.runExe()
         self.bot_lock = threading.Lock()
 
