@@ -1,10 +1,10 @@
 import logging
+
 import scriptlib
 
 dist1 = {}
 dist2 = {}
 parent = {}
-
 
 def main(a, args):
     a.ignored_errors = {

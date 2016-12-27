@@ -1,7 +1,7 @@
 import logging
-import scriptlib
-import check_friend
 
+import check_friend
+import scriptlib
 
 # noinspection PyUnusedLocal
 def main(a, args):

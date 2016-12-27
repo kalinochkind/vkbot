@@ -1,25 +1,24 @@
-import vkapi
-import time
-import log
-import logging
-from thread_manager import ThreadManager, Timeline
-from cache import UserCache, ConfCache, MessageCache
-import config
-import re
-import random
+import datetime
 import html
-import stats
-import check_friend
+import json
+import logging
+import queue
+import random
+import re
 import threading
+import time
+
+import accounts
 import args
 import captcha
-import accounts
-import datetime
-import json
-import threading
-import queue
+import check_friend
+import config
+import log
+import stats
+import vkapi
+from cache import UserCache, ConfCache, MessageCache
+from thread_manager import ThreadManager, Timeline
 from vkapi import CONF_START
-
 
 ignored_errors = {
     # (code, method): (message, can_retry)
@@ -35,9 +34,7 @@ ignored_errors = {
     (10, '*'): ('Error code 10', True),
 }
 
-
 class VkBot:
-
     delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
     chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
     same_user_interval = config.get('vkbot_timing.same_user_interval', 'i')
@@ -47,7 +44,8 @@ class VkBot:
     stats_dialog_count = config.get('stats.dialog_count', 'i')
 
     def __init__(self, username='', password=''):
-        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
+        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
+                               token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
         self.api.initLongpoll()
         self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
@@ -108,7 +106,9 @@ class VkBot:
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
-            if self.getSender(message) > CONF_START or self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
+            if self.getSender(message) > CONF_START:
+                return
+            if self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
                 return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
@@ -248,6 +248,7 @@ class VkBot:
             while True:
                 for i in self.getLongpoll():
                     self.longpoll_queue.put(i)
+
         self.longpoll_thread = threading.Thread(target=_monitor, daemon=True)
         self.longpoll_thread.start()
 
@@ -323,7 +324,8 @@ class VkBot:
         send_time = cur_delay + typing_time
         user_delay = 0
         if sender_msg and sender != self.admin:
-            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < CONF_START else self.same_conf_interval)  # can be negative
+            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < CONF_START else self.same_conf_interval)
+            # can be negative
         tl = Timeline(max(send_time, user_delay))
         if 'chat_id' in message:
             tl.attr['user_id'] = message['user_id']
@@ -418,7 +420,8 @@ class VkBot:
 
     def getUserId(self, domain):
         domain = str(domain).lower().rstrip().rstrip('}').rstrip()
-        conf = re.search('sel=c(\\d+)', domain) or re.search('^c(\\d+)$', domain) or re.search('chat=(\\d+)', domain) or re.search('peer=2(\\d{9})', domain)
+        conf = re.search('sel=c(\\d+)', domain) or re.search('^c(\\d+)$', domain) or re.search('chat=(\\d+)', domain) or re.search('peer=2(\\d{9})',
+                                                                                                                                   domain)
         if conf is not None:
             return int(conf.group(1)) + CONF_START
         if '=' in domain:
@@ -512,11 +515,11 @@ class VkBot:
     def printableSender(self, message, need_html):
         if message.get('chat_id', 0) > 0:
             if need_html:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>').replace('%i', str(
-                    message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                res = self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>')
+                return res.replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
             else:
-                return self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}').replace('%i', str(message['chat_id'])).replace('%c', html.escape(
-                    self.confs[message['chat_id']]['title']))
+                res = self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}')
+                return res.replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
         else:
             if need_html:
                 return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
@@ -556,5 +559,5 @@ class VkBot:
         for i in self.api.groups.getInvites()['items']:
             logging.info('Joining group "{}"'.format(i['name']))
             self.api.groups.join(group_id=i['id'])
-            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(self.loggableName(i['invited_by']), i['id'], i['name'],
-                                                                                                      ['', ' (closed)', ' (private)'][i['is_closed']]))
+            log.write('groups','{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(
+                self.loggableName(i['invited_by']), i['id'], i['name'], ['', ' (closed)', ' (private)'][i['is_closed']]))

@@ -1,6 +1,7 @@
 import time
-import config
+
 import accounts
+import config
 import stats
 
 fields = 'photo_50,country,last_seen'
@@ -19,13 +20,11 @@ def writeNoadd():
         f.write('\n'.join(map(str, sorted(noadd))))
     stats.update('ignored', len(noadd))
 
-
 def appendNoadd(users):
     noadd.update(users)
     with open(accounts.getFile('noadd.txt'), 'a') as f:
         f.write('\n' + '\n'.join(map(str, sorted(users))))
     stats.update('ignored', len(noadd))
-
 
 checks = [
     (lambda fr: fr['id'] not in noadd, 'Ignored'),
@@ -37,7 +36,6 @@ checks = [
     (lambda fr: not any(i in (fr['first_name'] + ' ' + fr['last_name']).lower() for i in banned_substrings), 'Bad substring in name'),
     (lambda fr: fr['first_name'] != fr['last_name'], 'First name equal to last name'),
 ]
-
 
 def isGood(fr, need_reason=False):
     reasons = []

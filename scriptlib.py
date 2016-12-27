@@ -1,7 +1,7 @@
-import logging
 import itertools
-from vkapi import CONF_START, TYPING_INTERVAL
+import logging
 
+from vkapi import CONF_START
 
 def _getPeople(fun, fields):
     friends = []
@@ -16,16 +16,13 @@ def _getPeople(fun, fields):
             break
     return friends
 
-
 def getFriends(a, fields=None):
     logging.info('Fetching friends')
     return _getPeople(a.friends.get, fields)
 
-
 def getFollowers(a, fields=None):
     logging.info('Fetching followers')
     return _getPeople(a.users.getFollowers, fields)
-
 
 def getDialogs(a):
     dialogs = []
@@ -42,7 +39,6 @@ def getDialogs(a):
         if len(fr['items']) < 200:
             break
     return dialogs
-
 
 def resolvePid(a, pid, conf_allowed=True):
     if conf_allowed:

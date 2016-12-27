@@ -1,6 +1,6 @@
 import time
-import scriptlib
 
+import scriptlib
 
 def main(a, args):
     if not args:

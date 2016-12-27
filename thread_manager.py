@@ -1,7 +1,6 @@
+import logging
 import threading
 import time
-import logging
-
 
 class ThreadManager:  # not thread-safe, should be used only from main thread
     def __init__(self):
@@ -50,7 +49,6 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
             return self.threads[key]._target
         except Exception:
             return None
-
 
 class Timeline:
     def __init__(self, duration=0):

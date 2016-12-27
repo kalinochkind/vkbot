@@ -1,6 +1,6 @@
-import tarfile
-import shutil
 import os.path
+import shutil
+import tarfile
 
 COMPRESSION_MODE = 'gz'
 

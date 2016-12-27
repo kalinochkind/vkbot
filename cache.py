@@ -1,11 +1,10 @@
-import config
-import time
 import logging
 import threading
+import time
 
+import config
 
 class Cache:
-
     invalidate_interval = 0
 
     def __init__(self, api):
@@ -60,9 +59,7 @@ class Cache:
     def _load(self, ids):
         raise NotImplementedError()
 
-
 class UserCache(Cache):
-
     invalidate_interval = config.get('cache.user_invalidate_interval', 'i')
 
     def __init__(self, api, fields):
@@ -72,14 +69,11 @@ class UserCache(Cache):
     def _load(self, ids):
         return self.api.users.get(user_ids=','.join(map(str, ids)), fields=self.fields)
 
-
 class ConfCache(Cache):
-
     invalidate_interval = config.get('cache.conf_invalidate_interval', 'i')
 
     def _load(self, ids):
         return self.api.messages.getChat(chat_ids=','.join(map(str, ids)))
-
 
 class MessageCache:
     def __init__(self):

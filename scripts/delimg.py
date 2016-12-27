@@ -1,6 +1,6 @@
 import logging
-import scriptlib
 
+import scriptlib
 
 def attachments(a, items):
     for i in items:
@@ -10,10 +10,8 @@ def attachments(a, items):
             a.photos.delete.delayed(photo_id=i['photo']['id'])
             logging.info('Found ' + str(i['photo']['id']))
 
-
 self_id = 0
 good = []
-
 
 # noinspection PyUnusedLocal
 def main(a, args):

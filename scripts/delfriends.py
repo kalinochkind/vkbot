@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
 import logging
-import accounts
 import time
+
+import accounts
+import check_friend
 import config
 import scriptlib
-import check_friend
-
 
 def main(a, args):
     days = config.get('delfriends.days_till_unfriend', 'i')

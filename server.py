@@ -1,8 +1,8 @@
+import logging
 import socket
 import threading
-import logging
-import config
 
+import config
 
 class MessageServer:
     port = config.get('server.port', 'i')

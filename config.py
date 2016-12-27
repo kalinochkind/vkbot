@@ -1,10 +1,10 @@
 import configparser
-import accounts
 import sys
+
+import accounts
 
 cp = configparser.ConfigParser()
 cp.read(accounts.getFile('inf.cfg'))
-
 
 def get(param, typename='s'):
     param = param.split('.')

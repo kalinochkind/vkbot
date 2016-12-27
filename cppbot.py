@@ -1,11 +1,11 @@
-from subprocess import Popen, PIPE
 import fcntl
-import os
 import logging
+import os
 import threading
-import config
 import time
+from subprocess import Popen, PIPE
 
+import config
 
 def nonBlockRead(output):
     fd = output.fileno()
@@ -16,9 +16,7 @@ def nonBlockRead(output):
     except Exception:
         return b''
 
-
 class CppBot:
-
     source_files = ['Analyzer.cpp', 'ChatBot.cpp', 'main.cpp', 'ChatBot.h', 'build.sh']
     exe_name = 'chat.exe'
     path = 'chat/'

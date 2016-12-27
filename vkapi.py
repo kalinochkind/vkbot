@@ -1,11 +1,10 @@
-import threading
-import urllib.request
-import json
-import time
-import logging
 import html
-import sys
+import json
+import logging
 import re
+import threading
+import time
+import urllib.request
 
 CALL_INTERVAL = 0.35
 TYPING_INTERVAL = 5
@@ -28,11 +27,12 @@ class DelayedCall:
     def __eq__(self, a):
         return self.method == a.method and self.params == a.params and self.callback_func is None and a.callback_func is None
 
-
 class VkApi:
     api_version = '5.60'
-    methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes', 'market', 'messages', 'newsfeed',
-               'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video', 'wall', 'widgets'}
+    methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
+               'market', 'messages', 'newsfeed',
+               'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',
+               'wall', 'widgets'}
 
     def __init__(self, username='', password='', *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file
@@ -141,7 +141,8 @@ class VkApi:
 
     def apiCall(self, method, params, retry=False):
         params['v'] = self.api_version
-        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode({i:params[i] for i in params if not i.startswith('_')}) + '&access_token=' + self.getToken()
+        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(
+            {i: params[i] for i in params if not i.startswith('_')}) + '&access_token=' + self.getToken()
         with self.api_lock:
             now = time.time()
             if now - self.last_call < CALL_INTERVAL:
@@ -181,30 +182,31 @@ class VkApi:
                 self.ch.reset(params)
             return data_array['response']
         elif 'error' in data_array:
-            if data_array['error']['error_code'] == 14:  # Captcha needed
+            code = data_array['error']['error_code']
+            if code == 14:  # Captcha needed
                 if self.ch:
                     self.ch.handle(data_array, params)
                 else:
                     logging.warning('Captcha needed')
                     time.sleep(5)
                 return self.apiCall(method, params)
-            elif data_array['error']['error_code'] == 5:  # Auth error
+            elif code == 5:  # Auth error
                 self.login()
                 return self.apiCall(method, params)
-            elif data_array['error']['error_code'] == 6:  # Too many requests per second
+            elif code == 6:  # Too many requests per second
                 logging.warning('{}: too many requests per second'.format(method))
                 time.sleep(2)
                 return self.apiCall(method, params)
-            elif data_array['error']['error_code'] == 17:  #Validation required
+            elif code == 17:  # Validation required
                 logging.warning('Validation required')
                 self.validate(data_array['error']['redirect_uri'])
                 time.sleep(1)
                 return self.apiCall(method, params)
-            elif (data_array['error']['error_code'], method) in self.ignored_errors or (data_array['error']['error_code'], '*') in self.ignored_errors:
+            elif (code, method) in self.ignored_errors or (code, '*') in self.ignored_errors:
                 try:
-                    handler = self.ignored_errors[(data_array['error']['error_code'], method)]
+                    handler = self.ignored_errors[(code, method)]
                 except KeyError:
-                    handler = self.ignored_errors[(data_array['error']['error_code'], '*')]
+                    handler = self.ignored_errors[(code, '*')]
                 if not handler:
                     return None
                 if retry or not handler[1]:
@@ -216,7 +218,7 @@ class VkApi:
                     return self.apiCall(method, params, True)
 
             else:
-                logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), data_array['error']['error_code'], data_array['error'].get('error_msg')))
+                logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, data_array['error'].get('error_msg')))
                 return None
         else:
             return self.apiCall(method, params)
@@ -283,4 +285,4 @@ class VkApi:
         url_re = re.compile(r'/(login.php\?act=security_check&[^"]+)"')
         post_url = 'https://m.vk.com/' + url_re.search(page).group(1)
         phone = self.username[-10:-2]
-        urllib.request.urlopen(post_url, ('code='+ phone).encode('utf-8'))
+        urllib.request.urlopen(post_url, ('code=' + phone).encode('utf-8'))

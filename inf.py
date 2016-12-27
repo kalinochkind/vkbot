@@ -5,33 +5,32 @@ import sys
 os.chdir(os.path.dirname(sys.argv[0]))
 
 import accounts  # must be first
-import log
+
 import logging
 import time
-from vkbot import VkBot, CONF_START
-import re
-import check_friend
-from calc import evalExpression
 import random
-import config
+import re
 import signal
-from server import MessageServer
 import threading
-from args import args
+
+import check_friend
+import config
+import log
 import stats
+from args import args
+from calc import evalExpression
+from server import MessageServer
+from vkbot import VkBot, CONF_START
 
 from prepare import login, password
 from cppbot import CppBot  # should go after prepare import
 
-
 def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
     return regex.match(msg.strip())
-
 
 noans = open(accounts.getFile('noans.txt'), encoding='utf-8').read().splitlines()
 smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitlines()
 random.shuffle(noans)
-
 
 class BanManager:
     def __init__(self, filename):
@@ -57,14 +56,12 @@ class BanManager:
         self.write()
         return True
 
-
 # noinspection PyDefaultArgument
 def timeto(name, interval, d={}):
     if interval >= 0 and time.time() > d.get(name, 0) + interval:
         d[name] = time.time()
         return True
     return False
-
 
 def renderSmile(s, regex=re.compile(r'&#(\d+);')):
     return regex.sub(lambda x: chr(int(x.group(1))), s)
@@ -77,7 +74,6 @@ def escape(message):
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
     message = message.replace("`", "'")
     return message
-
 
 last_reply_lower = set()
 _cmd_re = re.compile(r'\\[a-zA-Z]+')
@@ -130,9 +126,7 @@ def getBotReply(message):
     logging.info(text_msg, extra={'db': html_msg})
     return answer
 
-
 bot_users = {}
-
 
 # returns (text, is_friendship_request)
 # for friendship requests we do not call markAsRead
@@ -142,9 +136,10 @@ def reply(message):
     if vk.getSender(message) in banign.banned or vk.getSender(message) < 0:
         vk.banned_list.append(vk.getSender(message))
         return None
-    if vk.getSender(message) in check_friend.noadd or message['user_id'] in check_friend.noadd:
+    uid = message['user_id']
+    if vk.getSender(message) in check_friend.noadd or uid in check_friend.noadd:
         return (None, False)
-    if 'deactivated' in vk.users[message['user_id']] or vk.users[message['user_id']]['blacklisted'] or vk.users[message['user_id']]['blacklisted_by_me']:
+    if 'deactivated' in vk.users[uid] or vk.users[uid]['blacklisted'] or vk.users[uid]['blacklisted_by_me']:
         return (None, False)
 
     if 'body' not in message:
@@ -162,14 +157,14 @@ def reply(message):
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
         if 'chat_id' in message and not config.get('vkbot.no_leave_conf'):
-            bot_users[message['user_id']] = bot_users.get(message['user_id'], 0) + 1
-            if bot_users[message['user_id']] >= 3:
+            bot_users[uid] = bot_users.get(uid, 0) + 1
+            if bot_users[uid] >= 3:
                 logging.info('Too many bot messages')
                 log.write('conf', 'conf ' + str(message['chat_id']) + ' (bot messages)')
                 vk.leaveConf(message['chat_id'])
         return ('', False)
-    elif message['user_id'] in bot_users:
-        del bot_users[message['user_id']]
+    elif uid in bot_users:
+        del bot_users[uid]
 
     message['body'] = preprocessMessage(message)
 
@@ -180,13 +175,13 @@ def reply(message):
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
-        user_msg = vk.last_message.byUser(message['user_id'])
+        user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
             if message.get('_is_sticker'):
                 return ('', False)
             if user_msg['count'] == 5:
-                noaddUsers([message['user_id']], reason='flood')
+                noaddUsers([uid], reason='flood')
             elif user_msg['count'] < 5:
                 vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
             return ('', False)
@@ -202,7 +197,7 @@ def reply(message):
             if getBotReplyFlat(message['body']):
                 return ('', False)
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
-            log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(message['user_id']), message['body'], t))
+            log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(uid), message['body'], t))
             return (t, False)
         tbody = message['body'].replace('<br>', '')
         if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:
@@ -210,7 +205,6 @@ def reply(message):
             return ('', False)
 
     return (getBotReply(message), False)
-
 
 def preprocessMessage(message):
     message['_old_body'] = message.get('body')
@@ -266,7 +260,6 @@ def preprocessMessage(message):
 
     return result.strip()
 
-
 def preprocessReply(s, uid, onsend_actions):
     if s == 'myname':
         return vk.users[uid]['first_name']
@@ -305,7 +298,6 @@ def preprocessReply(s, uid, onsend_actions):
             return ''
     logging.error('Unknown variable: ' + s)
 
-
 # 1: female, 2: male
 def applyGender(msg, uid, male_re=re.compile(r'\{m([^\{\}]*)\}'), female_re=re.compile(r'\{f([^\{\}]*)\}')):
     gender = ['male', 'female', 'male'][vk.users[uid]['sex']]
@@ -317,13 +309,11 @@ def applyGender(msg, uid, male_re=re.compile(r'\{m([^\{\}]*)\}'), female_re=re.c
         msg = male_re.sub('\\1', msg)
     return msg, gender
 
-
 def testFriend(uid, need_reason=False):
     fr = vk.users[uid]
     if fr is None:
         return False
     return check_friend.isGood(fr, need_reason)
-
 
 def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
     if not remove and config.get('vkbot.no_ignore') and reason != 'external command':
@@ -344,20 +334,19 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
             users.discard(vk.admin)
             if not users:
                 return 0
-            text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in users]) + (' ({})'.format(reason) if reason else '')
+            text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in users]) + (
+            ' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             logging.info(text_msg, extra={'db': html_msg})
             check_friend.appendNoadd(users)
             vk.deleteFriend(users)
             return len(users)
 
-
 # noinspection PyUnusedLocal
 def reloadHandler(*p):
     bot.reload()
     vk.initSelf()
     return 'Reloaded!'
-
 
 # noinspection PyUnusedLocal
 def onExit(*p):
@@ -374,7 +363,6 @@ def getNameIndex(name):
         if name.upper() in n.upper().split():
             return i
     return -1
-
 
 signal.signal(signal.SIGTERM, onExit)
 
@@ -400,7 +388,6 @@ filtercomments_interval = config.get('intervals.filtercomments', 'i')
 stats_interval = config.get('intervals.stats', 'i')
 groupinvites_interval = config.get('intervals.groupinvites', 'i')
 
-
 def ignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
@@ -409,7 +396,6 @@ def ignoreHandler(user):
         return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
     else:
         return vk.printableName(user, user_fmt='{name}') + ' already ignored'
-
 
 def unignoreHandler(user):
     user = vk.getUserId(user)
@@ -422,20 +408,17 @@ def unignoreHandler(user):
             return 'Unbanned ' + vk.printableName(user, user_fmt='{name}')
         return vk.printableName(user, user_fmt='{name}') + ' is not ignored'
 
-
 def banHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
     return ('Banned {}' if banign.ban(user) else '{} already banned').format(vk.printableName(user, user_fmt='{name}'))
 
-
 def unbanHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
     return ('Unbanned {}' if banign.unban(user) else '{} is not banned').format(vk.printableName(user, user_fmt='{name}'))
-
 
 def isignoredHandler(user):
     user = vk.getUserId(user)
@@ -446,7 +429,6 @@ def isignoredHandler(user):
         return 'Good'
     return r
 
-
 def leaveHandler(conf):
     conf = vk.getUserId(conf)
     if conf > CONF_START:
@@ -456,7 +438,6 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
-
 # noinspection PyUnusedLocal
 def banlistHandler(*p):
     if banign.banned:
@@ -465,7 +446,6 @@ def banlistHandler(*p):
         return '\n'.join(result)
     else:
         return 'No one banned!'
-
 
 if config.get('server.port', 'i') > 0:
     srv = MessageServer()
@@ -485,7 +465,6 @@ if config.get('server.port', 'i') > 0:
 check_friend.writeNoadd()
 stats.update('started', time.time())
 vk.monitorLongpoll()
-
 
 def main_loop():
     try:
@@ -507,8 +486,8 @@ def main_loop():
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:
                 vk.loadUsers(dialogs, lambda x: x[0])
-                dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid).replace('{', '{{').replace('}', '}}')), cnt] for uid, cnt in dialogs if
-                           uid > 0]
+                dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid).replace('{', '{{').replace('}', '}}')), cnt]
+                           for uid, cnt in dialogs if uid > 0]
                 stats.update('dialogs', count)
                 stats.update('dialogs_list', dialogs)
                 stats.update('phone', vk.vars['phone'])
@@ -519,7 +498,6 @@ def main_loop():
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))
         time.sleep(2)
-
 
 while True:
     loop_thread = threading.Thread(target=main_loop)

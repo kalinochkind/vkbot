@@ -1,16 +1,16 @@
-import os
-import sys
 import codecs
 import importlib
-import time
-from args import args
-import accounts
-import log
-import config
-from vkapi import VkApi
-import captcha
 import logging
+import os
+import sys
+import time
 
+import accounts
+import captcha
+import config
+import log
+from args import args
+from vkapi import VkApi
 
 class MyHandler(logging.Handler):
     def emit(self, record):
@@ -35,7 +35,6 @@ class MyHandler(logging.Handler):
         elif lvl == 'INFO':
             log.info(msg)
 
-
 logging.basicConfig(handlers=[MyHandler()], level=logging.INFO)
 logging.getLogger('antigate').setLevel(logging.CRITICAL)
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -46,11 +45,9 @@ sys.stdout.encoding = 'UTF-8'
 login = config.get('login.login')
 password = config.get('login.password')
 
-
 def availableScripts():
     print('Available scripts:', ', '.join(sorted(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__'))))
     sys.exit()
-
 
 if args['script'] is None:
     availableScripts()

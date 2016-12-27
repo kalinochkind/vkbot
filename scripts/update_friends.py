@@ -1,9 +1,9 @@
+import logging
+
+import accounts
 import check_friend
 import log
-import logging
-import accounts
 import scriptlib
-
 
 # noinspection PyUnusedLocal
 def main(a, args):

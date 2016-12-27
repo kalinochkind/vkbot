@@ -1,7 +1,7 @@
-import time
-import scriptlib
 import logging
+import time
 
+import scriptlib
 
 def main(a, args):
     if not args:

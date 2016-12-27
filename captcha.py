@@ -1,12 +1,12 @@
-from urllib.request import urlopen
 import logging
-import socket
-import urllib.error
 import os
+import socket
 import time
-import config
-import accounts
+import urllib.error
+from urllib.request import urlopen
 
+import accounts
+import config
 
 class CaptchaHandler:
     key = config.get('captcha.antigate_key')
