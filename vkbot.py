@@ -48,8 +48,9 @@ class VkBot:
                                token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=captcha.CaptchaHandler())
         self.api.initLongpoll()
-        self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields)
-        self.confs = ConfCache(self.api)
+        self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields,
+                               config.get('cache.user_invalidate_interval', 'i'))
+        self.confs = ConfCache(self.api, config.get('cache.conf_invalidate_interval', 'i'))
         self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))
         self.initSelf(True)
         self.guid = int(time.time() * 5)
