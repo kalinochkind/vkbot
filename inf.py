@@ -369,7 +369,7 @@ vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('My name: ' + vk.vars['name'][0])
-bot = CppBot(getNameIndex(vk.vars['name'][0]))
+bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'))
 
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))

@@ -4,8 +4,6 @@ import threading
 import time
 from subprocess import Popen, PIPE
 
-import config
-
 def nonBlockRead(output):
     import fcntl
     fd = output.fileno()
@@ -22,9 +20,8 @@ class CppBot:
     path = 'chat/'
     data_path = 'data/'
     data_files = ['bot.txt', 'blacklist.txt', 'fixedstem.txt', 'names.txt', 'noans.txt', 'smiles.txt']
-    max_smiles = config.get('vkbot.max_smiles', 'i')
 
-    def __init__(self, name):
+    def __init__(self, name, max_smiles):
         try:
             exe_time = os.path.getmtime(self.path + self.exe_name)
             src_time = max(os.path.getmtime(self.path + i) for i in self.source_files)
@@ -33,6 +30,7 @@ class CppBot:
         except FileNotFoundError:
             self.buildExe()
         self.name = name
+        self.max_smiles = max_smiles
         self.start_time = time.time()
         self.bot = None
         self.runExe()
