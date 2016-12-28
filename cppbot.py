@@ -1,4 +1,3 @@
-import fcntl
 import logging
 import os
 import threading
@@ -8,6 +7,7 @@ from subprocess import Popen, PIPE
 import config
 
 def nonBlockRead(output):
+    import fcntl
     fd = output.fileno()
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
