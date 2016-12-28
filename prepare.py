@@ -12,6 +12,9 @@ from args import args
 from vkapi import VkApi
 from vkbot import createCaptchaHandler
 
+os.chdir(os.path.dirname(sys.argv[0]))
+accounts.init()
+
 class MyHandler(logging.Handler):
     def emit(self, record):
         pass

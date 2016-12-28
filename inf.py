@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import logging
-import os
 import random
 import re
 import signal
@@ -8,12 +7,7 @@ import sys
 import threading
 import time
 
-os.chdir(os.path.dirname(sys.argv[0]))
-
-import accounts  # must be first
-
-accounts.init()
-
+import accounts
 import config
 import log
 import stats

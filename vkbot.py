@@ -57,15 +57,15 @@ def createFriendController():
 class VkBot:
     fields = 'sex,crop_photo,blacklisted,blacklisted_by_me'
 
-    delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
-    chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
-    same_user_interval = config.get('vkbot_timing.same_user_interval', 'i')
-    same_conf_interval = config.get('vkbot_timing.same_conf_interval', 'i')
-    forget_interval = config.get('vkbot_timing.forget_interval', 'i')
-    delay_on_first_reply = config.get('vkbot_timing.delay_on_first_reply', 'i')
-    stats_dialog_count = config.get('stats.dialog_count', 'i')
-
     def __init__(self, username='', password=''):
+
+        self.delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
+        self.chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
+        self.same_user_interval = config.get('vkbot_timing.same_user_interval', 'i')
+        self.same_conf_interval = config.get('vkbot_timing.same_conf_interval', 'i')
+        self.forget_interval = config.get('vkbot_timing.forget_interval', 'i')
+        self.delay_on_first_reply = config.get('vkbot_timing.delay_on_first_reply', 'i')
+        self.stats_dialog_count = config.get('stats.dialog_count', 'i')
 
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
                                token_file=accounts.getFile('token.txt'),
