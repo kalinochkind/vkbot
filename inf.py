@@ -83,7 +83,7 @@ def getBotReply(message):
     answer = bot.interact('{} {} {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], message['body']))
 
     if answer == '$noans':
-        if message['body'].upper() == message['body'].lower() and '?' not in message['body']:
+        if (message['body'].upper() == message['body'].lower() and '?' not in message['body']) or message.get('_is_sticker'):
             answer = random.choice(smiles)
         else:
             answer = noans[0]
