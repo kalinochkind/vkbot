@@ -4,14 +4,19 @@ import threading
 import accounts
 
 lock = threading.Lock()
+_stats = None
 
-try:
-    _stats = json.loads(open(accounts.getFile('stats.txt')).read())
-except Exception:
-    _stats = {}
+def _load():
+    global _stats
+    if _stats is None:
+        try:
+            _stats = json.loads(open(accounts.getFile('stats.txt')).read())
+        except Exception:
+            _stats = {}
 
 def update(name, value):
     with lock:
+        _load()
         if name in _stats and _stats[name] == value:
             return
         _stats[name] = value
@@ -20,4 +25,5 @@ def update(name, value):
 
 def get(name, default=None):
     with lock:
+        _load()
         return _stats.get(name, default)
