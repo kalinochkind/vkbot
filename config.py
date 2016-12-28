@@ -3,10 +3,13 @@ import sys
 
 import accounts
 
-cp = configparser.ConfigParser()
-cp.read(accounts.getFile('inf.cfg'))
+cp = None
 
 def get(param, typename='s'):
+    global cp
+    if not cp:
+        cp = configparser.ConfigParser()
+        cp.read(accounts.getFile('inf.cfg'))
     param = param.split('.')
     try:
         if typename == 's':
