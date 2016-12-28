@@ -52,14 +52,20 @@ def error(s, need_exc_info=False, fatal=False):
 
 datetime_format = '%d.%m.%Y %H:%M:%S'
 
-logdir = 'accounts/{}/logs/'.format(accounts.current_account)
-if not os.path.isdir(logdir):
-    os.mkdir(logdir)
+logdir = None
+
+def initLogDir():
+    global logdir
+    logdir = 'accounts/{}/logs/'.format(accounts.current_account)
+    if not os.path.isdir(logdir):
+        os.mkdir(logdir)
 
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
     # if the name starts with _, it must be a special script log
     if script_name and not log.startswith('_'):
         s = '({}) {}'.format(script_name, s)
+    if logdir is None:
+        initLogDir()
     with open(logdir + log + '.log', 'a', encoding='utf-8') as f:
         f.write('[{}] {}\n'.format(curtime, s))
