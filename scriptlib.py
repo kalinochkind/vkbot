@@ -2,6 +2,7 @@ import itertools
 import logging
 
 from vkapi import CONF_START, TYPING_INTERVAL
+from vkbot import createFriendController
 
 def _getPeople(fun, fields):
     friends = []

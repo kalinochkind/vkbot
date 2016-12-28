@@ -1,29 +1,29 @@
 #!/usr/bin/python3
+import logging
 import os
+import random
+import re
+import signal
 import sys
+import threading
+import time
 
 os.chdir(os.path.dirname(sys.argv[0]))
 
 import accounts  # must be first
 
-import logging
-import time
-import random
-import re
-import signal
-import threading
+accounts.init()
 
-import check_friend
 import config
 import log
 import stats
+import vkbot
 from args import args
 from calc import evalExpression
-from server import MessageServer
-from vkbot import VkBot, CONF_START
-
+from cppbot import CppBot
 from prepare import login, password
-from cppbot import CppBot  # should go after prepare import
+from server import MessageServer
+from vkbot import CONF_START
 
 def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
     return regex.match(msg.strip())
@@ -137,7 +137,7 @@ def reply(message):
         vk.banned_list.append(vk.getSender(message))
         return None
     uid = message['user_id']
-    if vk.getSender(message) in check_friend.noadd or uid in check_friend.noadd:
+    if vk.getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
         return (None, False)
     if 'deactivated' in vk.users[uid] or vk.users[uid]['blacklisted'] or vk.users[uid]['blacklisted_by_me']:
         return (None, False)
@@ -311,7 +311,7 @@ def testFriend(uid, need_reason=False):
     fr = vk.users[uid]
     if fr is None:
         return False
-    return check_friend.isGood(fr, need_reason)
+    return friend_controller.isGood(fr, need_reason)
 
 def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
     if not remove and config.get('vkbot.no_ignore') and reason != 'external command':
@@ -323,12 +323,12 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
         return 0
     with lock:
         if remove:
-            prev_len = len(check_friend.noadd)
-            check_friend.noadd -= users
-            check_friend.writeNoadd()
-            return prev_len - len(check_friend.noadd)
+            prev_len = len(friend_controller.noadd)
+            friend_controller.noadd -= users
+            friend_controller.writeNoadd()
+            return prev_len - len(friend_controller.noadd)
         else:
-            users -= check_friend.noadd
+            users -= friend_controller.noadd
             users.discard(vk.admin)
             if not users:
                 return 0
@@ -336,7 +336,7 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
             ' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             logging.info(text_msg, extra={'db': html_msg})
-            check_friend.appendNoadd(users)
+            friend_controller.appendNoadd(users)
             vk.deleteFriend(users)
             return len(users)
 
@@ -364,7 +364,7 @@ def getNameIndex(name):
 
 signal.signal(signal.SIGTERM, onExit)
 
-vk = VkBot(login, password)
+vk = vkbot.VkBot(login, password)
 vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
@@ -460,7 +460,8 @@ if config.get('server.port', 'i') > 0:
     srv.listen()
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
-check_friend.writeNoadd()
+friend_controller = vkbot.createFriendController()
+friend_controller.writeNoadd()
 stats.update('started', time.time())
 vk.monitorLongpoll()
 
@@ -480,6 +481,7 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
+            stats.update('ignored', len(friend_controller.noadd))
             stats.update('blacklisted', vk.blacklistedCount())
             count, dialogs, confs = vk.lastDialogs()
             if count is not None:

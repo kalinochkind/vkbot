@@ -11,12 +11,12 @@ import time
 import accounts
 import args
 import captcha
-import check_friend
 import config
 import log
 import stats
 import vkapi
 from cache import UserCache, ConfCache, MessageCache
+from check_friend import FriendController
 from thread_manager import ThreadManager, Timeline
 from vkapi import CONF_START
 
@@ -44,7 +44,19 @@ def createCaptchaHandler():
     }
     return captcha.CaptchaHandler(captcha_params)
 
+def _getFriendControllerParams():
+    return {
+        'offline_allowed': config.get('check_friend.offline_allowed', 'i'),
+        'add_everyone': config.get('vkbot.add_everyone'),
+    }
+
+def createFriendController():
+    controller_params = _getFriendControllerParams()
+    return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'))
+
 class VkBot:
+    fields = 'sex,crop_photo,blacklisted,blacklisted_by_me'
+
     delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
     chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
     same_user_interval = config.get('vkbot_timing.same_user_interval', 'i')
@@ -59,7 +71,8 @@ class VkBot:
                                token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
         self.api.initLongpoll()
-        self.users = UserCache(self.api, 'sex,crop_photo,blacklisted,blacklisted_by_me,' + check_friend.fields,
+        # hi java
+        self.users = UserCache(self.api, self.fields + ',' + FriendController.requiredFields(_getFriendControllerParams()),
                                config.get('cache.user_invalidate_interval', 'i'))
         self.confs = ConfCache(self.api, config.get('cache.conf_invalidate_interval', 'i'))
         self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))

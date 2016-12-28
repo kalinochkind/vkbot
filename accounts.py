@@ -45,34 +45,35 @@ def accountExists(name):
 def listAccounts():
     return ', '.join(os.listdir('accounts'))
 
-if args.args.get('pack'):
-    pack.pack(args.args['pack'])
-    sys.exit()
-if args.args.get('pack_data'):
-    pack.pack_data(args.args['pack_data'])
-    sys.exit()
-if args.args.get('unpack'):
-    pack.unpack(args.args['unpack'])
-    sys.exit()
-
-if not os.path.isdir('accounts'):
-    try:
-        os.mkdir('accounts')
-    except PermissionError:
-        print('Unable to create accounts directory')
+def init():
+    if args.args.get('pack'):
+        pack.pack(args.args['pack'])
         sys.exit()
-acc = args.args['account']
-if acc is None:
-    acc = forceInput('Enter account name ({}): '.format(listAccounts() or 'no existing accounts'))
+    if args.args.get('pack_data'):
+        pack.pack_data(args.args['pack_data'])
+        sys.exit()
+    if args.args.get('unpack'):
+        pack.unpack(args.args['unpack'])
+        sys.exit()
 
-if not validateName(acc):
-    print('Invalid account name')
-    sys.exit()
-if accountExists(acc):
-    selectAccount(acc)
-else:
-    if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
-        print('Creating new account')
-        createAccount(acc)
+    if not os.path.isdir('accounts'):
+        try:
+            os.mkdir('accounts')
+        except PermissionError:
+            print('Unable to create accounts directory')
+            sys.exit()
+    acc = args.args['account']
+    if acc is None:
+        acc = forceInput('Enter account name ({}): '.format(listAccounts() or 'no existing accounts'))
+
+    if not validateName(acc):
+        print('Invalid account name')
+        sys.exit()
+    if accountExists(acc):
+        selectAccount(acc)
     else:
-        sys.exit()
+        if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
+            print('Creating new account')
+            createAccount(acc)
+        else:
+            sys.exit()

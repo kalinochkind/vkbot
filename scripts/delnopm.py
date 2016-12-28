@@ -1,6 +1,5 @@
 import logging
 
-import check_friend
 import scriptlib
 
 # noinspection PyUnusedLocal
@@ -11,4 +10,4 @@ def main(a, args):
         if not j['can_write_private_message']:
             to_del.append(str(j['id']))
             logging.info('Found id{} ({} {})'.format(j['id'], j['first_name'], j['last_name']))
-    check_friend.appendNoadd(to_del)
+    scriptlib.createFriendController().appendNoadd(to_del)

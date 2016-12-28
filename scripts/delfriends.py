@@ -4,7 +4,6 @@ import logging
 import time
 
 import accounts
-import check_friend
 import config
 import scriptlib
 
@@ -42,5 +41,5 @@ def main(a, args):
     if prepare:
         f.close()
     else:
-        check_friend.appendNoadd(to_del)
+        scriptlib.createFriendController().appendNoadd(to_del)
     logging.info('Total: ' + str(cnt))
