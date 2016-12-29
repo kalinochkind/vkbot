@@ -7,6 +7,7 @@ import pack
 
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
+default_config = 'inf.cfg.default'
 
 def forceInput(text, password=False):
     s = ''
@@ -25,7 +26,7 @@ def createAccount(name):
     for i in account_files:
         open(dirname + i, 'w').close()
     with open(dirname + 'inf.cfg', 'w') as f:
-        f.write(open('inf.cfg.default').read().strip() + '\n\n[login]\nlogin = {}\npassword = {}'.format(login, password))
+        f.write(open(default_config).read().strip() + '\n\n[login]\nlogin = {}\npassword = {}'.format(login, password))
     selectAccount(name)
     return True
 
