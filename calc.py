@@ -65,7 +65,7 @@ def evalExpression(s):
         return None
     if s == '50//50' or s == '24//7':
         return None
-    if isnum(res):
+    if isnum(res) and res != '0':
         return res
     else:
         return None
