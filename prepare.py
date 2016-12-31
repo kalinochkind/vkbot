@@ -61,14 +61,17 @@ if args['script']:
         sys.exit()
     log.script_name = args['script'].lower()
     try:
-        main = importlib.import_module('scripts.' + args['script'].lower()).main
+        script = importlib.import_module('scripts.' + args['script'].lower())
+        main = script.main
+        need_auth = getattr(script, 'need_auth', False)
     except ImportError:
         print('Invalid script')
         availableScripts()
         sys.exit()
     v = VkApi(login, password, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
               log_file=accounts.getFile('inf.log') if args['logging'] else '', captcha_handler=createCaptchaHandler())
-    v.initLongpoll()
+    if need_auth:
+        v.initLongpoll()
     main(v, args['args'])
     v.sync()
     sys.exit()
