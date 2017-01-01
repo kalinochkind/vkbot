@@ -257,7 +257,7 @@ class VkApi:
     def getLongpoll(self, mode=2):
         if not self.longpoll_server:
             self.initLongpoll()
-        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
+        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version=1'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except urllib.error.HTTPError as e:
