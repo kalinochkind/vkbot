@@ -47,7 +47,7 @@ def createCaptchaHandler():
 def _getFriendControllerParams():
     return {
         'offline_allowed': config.get('check_friend.offline_allowed', 'i'),
-        'add_everyone': config.get('vkbot.add_everyone'),
+        'add_everyone': config.get('vkbot.add_everyone', 'b'),
     }
 
 def createFriendController():
@@ -66,6 +66,7 @@ class VkBot:
         self.forget_interval = config.get('vkbot_timing.forget_interval', 'i')
         self.delay_on_first_reply = config.get('vkbot_timing.delay_on_first_reply', 'i')
         self.stats_dialog_count = config.get('stats.dialog_count', 'i')
+        self.no_leave_conf = config.get('vkbot.no_leave_conf', 'b')
 
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
                                token_file=accounts.getFile('token.txt'),
@@ -214,13 +215,13 @@ class VkBot:
                 if opt.get('source_act') == 'chat_title_update':
                     del self.confs[sender - CONF_START]
                     logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
-                    if not config.get('vkbot.no_leave_conf') and self.bad_conf_title(opt['source_text']):
+                    if not self.no_leave_conf and self.bad_conf_title(opt['source_text']):
                         self.leaveConf(sender - CONF_START)
                         log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
                         continue
                 if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
                     self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
-                    if not config.get('vkbot.no_leave_conf') and int(opt['from']) not in self.banned:
+                    if not self.no_leave_conf and int(opt['from']) not in self.banned:
                         self.deleteFriend(int(opt['from']))
                 if flags & 2:  # out
                     if not opt.get('source_act'):
@@ -376,7 +377,7 @@ class VkBot:
         self.tm.run(sender, tl, tl.terminate)
 
     def checkConf(self, cid):
-        if config.get('vkbot.no_leave_conf'):
+        if self.no_leave_conf:
             return True
         if cid + CONF_START in self.good_conf:
             return self.good_conf[cid + CONF_START]

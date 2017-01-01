@@ -12,6 +12,8 @@ def get(param, typename='s'):
         cp.read(accounts.getFile('inf.cfg'))
     param = param.split('.')
     try:
+        if typename == 'b':
+            return cp[param[0]].getboolean(param[1])
         cp[param[0]][param[1]]  # to make sure that it exists
         if typename == 's':
             return cp[param[0]].get(param[1])
@@ -19,8 +21,6 @@ def get(param, typename='s'):
             return cp[param[0]].getint(param[1])
         elif typename == 'f':
             return cp[param[0]].getfloat(param[1])
-        elif typename == 'b':
-            return cp[param[0]].getboolean(param[1])
     except KeyError:
         if input('Parameter {}.{} does not exist. Rebuild configuration? [y/n] '.format(*param)).lower() == 'y':
             rebuild(accounts.getFile('inf.cfg'), accounts.default_config)

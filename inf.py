@@ -148,7 +148,7 @@ def reply(message):
 
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
-        if 'chat_id' in message and not config.get('vkbot.no_leave_conf'):
+        if 'chat_id' in message and not vk.no_leave_conf:
             bot_users[uid] = bot_users.get(uid, 0) + 1
             if bot_users[uid] >= 3:
                 logging.info('Too many bot messages')
@@ -164,7 +164,7 @@ def reply(message):
         return ('', False)
 
     if message['body']:
-        if message.get('_is_sticker') and config.get('vkbot.ignore_stickers'):
+        if message.get('_is_sticker') and config.get('vkbot.ignore_stickers', 'b'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
         user_msg = vk.last_message.byUser(uid)
@@ -308,7 +308,7 @@ def testFriend(uid, need_reason=False):
     return friend_controller.isGood(fr, need_reason)
 
 def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
-    if not remove and config.get('vkbot.no_ignore') and reason != 'external command':
+    if not remove and config.get('vkbot.no_ignore', 'b') and reason != 'external command':
         for i in users:
             vk.logSender('Wanted to ignore %sender% ({})'.format(reason), {'user_id': i})
         return 0
