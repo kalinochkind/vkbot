@@ -95,7 +95,6 @@ class VkBot:
         self.banned = set()
 
     def initSelf(self, sync=False):
-        self.users.clear()
 
         def do():
             res = self.api.users.get(fields='contacts,relation,bdate')[0]
@@ -123,14 +122,22 @@ class VkBot:
             return CONF_START + message['chat_id']
         return message['user_id']
 
-    def loadUsers(self, arr, key, clean=False, confs=False):
+    def loadUsers(self, arr, key, clean=False):
         users = []
+        confs = []
         for i in arr:
             try:
-                users.append(key(i))
+                pid = key(i)
+                if pid <= 0:
+                    continue
+                if pid > CONF_START:
+                    confs.append(pid - CONF_START)
+                else:
+                    users.append(pid)
             except Exception:
                 pass
-        (self.confs if confs else self.users).load(users, clean)
+        self.users.load(users)
+        self.confs.load(confs)
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
@@ -173,7 +180,7 @@ class VkBot:
                 logging.warning('Unable to fetch messages')
                 return
             self.loadUsers(messages, lambda x: x['message']['user_id'])
-            self.loadUsers(messages, lambda x: x['message']['chat_id'], confs=True)
+            self.loadUsers(messages, lambda x: x['message']['chat_id'] + CONF_START)
             for msg in sorted(messages, key=lambda m: m['message']['id']):
                 cur = msg['message']
                 if cur['out']:
@@ -186,7 +193,7 @@ class VkBot:
         else:
             messages = self.longpollMessages()
             self.loadUsers(messages, lambda x: x['user_id'])
-            self.loadUsers(messages, lambda x: x['chat_id'], confs=True)
+            self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
             for cur in sorted(messages, key=lambda m: m['id']):
                 self.last_message_id = max(self.last_message_id, cur['id'])
                 self.replyOne(cur, gen_reply)
