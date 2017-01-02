@@ -319,7 +319,7 @@ class VkBot:
                 self.tm.run(sender, tl, tl.terminate)
             self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
-            if sender > CONF_START and message['body'] is not None:
+            if sender > CONF_START and '_old_body' in message:
                 sender_msg.setdefault('ignored', {})[message['user_id']] = time.time()
             return
 
