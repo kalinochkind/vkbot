@@ -136,8 +136,8 @@ class VkBot:
                     users.append(pid)
             except Exception:
                 pass
-        self.users.load(users)
-        self.confs.load(confs)
+        self.users.load(users, clean)
+        self.confs.load(confs, clean)
 
     def replyOne(self, message, gen_reply, method=None):
         if self.whitelist and self.getSender(message) not in self.whitelist:
