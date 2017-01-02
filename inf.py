@@ -220,6 +220,8 @@ def preprocessMessage(message):
         elif a['type'] == 'doc':
             if a['doc']['type'] == 5:  # voice message
                 att.append('voice')
+            elif 'graffiti' in a['doc']:
+                result += ' ..'
             else:
                 att.append(a['doc']['title'])
         elif a['type'] == 'gift':

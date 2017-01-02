@@ -216,6 +216,8 @@ class VkBot:
                 text = i[6]
                 opt = i[7]
                 flags = i[2]
+
+
                 if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
                     self.good_conf[sender] = False
                     continue
@@ -233,40 +235,49 @@ class VkBot:
                 if flags & 2:  # out
                     if not opt.get('source_act'):
                         self.tm.terminate(sender)
+                try:
+                    if 'from' in opt and int(opt['from']) != self.tm.get(sender).attr['user_id'] and not opt.get('source_act'):
+                        self.tm.get(sender).attr['reply'] = True
+                except Exception:
+                    pass
+
+                if flags & 2:
                     continue
-                for number in range(1, 11):
-                    if opt.get('attach{}_type'.format(number)) == 'photo':
-                        del opt['attach{}_type'.format(number)]
-                        del opt['attach{}'.format(number)]
-                        text += ' ..'
-                    if opt.get('attach{}_type'.format(number)) == 'doc':
-                        if opt.get('attach{}_kind'.format(number)) == 'graffiti':
-                            del opt['attach{}_type'.format(number)]
-                            del opt['attach{}'.format(number)]
-                            del opt['attach{}_kind'.format(number)]
-                            text += ' ..'
-                        if opt.get('attach{}_kind'.format(number)) == 'audiomsg':
-                            del opt['attach{}_type'.format(number)]
-                            del opt['attach{}'.format(number)]
-                            del opt['attach{}_kind'.format(number)]
-                            text += ' [Voice]'
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if opt.get('source_act'):
                     msg['body'] = None
-                if opt.get('attach1_type') == 'sticker':
-                    msg['attachments'] = [{'type': 'sticker'}]
-
                 if 'from' in opt:
                     msg['chat_id'] = sender - CONF_START
                     msg['user_id'] = int(opt['from'])
                 else:
                     msg['user_id'] = sender
-                try:
-                    if 'chat_id' in msg and msg['user_id'] != self.tm.get(sender).attr['user_id'] and msg['body'] is not None:
-                        self.tm.get(sender).attr['reply'] = True
-                except Exception:
-                    pass
-                if not (set(opt) <= {'from', 'emoji'} or opt.get('attach1_type') == 'sticker') and not opt.get('source_act'):
+
+                attachments = []
+                for number in range(1, 11):
+                    prefix = 'attach' + str(number)
+                    kind = opt.get(prefix + '_type')
+                    if kind is None:
+                        continue  # or break
+                    if kind == 'photo':
+                        attachments.append({'type': 'photo'})
+                    elif kind == 'sticker':
+                        attachments.append({'type': 'sticker'})
+                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'audiomsg':
+                        attachments.append({'type': 'doc', 'doc': {'type': 5}})
+                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'graffiti':
+                        attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
+                    else:  # something hard
+                        need_extra.append(str(mid))
+                        msg = None
+                        break
+                if not msg:
+                    continue
+                if attachments:
+                    msg['attachments'] = attachments
+                for i in list(opt):
+                    if i.startswith('attach'):
+                        del opt[i]
+                if not set(opt) <= {'from', 'emoji'} and not opt.get('source_act'):
                     need_extra.append(str(mid))
                     continue
                 result.append(msg)
