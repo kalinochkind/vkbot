@@ -219,7 +219,7 @@ def preprocessMessage(message):
                 att[-1] = a['wall']['copy_history'][0]['text']
         elif a['type'] == 'doc':
             if a['doc']['type'] == 5:  # voice message
-                result += ' [Voice]'
+                att.append('voice')
             else:
                 att.append(a['doc']['title'])
         elif a['type'] == 'gift':
@@ -230,12 +230,11 @@ def preprocessMessage(message):
             att.append(a['market']['description'])
         elif a['type'] == 'sticker':
             message['_is_sticker'] = True
-            result += ' [Sticker]'
+            att.append('sticker')
         elif a['type'] == 'photo':
             result += ' ..'
     for a in att:
-        result += ' [' + a.lower() + ']'
-    result = result.replace('vkgift', 'Vkgift')
+        result += ' [' + a + ']'
 
     if 'fwd_messages' in message:
         fwd_users = {fwd['user_id'] for fwd in message['fwd_messages']}
