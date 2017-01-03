@@ -4,6 +4,7 @@ import time
 import accounts
 import args
 import config
+import log as _log
 
 MAX_TEXT_LENGTH = 1024
 
@@ -41,6 +42,7 @@ def log(message, kind, text_msg=None):
                 conn.commit()
             except MySQLdb.Error as e:
                 print(e, flush=True)
+                _log.write('error', 'MySQL error: ' + str(e))
                 time.sleep(5)
                 connected = False
                 log(message, kind, text_msg)
