@@ -54,11 +54,11 @@ class MessageReceiver:
         arr = self.api.getLongpoll()
         need_extra = []
         result = []
-        for i in arr:
-            if i[0] == 4:  # new message
-                mid, flags, sender, ts, random_id, text, opt = i[1:]
+        for record in arr:
+            if record[0] == 4:  # new message
+                mid, flags, sender, ts, random_id, text, opt = record[1:]
 
-                if self.longpoll_callback and self.longpoll_callback(*i[1:]):
+                if self.longpoll_callback and self.longpoll_callback(*record[1:]):
                     continue
 
                 if flags & 2:

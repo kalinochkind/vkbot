@@ -1,7 +1,9 @@
 import itertools
 import logging
 
+# noinspection PyUnresolvedReferences
 from vkapi import CONF_START, TYPING_INTERVAL
+# noinspection PyUnresolvedReferences
 from vkbot import createFriendController
 
 def _getPeople(fun, fields):

@@ -14,7 +14,6 @@ checks = [
 ]
 
 class FriendController:
-
     def __init__(self, params, ignore_filename, allowed_names_filename):
         self.ignore_filename = ignore_filename
         self.allowed_filename = allowed_names_filename

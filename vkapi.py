@@ -4,6 +4,8 @@ import logging
 import re
 import threading
 import time
+import urllib.error
+import urllib.parse
 import urllib.request
 
 CALL_INTERVAL = 0.35

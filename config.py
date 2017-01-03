@@ -14,6 +14,7 @@ def get(param, typename='s'):
     try:
         if typename == 'b':
             return cp[param[0]].getboolean(param[1])
+        # noinspection PyStatementEffect
         cp[param[0]][param[1]]  # to make sure that it exists
         if typename == 's':
             return cp[param[0]].get(param[1])

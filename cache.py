@@ -3,7 +3,6 @@ import threading
 import time
 
 class Cache:
-
     def __init__(self, api, invalidate_interval=0):
         self.api = api
         self.objects = {}

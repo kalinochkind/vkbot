@@ -6,7 +6,6 @@ import urllib.error
 from urllib.request import urlopen
 
 class CaptchaHandler:
-
     def __init__(self, params):
         self.png_exists = False
         self.key = params.get('antigate_key')
