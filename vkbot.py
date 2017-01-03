@@ -178,6 +178,7 @@ class VkBot:
         if include_read:
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
+    # noinspection PyUnusedLocal
     def longpollCallback(self, mid, flags, sender, ts, random_id, text, opt):
         if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
             self.good_conf[sender] = False
@@ -386,7 +387,9 @@ class VkBot:
         return data[0]['id']
 
     def deleteComment(self, rep):
-        if rep['type'].endswith('photo'):
+        if rep['type'] == 'wall':
+            self.api.wall.delete(owner_id=self.self_id, post_id=rep['feedback']['id'])
+        elif rep['type'].endswith('photo'):
             self.api.photos.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
         elif rep['type'].endswith('video'):
             self.api.video.deleteComment(owner_id=self.self_id, comment_id=rep['feedback']['id'])
@@ -401,7 +404,6 @@ class VkBot:
         for rep in data:
             if rep['date'] != 'i':
                 self.last_viewed_comment = max(self.last_viewed_comment, int(rep['date']))
-                stats.update('last_comment', self.last_viewed_comment)
 
             def _check(s):
                 if 'photo' in s:
@@ -411,24 +413,26 @@ class VkBot:
                 if 'post' in s:
                     return s['post']['to_id'] == self.self_id
 
-            if rep['type'].startswith('comment_') or rep['type'].startswith('reply_comment') and _check(rep['parent']):
+            if rep['type'].startswith('comment_') or (rep['type'].startswith('reply_comment') and _check(rep['parent'])) or rep['type'] == 'wall':
                 txt = html.escape(rep['feedback']['text'])
                 res = 'good'
-                if self.users[rep['feedback']['from_id']]['blacklisted']:
+                frid = int(rep['feedback']['from_id'])
+                if self.users[frid]['blacklisted']:
                     res = 'blacklisted'
-                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (blacklisted): ' + txt)
+                    log.write('comments', self.loggableName(frid) + ' (blacklisted): ' + txt)
                     self.deleteComment(rep)
-                    to_bl.add(rep['feedback']['from_id'])
+                    to_bl.add(frid)
                 elif test(txt):
                     res = 'bad'
-                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ': ' + txt)
+                    log.write('comments', self.loggableName(frid) + ': ' + txt)
                     self.deleteComment(rep)
-                    to_del.add(rep['feedback']['from_id'])
+                    to_del.add(frid)
                 elif 'attachments' in rep['feedback'] and any(i.get('type') in ['video', 'link'] for i in rep['feedback']['attachments']):
                     res = 'attachment'
-                    log.write('comments', self.loggableName(rep['feedback']['from_id']) + ' (attachment)')
+                    log.write('comments', self.loggableName(frid) + ' (attachment)')
                     self.deleteComment(rep)
-                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id': rep['feedback']['from_id']})
+                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id': frid})
+        stats.update('last_comment', self.last_viewed_comment)
         for i in to_bl:
             self.blacklist(i)
         return to_del
