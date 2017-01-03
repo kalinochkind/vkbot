@@ -5,6 +5,8 @@ import accounts
 import args
 import config
 
+MAX_TEXT_LENGTH = 1024
+
 enabled = bool(args.args['database'])
 if enabled:
     import MySQLdb
@@ -34,6 +36,7 @@ def log(message, kind, text_msg=None):
                 _connect()
                 if text_msg is None:
                     text_msg = message
+                text_msg = text_msg[:MAX_TEXT_LENGTH]
                 cur.execute('INSERT INTO vkbot_logmessage VALUES (NULL, %s, %s, NOW(), %s, %s)', (message, kind, text_msg, accounts.current_account))
                 conn.commit()
             except MySQLdb.Error as e:
