@@ -2,7 +2,6 @@ import datetime
 import html
 import json
 import logging
-import queue
 import random
 import re
 import threading
@@ -17,6 +16,7 @@ import stats
 import vkapi
 from cache import UserCache, ConfCache, MessageCache
 from check_friend import FriendController
+from message_receiver import MessageReceiver
 from thread_manager import ThreadManager, Timeline
 from vkapi import CONF_START
 
@@ -83,16 +83,21 @@ class VkBot:
         self.good_conf = {}
         self.tm = ThreadManager()
         self.last_message = MessageCache()
-        self.last_message_id = 0
-        self.whitelist = None
-        self.whitelist_includeread = True
         self.bad_conf_title = lambda s: False
         self.admin = None
         self.banned_list = []
-        self.longpoll_queue = queue.Queue()
         self.message_lock = threading.Lock()
-        self.longpoll_thread = None
         self.banned = set()
+        self.receiver = MessageReceiver(self.api)
+        self.receiver.longpoll_callback = self.longpollCallback
+
+    @property
+    def whitelist(self):
+        return self.receiver.whitelist
+
+    @whitelist.setter
+    def whitelist(self, new):
+        self.receiver.whitelist = new
 
     def initSelf(self, sync=False):
 
@@ -139,7 +144,7 @@ class VkBot:
         self.users.load(users, clean)
         self.confs.load(confs, clean)
 
-    def replyOne(self, message, gen_reply, method=None):
+    def replyOne(self, message, gen_reply):
         if self.whitelist and self.getSender(message) not in self.whitelist:
             if self.getSender(message) > CONF_START:
                 return
@@ -153,8 +158,6 @@ class VkBot:
         except Exception:
             return
 
-        if method is not None:
-            message['_method'] = method
         try:
             ans = gen_reply(message)
         except Exception as e:
@@ -167,136 +170,39 @@ class VkBot:
     def replyAll(self, gen_reply, include_read=False):
         self.tm.gc()
         self.banned_list = []
+        messages = self.receiver.getMessages(include_read)
+        self.loadUsers(messages, lambda x: x['user_id'])
+        self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
+        for cur in messages:
+            self.replyOne(cur, gen_reply)
         if include_read:
-            self.users.gc()
-            if self.whitelist:
-                messages = self.api.messages.getDialogs(unread=(0 if self.whitelist_includeread else 1), count=20)
-                self.whitelist_includeread = False
-            else:
-                messages = self.api.messages.getDialogs(unread=1, count=200)
-            try:
-                messages = messages['items'][::-1]
-            except TypeError:
-                logging.warning('Unable to fetch messages')
-                return
-            self.loadUsers(messages, lambda x: x['message']['user_id'])
-            self.loadUsers(messages, lambda x: x['message']['chat_id'] + CONF_START)
-            for msg in sorted(messages, key=lambda m: m['message']['id']):
-                cur = msg['message']
-                if cur['out']:
-                    continue
-                if self.last_message_id and cur['id'] > self.last_message_id:
-                    continue
-                self.replyOne(cur, gen_reply, 'getDialogs')
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
-        else:
-            messages = self.longpollMessages()
-            self.loadUsers(messages, lambda x: x['user_id'])
-            self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
-            for cur in sorted(messages, key=lambda m: m['id']):
-                self.last_message_id = max(self.last_message_id, cur['id'])
-                self.replyOne(cur, gen_reply)
+    def longpollCallback(self, mid, flags, sender, ts, random_id, text, opt):
+        if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
+            self.good_conf[sender] = False
+            return True
 
-    def longpollMessages(self):
-        res = []
-        while not self.longpoll_queue.empty():
-            res.append(self.longpoll_queue.get())
-        return res
-
-    def getLongpoll(self):
-        arr = self.api.getLongpoll()
-        need_extra = []
-        result = []
-        for i in arr:
-            if i[0] == 4:  # new message
-                mid = i[1]
-                sender = i[3]
-                ts = i[4]
-                text = i[6]
-                opt = i[7]
-                flags = i[2]
-
-
-                if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
-                    self.good_conf[sender] = False
-                    continue
-                if opt.get('source_act') == 'chat_title_update':
-                    del self.confs[sender - CONF_START]
-                    logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
-                    if not self.no_leave_conf and self.bad_conf_title(opt['source_text']):
-                        self.leaveConf(sender - CONF_START)
-                        log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
-                        continue
-                if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
-                    self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
-                    if not self.no_leave_conf and int(opt['from']) not in self.banned:
-                        self.deleteFriend(int(opt['from']))
-                if flags & 2:  # out
-                    if not opt.get('source_act'):
-                        self.tm.terminate(sender)
-                try:
-                    if 'from' in opt and int(opt['from']) != self.tm.get(sender).attr['user_id'] and not opt.get('source_act'):
-                        self.tm.get(sender).attr['reply'] = True
-                except Exception:
-                    pass
-
-                if flags & 2:
-                    continue
-                msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
-                if opt.get('source_act'):
-                    msg['body'] = None
-                if 'from' in opt:
-                    msg['chat_id'] = sender - CONF_START
-                    msg['user_id'] = int(opt['from'])
-                else:
-                    msg['user_id'] = sender
-
-                attachments = []
-                for number in range(1, 11):
-                    prefix = 'attach' + str(number)
-                    kind = opt.get(prefix + '_type')
-                    if kind is None:
-                        continue  # or break
-                    if kind == 'photo':
-                        attachments.append({'type': 'photo'})
-                    elif kind == 'sticker':
-                        attachments.append({'type': 'sticker'})
-                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'audiomsg':
-                        attachments.append({'type': 'doc', 'doc': {'type': 5}})
-                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'graffiti':
-                        attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
-                    else:  # something hard
-                        need_extra.append(str(mid))
-                        msg = None
-                        break
-                if not msg:
-                    continue
-                if attachments:
-                    msg['attachments'] = attachments
-                for i in list(opt):
-                    if i.startswith('attach'):
-                        del opt[i]
-                if not set(opt) <= {'from', 'emoji'} and not opt.get('source_act'):
-                    need_extra.append(str(mid))
-                    continue
-                result.append(msg)
-
-        if need_extra:
-            need_extra = ','.join(need_extra)
-            for i in self.api.messages.getById(message_ids=need_extra)['items']:
-                i['_method'] = 'getById'
-                result.append(i)
-        return result
-
-    def monitorLongpoll(self):
-        def _monitor():
-            while True:
-                for i in self.getLongpoll():
-                    self.longpoll_queue.put(i)
-
-        self.longpoll_thread = threading.Thread(target=_monitor, daemon=True)
-        self.longpoll_thread.start()
+        if opt.get('source_act') == 'chat_title_update':
+            del self.confs[sender - CONF_START]
+            logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
+            if not self.no_leave_conf and self.bad_conf_title(opt['source_text']):
+                self.leaveConf(sender - CONF_START)
+                log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
+                return True
+        if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
+            self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
+            if not self.no_leave_conf and int(opt['from']) not in self.banned:
+                self.deleteFriend(int(opt['from']))
+        if flags & 2:  # out
+            if not opt.get('source_act'):
+                self.tm.terminate(sender)
+            return True
+        try:
+            if 'from' in opt and int(opt['from']) != self.tm.get(sender).attr['user_id'] and not opt.get('source_act'):
+                self.tm.get(sender).attr['reply'] = True
+        except Exception:
+            pass
 
     def sendMessage(self, to, msg, forward=None):
         if not self.good_conf.get(to, 1):
@@ -605,5 +511,5 @@ class VkBot:
         for i in self.api.groups.getInvites()['items']:
             logging.info('Joining group "{}"'.format(i['name']))
             self.api.groups.join(group_id=i['id'])
-            log.write('groups','{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(
+            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(
                 self.loggableName(i['invited_by']), i['id'], i['name'], ['', ' (closed)', ' (private)'][i['is_closed']]))

@@ -328,7 +328,7 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
             if not users:
                 return 0
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in users]) + (
-            ' ({})'.format(reason) if reason else '')
+                ' ({})'.format(reason) if reason else '')
             html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
             logging.info(text_msg, extra={'db': html_msg})
             friend_controller.appendNoadd(users)
@@ -458,7 +458,6 @@ if config.get('server.port', 'i') > 0:
 friend_controller = vkbot.createFriendController()
 friend_controller.writeNoadd()
 stats.update('started', time.time())
-vk.monitorLongpoll()
 
 def main_loop():
     try:
