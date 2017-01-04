@@ -192,7 +192,8 @@ class VkBot:
                 log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
                 return True
         if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
-            self.logSender('%sender% added me to conf "{}"'.format(self.confs[sender - CONF_START]['title']), {'user_id': int(opt['from'])})
+            self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
+                           {'user_id': int(opt['from'])})
             if not self.no_leave_conf and int(opt['from']) not in self.banned:
                 self.deleteFriend(int(opt['from']))
         if flags & 2:  # out
@@ -457,7 +458,7 @@ class VkBot:
 
     # {name} - first_name last_name
     # {id} - id
-    def printableName(self, pid, user_fmt, conf_fmt='Conf "{name}"'):
+    def printableName(self, pid, user_fmt, conf_fmt='Conf "{name}" ({id})'):
         if pid > CONF_START:
             return conf_fmt.format(id=(pid - CONF_START), name=self.confs[pid - CONF_START]['title'])
         else:
