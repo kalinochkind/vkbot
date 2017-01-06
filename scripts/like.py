@@ -16,12 +16,15 @@ def main(a, args):
     if uid is None:
         print('fail')
         return
-    data = a.wall.get(owner_id=uid, count=100, extended=1)
+    data = a.wall.get(owner_id=uid, count=100, extended=1, fields="sex,blacklisted,blacklisted_by_me")
     profiles = {i['id']: i for i in data['profiles']}
     liked = set()
     for i in data['items']:
         if sex and i['from_id'] in profiles and profiles[i['from_id']]['sex'] != sex:
             logging.info('Skip ' + str(i['id']))
+            continue
+        if profiles[i['from_id']]['blacklisted'] or profiles[i['from_id']]['blacklisted_by_me']:
+            logging.info('Blacklist ' + str(i['id']))
             continue
         if i['from_id'] in liked:
             logging.info('Duplicate ' + str(i['id']))
