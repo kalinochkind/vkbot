@@ -435,7 +435,7 @@ def leaveHandler(conf):
 def banlistHandler(*p):
     if banign.banned:
         result = sorted(banign.banned)
-        result = [vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a><br>') for j in result]
+        result = [str(j) + ' ' + vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a>') for j in result]
         return '\n'.join(result)
     else:
         return 'No one banned!'
