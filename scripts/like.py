@@ -20,6 +20,8 @@ def main(a, args):
     profiles = {i['id']: i for i in data['profiles']}
     liked = set()
     for i in data['items']:
+        if i['from_id'] < 0:
+            continue
         if sex and i['from_id'] in profiles and profiles[i['from_id']]['sex'] != sex:
             logging.info('Skip ' + str(i['id']))
             continue
