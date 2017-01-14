@@ -157,6 +157,8 @@ class VkBot:
                 return
         except Exception:
             return
+        if message['id'] < self.last_message.bySender(self.getSender(message)).get('id', 0):
+            return
 
         try:
             ans = gen_reply(message)
