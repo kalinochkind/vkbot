@@ -1,12 +1,14 @@
 import logging
 import queue
 import threading
+import time
 
 from vkapi import CONF_START
 
 class MessageReceiver:
-    def __init__(self, api):
+    def __init__(self, api, get_dialogs_interval=60):
         self.api = api
+        self.get_dialogs_interval = get_dialogs_interval
         self.longpoll_queue = queue.Queue()
         self.longpoll_thread = threading.Thread(target=self.monitor, daemon=True)
         self.longpoll_thread.start()
@@ -14,6 +16,10 @@ class MessageReceiver:
         self.whitelist = []
         self.whitelist_includeread = True
         self.last_message_id = 0
+        self.last_get_dialogs = 0
+        self.longpolled_messages = set()
+        self.used_get_dialogs = False
+
 
     def monitor(self):
         while True:
@@ -21,7 +27,10 @@ class MessageReceiver:
                 self.longpoll_queue.put(i)
 
     def getMessages(self, get_dialogs=False):
-        if get_dialogs:
+        ctime = time.time()
+        if ctime - self.last_get_dialogs > self.get_dialogs_interval or get_dialogs:
+            self.used_get_dialogs = True
+            self.last_get_dialogs = ctime
             res = []
             if self.whitelist:
                 messages = self.api.messages.getDialogs(unread=(0 if self.whitelist_includeread else 1), count=20)
@@ -35,17 +44,20 @@ class MessageReceiver:
                 return []
             for msg in sorted(messages, key=lambda m: m['message']['id']):
                 cur = msg['message']
-                if cur['out']:
+                if cur['out'] or cur['id'] in self.longpolled_messages:
                     continue
                 if self.last_message_id and cur['id'] > self.last_message_id:
                     continue  # wtf?
                 cur['_method'] = 'getDialogs'
                 res.append(cur)
+            self.longpolled_messages.clear()
         else:
+            self.used_get_dialogs = False
             res = []
             while not self.longpoll_queue.empty():
                 res.append(self.longpoll_queue.get())
             res.sort(key=lambda x: x['id'])
+            self.longpolled_messages.update(i['id'] for i in res)
             if res:
                 self.last_message_id = max(self.last_message_id, res[-1]['id'])
         return res

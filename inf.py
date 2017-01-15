@@ -359,7 +359,8 @@ def getNameIndex(name):
 
 signal.signal(signal.SIGTERM, onExit)
 
-vk = vkbot.VkBot(login, password)
+includeread_interval = config.get('intervals.includeread', 'i')
+vk = vkbot.VkBot(login, password, includeread_interval)
 vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
@@ -374,7 +375,6 @@ if args['whitelist']:
     logging.info('Whitelist: ' + ', '.join(map(lambda x: x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 addfriends_interval = config.get('intervals.addfriends', 'i')
-includeread_interval = config.get('intervals.includeread', 'i')
 setonline_interval = config.get('intervals.setonline', 'i')
 unfollow_interval = config.get('intervals.unfollow', 'i')
 filtercomments_interval = config.get('intervals.filtercomments', 'i')
@@ -470,7 +470,7 @@ def main_loop():
         if timeto('addfriends', addfriends_interval):
             vk.addFriends(reply, testFriend)
         if includeread_interval >= 0:
-            vk.replyAll(reply, timeto('includeread', includeread_interval))
+            vk.replyAll(reply)
         else:
             time.sleep(1)
         if timeto('stats', stats_interval):

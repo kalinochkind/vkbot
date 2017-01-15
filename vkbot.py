@@ -57,7 +57,7 @@ def createFriendController():
 class VkBot:
     fields = 'sex,crop_photo,blacklisted,blacklisted_by_me'
 
-    def __init__(self, username='', password=''):
+    def __init__(self, username='', password='', get_dialogs_interval=60):
 
         self.delay_on_reply = config.get('vkbot_timing.delay_on_reply', 'i')
         self.chars_per_second = config.get('vkbot_timing.chars_per_second', 'i')
@@ -88,7 +88,7 @@ class VkBot:
         self.banned_list = []
         self.message_lock = threading.Lock()
         self.banned = set()
-        self.receiver = MessageReceiver(self.api)
+        self.receiver = MessageReceiver(self.api, get_dialogs_interval)
         self.receiver.longpoll_callback = self.longpollCallback
 
     @property
@@ -169,15 +169,15 @@ class VkBot:
         if ans:
             self.replyMessage(message, ans[0], ans[1])
 
-    def replyAll(self, gen_reply, include_read=False):
+    def replyAll(self, gen_reply):
         self.tm.gc()
         self.banned_list = []
-        messages = self.receiver.getMessages(include_read)
+        messages = self.receiver.getMessages()
         self.loadUsers(messages, lambda x: x['user_id'])
         self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
         for cur in messages:
             self.replyOne(cur, gen_reply)
-        if include_read:
+        if self.receiver.used_get_dialogs:
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
     # noinspection PyUnusedLocal
