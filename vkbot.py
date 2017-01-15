@@ -505,6 +505,8 @@ class VkBot:
         try:
             items = list(dialogs['items'])
             for dialog in items:
+                if self.getSender(dialog['message']) in self.banned:
+                    continue
                 self.api.messages.getHistory.delayed(peer_id=self.getSender(dialog['message']), count=0).callback(cb)
                 if 'title' in dialog['message']:
                     confs[self.getSender(dialog['message'])] = dialog['message']['title']
