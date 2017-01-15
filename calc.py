@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 rep = {
     "ноль": "0", "нуль": '0', "один": "1", "два": "2", "дважды": "2*", "три": "3", "трижды": "3*", "четыре": "4", "четырежды": "4*", "пять": "5",
@@ -11,12 +12,14 @@ rep = {
 }
 op = {"плюс": "+", "минус": "-", "прибавить": "+", "отнять": "-", "умножить": "*", "разделить": "//", "делить": "//"}
 allowed = set('йцукенгшщзхъфывапролджэячсмитьбю.1234567890()+-*/ ')
+not_a_minus = re.compile(r'(?<=[a-zа-я])-(?=[a-zа-я])', re.IGNORECASE)
 
 def isnum(s):
     return s and (s.isdigit() or s[0] == '-' and len(s) > 1 and s[1:].isdigit())
 
 def evalExpression(s):
     s = s.replace('\u00d7', '*').replace('\u2022', '*').replace('\u00f7', '/')
+    s = not_a_minus.sub(' ', s)
     s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ').replace('/', ' // ')
     if '[' in s:
         return None
