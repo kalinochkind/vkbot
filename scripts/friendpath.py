@@ -9,6 +9,7 @@ parent = {}
 def main(a, args):
     a.ignored_errors = {
         (15, 'friends.get'): None,
+        (18, 'friends.get'): None,
     }
 
     def getName(u):
