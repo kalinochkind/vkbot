@@ -241,7 +241,7 @@ def preprocessMessage(message):
     if 'fwd_messages' in message:
         fwd_users = {fwd['user_id'] for fwd in message['fwd_messages']}
         if fwd_users in ({vk.self_id}, {message['user_id'], vk.self_id}):
-            return result.strip() or None
+            return result.strip() + ' ' + '{}' * len(message['fwd_messages'])
         elif fwd_users == {message['user_id']}:
             for fwd in message['fwd_messages']:
                 r = preprocessMessage(fwd)
