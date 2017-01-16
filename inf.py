@@ -339,6 +339,7 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
 def reloadHandler(*p):
     bot.reload()
     vk.initSelf()
+    vk.clearCache()
     return 'Reloaded!'
 
 # noinspection PyUnusedLocal

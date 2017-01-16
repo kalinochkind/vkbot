@@ -522,3 +522,7 @@ class VkBot:
             self.api.groups.join(group_id=i['id'])
             log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(
                 self.loggableName(i['invited_by']), i['id'], i['name'], ['', ' (closed)', ' (private)'][i['is_closed']]))
+
+    def clearCache(self):
+        self.users.clear()
+        self.confs.clear()
