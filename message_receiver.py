@@ -78,6 +78,7 @@ class MessageReceiver:
                 msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
                 if opt.get('source_act'):
                     msg['body'] = None
+                    msg['action'] = opt['source_act']
                 if 'from' in opt:
                     msg['chat_id'] = sender - CONF_START
                     msg['user_id'] = int(opt['from'])
