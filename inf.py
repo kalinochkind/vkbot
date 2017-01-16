@@ -292,7 +292,7 @@ def preprocessReply(s, uid, onsend_actions):
     logging.error('Unknown variable: ' + s)
 
 # 1: female, 2: male
-def applyGender(msg, uid, male_re=re.compile(r'\{m([^\{\}]*)\}'), female_re=re.compile(r'\{f([^\{\}]*)\}')):
+def applyGender(msg, uid, male_re=re.compile(r'\{m([^{}]*)\}'), female_re=re.compile(r'\{f([^{}]*)\}')):
     gender = ['male', 'female', 'male'][vk.users[uid]['sex']]
     if gender == 'female':
         msg = male_re.sub('', msg)
