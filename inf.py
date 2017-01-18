@@ -170,6 +170,9 @@ def reply(message):
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
+            if message.get('_is_voice') and user_msg == vk.last_message.bySender(vk.getSender(message)) and not user_msg.get('resent'):
+                vk.logSender('(%sender%) {} - voice again'.format(message['body']), message)
+                return (user_msg.get('reply'), False)
             if message.get('_is_sticker'):
                 return ('', False)
             if user_msg['count'] == 5:
@@ -220,6 +223,7 @@ def preprocessMessage(message):
         elif a['type'] == 'doc':
             if a['doc']['type'] == 5:  # voice message
                 att.append('voice')
+                message['_is_voice'] = True
             elif 'graffiti' in a['doc']:
                 result += ' ..'
             else:

@@ -77,6 +77,7 @@ class MessageCache:
         entry = {'id': mid, 'text': message['body'], 'reply': reply, 'count': 1, 'time': time.time(), 'user_id': message['user_id']}
         self.user_msg[message['user_id']] = entry
         self.sender_msg[sender] = entry
+        return entry
 
     def byUser(self, uid):
         return self.user_msg.setdefault(uid, {})

@@ -272,7 +272,9 @@ class VkBot:
                     del self.users[sender]
                     self.logSender('Failed to send a message to %sender%', message)
                     return
-                self.last_message.add(sender, message, res, answer)
+                msg = self.last_message.add(sender, message, res, answer)
+                if resend:
+                    msg['resent'] = True
             except Exception as e:
                 logging.exception('thread {}: {}'.format(e.__class__.__name__, str(e)))
 
