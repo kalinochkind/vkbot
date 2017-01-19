@@ -12,7 +12,11 @@ default_config = 'inf.cfg.default'
 def forceInput(text, password=False):
     s = ''
     while not s.strip():
-        s = getpass.getpass(text) if password else input(text)
+        try:
+            s = getpass.getpass(text) if password else input(text)
+        except EOFError:
+            print()
+            sys.exit()
     return s
 
 def validateName(name):
@@ -73,8 +77,12 @@ def init():
     if accountExists(acc):
         selectAccount(acc)
     else:
-        if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
-            print('Creating new account')
-            createAccount(acc)
-        else:
+        try:
+            if not listAccounts() or input('Account {} does not exist. Create it? [y/n]'.format(acc)).lower() == 'y':
+                print('Creating new account')
+                createAccount(acc)
+            else:
+                sys.exit()
+        except EOFError:
+            print()
             sys.exit()
