@@ -67,6 +67,7 @@ def escape(message):
     message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
     message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
     message = message.replace("`", "'")
+    message = message.replace('{', '\u200b{\u200b').replace('}', '\u200b}\u200b')  # zero width spaces
     return message
 
 last_reply_lower = set()
