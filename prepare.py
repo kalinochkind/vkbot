@@ -53,6 +53,7 @@ def availableScripts():
 
 if args['script'] is None:
     availableScripts()
+    sys.exit()
 
 if args['script']:
     if not args['script'].replace('_', '').isalpha():
