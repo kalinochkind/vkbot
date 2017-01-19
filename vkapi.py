@@ -95,6 +95,7 @@ class VkApi:
                         def cb(req, resp):
                             callback(req, resp)
                             if 'next_from' in resp:
+                                req['start_from'] = resp['next_from']
                                 self.delayed(**req).callback(cb)
 
                         self.delayed(**dp).callback(cb)
