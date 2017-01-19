@@ -30,7 +30,7 @@ class DelayedCall:
         return self.method == a.method and self.params == a.params and self.callback_func is None and a.callback_func is None
 
 class VkApi:
-    api_version = '5.60'
+    api_version = '5.62'
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
                'market', 'messages', 'newsfeed',
                'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',

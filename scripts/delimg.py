@@ -4,11 +4,11 @@ import scriptlib
 
 def attachments(a, items):
     for i in items:
-        if i['photo']['owner_id'] == self_id:
-            if i['photo']['id'] in good:
+        if i['attachment']['photo']['owner_id'] == self_id:
+            if i['attachment']['photo']['id'] in good:
                 continue
-            a.photos.delete.delayed(photo_id=i['photo']['id'])
-            logging.info('Found ' + str(i['photo']['id']))
+            a.photos.delete.delayed(photo_id=i['attachment']['photo']['id'])
+            logging.info('Found ' + str(i['attachment']['photo']['id']))
 
 self_id = 0
 good = []
