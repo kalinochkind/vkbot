@@ -20,6 +20,9 @@ def main(a, args):
     profiles = {i['id']: i for i in data['profiles']}
     liked = set()
     for i in data['items']:
+        if i['likes'].get('user_likes'):
+            logging.info(str(i['id']) + ' already liked, breaking')
+            break
         if i['from_id'] < 0:
             continue
         if sex and i['from_id'] in profiles and profiles[i['from_id']]['sex'] != sex:
