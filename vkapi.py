@@ -107,7 +107,7 @@ class VkApi:
         return _GroupWrapper(item)
 
     def execute(self, code):
-        return self.apiCall('execute', {"code": code})
+        return self.apiCall('execute', {"code": code}, full_response=True)
 
     @staticmethod
     def encodeApiCall(s):
@@ -137,12 +137,23 @@ class VkApi:
             query.append('];')
             query = ''.join(query)
             response = self.execute(query)
-            for dc, r in zip(dl, response):
-                dc.called(r)
+            errors = response.get('execute_errors', [])
+            for dc, r in zip(dl, response['response']):
+                if r is False:  # it's fine here
+                    error = errors.pop(0)
+                    if error['method'] != dc.method:
+                        logging.error('Failed to match errors with methods. Response: ' + str(response))
+                        return
+                    if self.processError(dc.method, dc.params, {'error': error}):
+                        self.delayed_list.append(dc)
+                    else:
+                        dc.called(None)
+                else:
+                    dc.called(r)
             if once:
                 return
 
-    def apiCall(self, method, params, retry=False):
+    def apiCall(self, method, params, retry=False, full_response=False):
         params['v'] = self.api_version
         url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(
             {i: params[i] for i in params if not i.startswith('_')}) + '&access_token=' + self.getToken()
@@ -180,7 +191,7 @@ class VkApi:
         if data_array is None:
             logging.error('data_array is None')
             return None
-        if 'response' in data_array:
+        if 'response' in data_array and not full_response:
             if self.ch:
                 self.ch.reset(params)
             return data_array['response']
@@ -205,26 +216,33 @@ class VkApi:
                 self.validate(data_array['error']['redirect_uri'])
                 time.sleep(1)
                 return self.apiCall(method, params)
-            elif (code, method) in self.ignored_errors or (code, '*') in self.ignored_errors:
-                try:
-                    handler = self.ignored_errors[(code, method)]
-                except KeyError:
-                    handler = self.ignored_errors[(code, '*')]
-                if not handler:
-                    return None
-                if retry or not handler[1]:
-                    logging.warning(handler[0])
-                    return None
-                else:
-                    logging.warning(handler[0] + ', retrying')
-                    time.sleep(3)
-                    return self.apiCall(method, params, True)
-
+            elif self.processError(method, params, data_array, retry):
+                time.sleep(1)
+                return self.apiCall(method, params, True)
             else:
-                logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, data_array['error'].get('error_msg')))
                 return None
+        elif full_response:
+            return data_array
         else:
             return self.apiCall(method, params)
+
+    def processError(self, method, params, response, retry=False):
+        code = response['error']['error_code']
+        if (code, method) not in self.ignored_errors and (code, '*') not in self.ignored_errors:
+            logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, response['error'].get('error_msg')))
+            return False
+        try:
+            handler = self.ignored_errors[(code, method)]
+        except KeyError:
+            handler = self.ignored_errors[(code, '*')]
+        if not handler:
+            return False
+        if retry or not handler[1]:
+            logging.warning(handler[0])
+            return False
+        else:
+            logging.warning(handler[0] + ', retrying')
+            return True
 
     def login(self):
         logging.info('Fetching new token')
