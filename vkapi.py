@@ -16,6 +16,7 @@ class DelayedCall:
     def __init__(self, method, params):
         self.method = method
         self.params = params
+        self.retry = False
         self.callback_func = None
 
     def callback(self, func):
@@ -127,7 +128,7 @@ class VkApi:
                 return
             if len(dl) == 1:
                 dc = dl[0]
-                response = self.apiCall(dc.method, dc.params)
+                response = self.apiCall(dc.method, dc.params, dc.retry)
                 dc.called(response)
                 return
 
@@ -144,8 +145,10 @@ class VkApi:
                     if error['method'] != dc.method:
                         logging.error('Failed to match errors with methods. Response: ' + str(response))
                         return
-                    if self.processError(dc.method, dc.params, {'error': error}):
+                    if self.processError(dc.method, dc.params, {'error': error}, dc.retry):
+                        dc.retry = True
                         self.delayed_list.append(dc)
+                        once = False
                     else:
                         dc.called(None)
                 else:
