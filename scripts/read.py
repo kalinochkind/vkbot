@@ -18,7 +18,7 @@ def main(a, args):
             chats.append(msg['message']['chat_id'])
         else:
             users.append(msg['message']['user_id'])
-    uc = cache.UserCache(a, 'id')
+    uc = cache.UserCache(a, 'online')
     cc = cache.ConfCache(a)
     uc.load(users)
     cc.load(chats)
@@ -30,9 +30,10 @@ def main(a, args):
     for msg in dialogs:
         m = msg['message']
         if 'chat_id' in m:
-            print('Chat "{}" ({}):'.format(cc[m['chat_id']]['title'], m['chat_id']))
+            print('Chat "{}" ({}): {}'.format(cc[m['chat_id']]['title'], m['chat_id'], msg['unread']))
         else:
-            print('{} {} ({}):'.format(uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name'], m['user_id']))
+            print('{} {} ({}){}: {}'.format(uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name'], m['user_id'],
+                  ', online' if uc[m['user_id']]['online'] else '', msg['unread']))
         print()
         for i in messages[vkbot.VkBot.getSender(msg['message'])]:
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
