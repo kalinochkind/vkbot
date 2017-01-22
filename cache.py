@@ -13,7 +13,7 @@ class Cache:
         uid = int(uid)
         try:
             with self.lock:
-                if uid not in self.objects or self.objects[uid][0] + self.invalidate_interval < time.time():
+                if uid not in self.objects or (self.objects[uid][0] + self.invalidate_interval < time.time() and self.invalidate_interval):
                     self.load([uid])
                 return self.objects[uid][1]
         except Exception:
