@@ -77,6 +77,7 @@ class VkBot:
                                config.get('cache.user_invalidate_interval', 'i'))
         self.confs = ConfCache(self.api, config.get('cache.conf_invalidate_interval', 'i'))
         self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))
+        self.vars['default_bf'] = self.vars['bf']['id']
         self.initSelf(True)
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
@@ -451,9 +452,13 @@ class VkBot:
         self.logSender('Liked %sender%', {'user_id': uid})
 
     def setRelation(self, uid):
+        if uid:
+            log.write('relation', self.loggableName(uid))
+        else:
+            log.write('relation', 'Removed')
+            uid = self.vars['default_bf']
         self.api.account.saveProfileInfo(relation_partner_id=uid)
         self.vars['bf'] = self.users[uid]
-        log.write('relation', self.loggableName(uid))
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 
     def waitAllThreads(self):

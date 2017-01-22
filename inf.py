@@ -271,6 +271,9 @@ def preprocessReply(s, uid, onsend_actions):
     if s == 'gosp':
         onsend_actions.append(lambda: vk.setRelation(uid))
         return ''
+    if s == 'rmsp':
+        onsend_actions.append(lambda: vk.setRelation(None))
+        return ''
     if s == 'phone':
         return vk.vars['phone']
     if s == 'age':
