@@ -72,6 +72,7 @@ class VkBot:
                                token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
         self.api.initLongpoll()
+        stats.update('logging', bool(self.api.log_file))
         # hi java
         self.users = UserCache(self.api, self.fields + ',' + FriendController.requiredFields(_getFriendControllerParams()),
                                config.get('cache.user_invalidate_interval', 'i'))
