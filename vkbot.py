@@ -32,6 +32,7 @@ ignored_errors = {
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
     (8, '*'): ('Error code 8', True),
     (10, '*'): ('Error code 10', True),
+    (100, 'messages.getChat'): None,
 }
 
 def createCaptchaHandler():
@@ -329,6 +330,8 @@ class VkBot:
         return True
 
     def leaveConf(self, cid):
+        if not self.confs[cid]:
+            return False
         logging.info('Leaving conf {} ("{}")'.format(cid, self.confs[cid]['title']))
         self.good_conf[cid + CONF_START] = False
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
@@ -378,12 +381,17 @@ class VkBot:
     def setOnline(self):
         self.api.account.setOnline()
 
-    def getUserId(self, domain):
+    def getUserId(self, domain, is_conf=False):
         domain = str(domain).lower().rstrip().rstrip('}').rstrip()
         conf = re.search('sel=c(\\d+)', domain) or re.search('^c(\\d+)$', domain) or re.search('chat=(\\d+)', domain) or re.search('peer=2(\\d{9})',
                                                                                                                                    domain)
         if conf is not None:
             return int(conf.group(1)) + CONF_START
+        if is_conf:
+            if domain.isdigit():
+                return int(domain) + CONF_START
+            else:
+                return None
         if '=' in domain:
             domain = domain.split('=')[-1]
         if '/' in domain:

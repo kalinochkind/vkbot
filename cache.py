@@ -15,7 +15,10 @@ class Cache:
             with self.lock:
                 if uid not in self.objects or (self.objects[uid][0] + self.invalidate_interval < time.time() and self.invalidate_interval):
                     self.load([uid])
-                return self.objects[uid][1]
+                if uid in self.objects:
+                    return self.objects[uid][1]
+                else:
+                    return None
         except Exception:
             logging.exception('Cache error')
             return None
@@ -66,7 +69,7 @@ class UserCache(Cache):
 
 class ConfCache(Cache):
     def _load(self, ids):
-        return self.api.messages.getChat(chat_ids=','.join(map(str, ids)))
+        return self.api.messages.getChat(chat_ids=','.join(map(str, ids))) or []
 
 class MessageCache:
     def __init__(self):
