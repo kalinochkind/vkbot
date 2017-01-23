@@ -433,6 +433,8 @@ def isignoredHandler(user):
 
 def leaveHandler(conf):
     conf = vk.getUserId(conf)
+    if conf is None:
+        return 'Fail'
     if conf > CONF_START:
         conf -= CONF_START
     if vk.leaveConf(conf):
