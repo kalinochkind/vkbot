@@ -197,7 +197,7 @@ def reply(message):
             log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(uid), message['body'], t))
             return (t, False)
         tbody = message['body'].replace('<br>', '')
-        if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1:
+        if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1 and config.get('vkbot.ignore_caps', 'b'):
             vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
             return ('', False)
 

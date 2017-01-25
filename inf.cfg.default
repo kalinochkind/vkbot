@@ -19,6 +19,7 @@ no_ignore = yes
 add_everyone = yes
 no_leave_conf = yes
 ignore_stickers = no
+ignore_caps = yes
 
 [stats]
 dialog_count = 10
