@@ -8,6 +8,7 @@ import threading
 import time
 
 import accounts
+
 import args
 import captcha
 import config
@@ -16,9 +17,9 @@ import stats
 import vkapi
 from cache import UserCache, ConfCache, MessageCache
 from check_friend import FriendController
-from message_receiver import MessageReceiver
 from thread_manager import ThreadManager, Timeline
-from vkapi import CONF_START
+from vkapi import MessageReceiver, CONF_START
+from vkapi.utils import getSender
 
 ignored_errors = {
     # (code, method): (message, can_retry)
@@ -124,12 +125,6 @@ class VkBot:
         else:
             threading.Thread(target=do).start()
 
-    @staticmethod
-    def getSender(message):
-        if 'chat_id' in message:
-            return CONF_START + message['chat_id']
-        return message['user_id']
-
     def loadUsers(self, arr, key, clean=False):
         users = []
         confs = []
@@ -148,19 +143,19 @@ class VkBot:
         self.confs.load(confs, clean)
 
     def replyOne(self, message, gen_reply):
-        if self.whitelist and self.getSender(message) not in self.whitelist:
-            if self.getSender(message) > CONF_START:
+        if self.whitelist and getSender(message) not in self.whitelist:
+            if getSender(message) > CONF_START:
                 return
             if self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
                 return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
         try:
-            if self.tm.isBusy(self.getSender(message)) and not self.tm.get(self.getSender(message)).attr['unimportant']:
+            if self.tm.isBusy(getSender(message)) and not self.tm.get(getSender(message)).attr['unimportant']:
                 return
         except Exception:
             return
-        if message['id'] < self.last_message.bySender(self.getSender(message)).get('id', 0):
+        if message['id'] < self.last_message.bySender(getSender(message)).get('id', 0):
             return
 
         try:
@@ -223,7 +218,7 @@ class VkBot:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
     def replyMessage(self, message, answer, skip_mark_as_read=False):
-        sender = self.getSender(message)
+        sender = getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
             return
@@ -305,7 +300,7 @@ class VkBot:
                 tl.do(i)
                 tl.sleep(cur_delay)
         if typing_time:
-            tl.doEveryFor(vkapi.TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(vkapi.utils.TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send, True)
         self.tm.run(sender, tl, tl.terminate)
 
@@ -521,11 +516,11 @@ class VkBot:
         try:
             items = list(dialogs['items'])
             for dialog in items:
-                if self.getSender(dialog['message']) in self.banned:
+                if getSender(dialog['message']) in self.banned:
                     continue
-                self.api.messages.getHistory.delayed(peer_id=self.getSender(dialog['message']), count=0).callback(cb)
+                self.api.messages.getHistory.delayed(peer_id=getSender(dialog['message']), count=0).callback(cb)
                 if 'title' in dialog['message']:
-                    confs[self.getSender(dialog['message'])] = dialog['message']['title']
+                    confs[getSender(dialog['message'])] = dialog['message']['title']
             self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')

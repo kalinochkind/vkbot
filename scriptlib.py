@@ -1,8 +1,7 @@
 import itertools
 import logging
+import vkapi
 
-# noinspection PyUnresolvedReferences
-from vkapi import CONF_START, TYPING_INTERVAL
 # noinspection PyUnresolvedReferences
 from vkbot import createFriendController
 
@@ -36,7 +35,7 @@ def getDialogs(a):
         for t in fr['items']:
             t = t['message']
             if 'chat_id' in t:
-                dialogs.append(t['chat_id'] + CONF_START)
+                dialogs.append(t['chat_id'] + vkapi.CONF_START)
             else:
                 dialogs.append(t['user_id'])
         if len(fr['items']) < 200:
@@ -48,7 +47,7 @@ def resolvePid(a, pid, conf_allowed=True):
         if pid.isdigit():
             return int(pid)
         if pid.startswith('c') and pid[1:].isdigit():
-            return CONF_START + int(pid[1:])
+            return vkapi.CONF_START + int(pid[1:])
     if '/' in pid:
         pid = pid.split('/')[-1]
     try:

@@ -1,7 +1,7 @@
 import time
 
 import cache
-import vkbot
+import vkapi
 from log import datetime_format
 
 def main(a, args):
@@ -13,7 +13,7 @@ def main(a, args):
         def cb(req, resp):
             messages[req['peer_id']] = resp['items'][::-1]
 
-        a.messages.getHistory.delayed(peer_id=vkbot.VkBot.getSender(msg['message']), count=min(msg['unread'], 10)).callback(cb)
+        a.messages.getHistory.delayed(peer_id=vkapi.utils.getSender(msg['message']), count=min(msg['unread'], 10)).callback(cb)
         if 'chat_id' in msg['message']:
             chats.append(msg['message']['chat_id'])
         else:
@@ -35,7 +35,7 @@ def main(a, args):
             print('{} {} ({}){}: {}'.format(uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name'], m['user_id'],
                   ', online' if uc[m['user_id']]['online'] else '', msg['unread']))
         print()
-        for i in messages[vkbot.VkBot.getSender(msg['message'])]:
+        for i in messages[vkapi.utils.getSender(msg['message'])]:
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
             print()
         print('-------------------------\n')

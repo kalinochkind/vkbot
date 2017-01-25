@@ -17,7 +17,8 @@ from calc import evalExpression
 from cppbot import CppBot
 from prepare import login, password
 from server import MessageServer
-from vkbot import CONF_START
+from vkapi import CONF_START
+from vkapi.utils import getSender
 
 def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
     return regex.match(msg.strip())
@@ -128,11 +129,11 @@ bot_users = {}
 # None: just ignore the message
 # (None, False): immediate MarkAsRead
 def reply(message):
-    if vk.getSender(message) in banign.banned or vk.getSender(message) < 0:
-        vk.banned_list.append(vk.getSender(message))
+    if getSender(message) in banign.banned or getSender(message) < 0:
+        vk.banned_list.append(getSender(message))
         return None
     uid = message['user_id']
-    if vk.getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
+    if getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
         return (None, False)
     if 'deactivated' in vk.users[uid] or vk.users[uid]['blacklisted'] or vk.users[uid]['blacklisted_by_me']:
         return (None, False)
@@ -171,7 +172,7 @@ def reply(message):
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
-            if message.get('_is_voice') and user_msg == vk.last_message.bySender(vk.getSender(message)) and not user_msg.get('resent'):
+            if message.get('_is_voice') and user_msg == vk.last_message.bySender(getSender(message)) and not user_msg.get('resent'):
                 vk.logSender('(%sender%) {} - voice again'.format(message['body']), message)
                 return (user_msg.get('reply'), False)
             if message.get('_is_sticker'):

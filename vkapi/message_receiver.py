@@ -3,7 +3,7 @@ import queue
 import threading
 import time
 
-from vkapi import CONF_START
+from .utils import CONF_START
 
 class MessageReceiver:
     def __init__(self, api, get_dialogs_interval=60):

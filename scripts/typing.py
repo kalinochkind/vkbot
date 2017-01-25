@@ -1,6 +1,7 @@
 import time
 
 import scriptlib
+import vkapi
 
 def main(a, args):
     if not args:
@@ -11,4 +12,4 @@ def main(a, args):
         return
     while True:
         a.messages.setActivity(type='typing', user_id=uid)
-        time.sleep(scriptlib.TYPING_INTERVAL)
+        time.sleep(vkapi.utils.TYPING_INTERVAL)
