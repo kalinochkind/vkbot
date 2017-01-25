@@ -233,7 +233,7 @@ def preprocessMessage(message):
         elif a['type'] == 'gift':
             att.append('vkgift')
         elif a['type'] == 'link':
-            att.append(a['link']['description'])
+            att.append(a['link']['title'] + ': ' + a['link']['description'])
         elif a['type'] == 'market':
             att.append(a['market']['description'])
         elif a['type'] == 'sticker':
