@@ -171,7 +171,7 @@ class VkApi:
                 err = str(e)
                 logging.warning(method + ' failed ({})'.format(html.escape(err.strip())))
                 time.sleep(1)
-                return self.apiCall(method, params)
+                return self.apiCall(method, params, retry, full_response)
             except Exception as e:
                 if retry:
                     logging.exception('({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
@@ -179,7 +179,7 @@ class VkApi:
                 else:
                     time.sleep(1)
                     logging.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
-                    return self.apiCall(method, params, True)
+                    return self.apiCall(method, params, True, full_response)
 
             try:
                 data_array = json.loads(json_string.decode('utf-8'))
@@ -206,28 +206,28 @@ class VkApi:
                 else:
                     logging.warning('Captcha needed')
                     time.sleep(5)
-                return self.apiCall(method, params)
+                return self.apiCall(method, params, retry, full_response)
             elif code == 5:  # Auth error
                 self.login()
-                return self.apiCall(method, params)
+                return self.apiCall(method, params, retry, full_response)
             elif code == 6:  # Too many requests per second
                 logging.warning('{}: too many requests per second'.format(method))
                 time.sleep(2)
-                return self.apiCall(method, params)
+                return self.apiCall(method, params, retry, full_response)
             elif code == 17:  # Validation required
                 logging.warning('Validation required')
                 self.validate(data_array['error']['redirect_uri'])
                 time.sleep(1)
-                return self.apiCall(method, params)
+                return self.apiCall(method, params, retry, full_response)
             elif self.processError(method, params, data_array, retry):
                 time.sleep(1)
-                return self.apiCall(method, params, True)
+                return self.apiCall(method, params, True, full_response)
             else:
                 return None
         elif full_response:
             return data_array
         else:
-            return self.apiCall(method, params)
+            return self.apiCall(method, params, retry, full_response)
 
     def processError(self, method, params, response, retry=False):
         code = response['error']['error_code']
