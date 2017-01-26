@@ -41,6 +41,8 @@ class MyHandler(logging.Handler):
 logging.basicConfig(handlers=[MyHandler()], level=logging.INFO)
 logging.getLogger('antigate').setLevel(logging.CRITICAL)
 logging.getLogger('requests').setLevel(logging.CRITICAL)
+if config.get('vkbot.suppress_chat_stderr', 'b'):
+    logging.getLogger('chatlog').setLevel(logging.CRITICAL)
 
 os.environ['LC_ALL'] = 'ru_RU.utf-8'
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
