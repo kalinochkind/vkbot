@@ -107,6 +107,8 @@ def getBotReply(message):
 
     if '_old_body' not in message:
         message['_old_body'] = message['body']
+    if message['_old_body'] and message['_old_body'][0].isdigit() and message['_old_body'] == message['_old_body'].lower():
+        message['_old_body'] = ''
     if message['_old_body'] == message['_old_body'].lower() and message['_old_body'] != message['_old_body'].upper():
         last_reply_lower.add(message['user_id'])
         answer = answer.lower()
