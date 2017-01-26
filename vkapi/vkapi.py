@@ -10,6 +10,8 @@ import urllib.request
 
 from .utils import DelayedCall
 
+logger = logging.getLogger('vkapi')
+
 CALL_INTERVAL = 0.35
 
 class VkApi:
@@ -23,7 +25,7 @@ class VkApi:
         self.log_file = log_file
         self.token_file = token_file
         if self.log_file:
-            logging.info('Logging enabled')
+            logger.info('Logging enabled')
             open(self.log_file, 'w').close()
         self.username = username
         self.password = password
@@ -125,7 +127,7 @@ class VkApi:
                 if r is False:  # it's fine here
                     error = errors.pop(0)
                     if error['method'] != dc.method:
-                        logging.error('Failed to match errors with methods. Response: ' + str(response))
+                        logger.error('Failed to match errors with methods. Response: ' + str(response))
                         return
                     if self.processError(dc.method, dc.params, {'error': error}, dc.retry):
                         dc.retry = True
@@ -151,30 +153,30 @@ class VkApi:
                 json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
             except OSError as e:
                 err = str(e)
-                logging.warning(method + ' failed ({})'.format(html.escape(err.strip())))
+                logger.warning(method + ' failed ({})'.format(html.escape(err.strip())))
                 time.sleep(1)
                 return self.apiCall(method, params, retry, full_response)
             except Exception as e:
                 if retry:
-                    logging.exception('({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
+                    logger.exception('({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
                     return None
                 else:
                     time.sleep(1)
-                    logging.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
+                    logger.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
                     return self.apiCall(method, params, True, full_response)
 
             try:
                 data_array = json.loads(json_string.decode('utf-8'))
             except json.decoder.JSONDecodeError:
-                logging.error('Invalid JSON')
+                logger.error('Invalid JSON')
                 data_array = None
             self.writeLog('method: {}, params: {}\nresponse: {}'.format(method, json.dumps(params), json.dumps(data_array)))
             duration = time.time() - now
             if duration > self.timeout:
-                logging.warning('{} timeout'.format(method))
+                logger.warning('{} timeout'.format(method))
 
         if data_array is None:
-            logging.error('data_array is None')
+            logger.error('data_array is None')
             return None
         if 'response' in data_array and not full_response:
             if self.ch:
@@ -186,18 +188,18 @@ class VkApi:
                 if self.ch:
                     self.ch.handle(data_array, params)
                 else:
-                    logging.warning('Captcha needed')
+                    logger.warning('Captcha needed')
                     time.sleep(5)
                 return self.apiCall(method, params, retry, full_response)
             elif code == 5:  # Auth error
                 self.login()
                 return self.apiCall(method, params, retry, full_response)
             elif code == 6:  # Too many requests per second
-                logging.warning('{}: too many requests per second'.format(method))
+                logger.warning('{}: too many requests per second'.format(method))
                 time.sleep(2)
                 return self.apiCall(method, params, retry, full_response)
             elif code == 17:  # Validation required
-                logging.warning('Validation required')
+                logger.warning('Validation required')
                 self.validate(data_array['error']['redirect_uri'])
                 time.sleep(1)
                 return self.apiCall(method, params, retry, full_response)
@@ -214,7 +216,7 @@ class VkApi:
     def processError(self, method, params, response, retry=False):
         code = response['error']['error_code']
         if (code, method) not in self.ignored_errors and (code, '*') not in self.ignored_errors:
-            logging.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, response['error'].get('error_msg')))
+            logger.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, response['error'].get('error_msg')))
             return False
         try:
             handler = self.ignored_errors[(code, method)]
@@ -223,22 +225,22 @@ class VkApi:
         if not handler:
             return False
         if retry or not handler[1]:
-            logging.warning(handler[0])
+            logger.warning(handler[0])
             return False
         else:
-            logging.warning(handler[0] + ', retrying')
+            logger.warning(handler[0] + ', retrying')
             return True
 
     def login(self):
-        logging.info('Fetching new token')
+        logger.info('Fetching new token')
         url = ('https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username +
                '&password=' + self.password)
         if not self.username or not self.password:
-            logging.critical('I don\'t know your login or password, sorry')
+            logger.critical('I don\'t know your login or password, sorry')
         try:
             json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
         except Exception:
-            logging.critical('Authorization failed')
+            logger.critical('Authorization failed')
             return
         data = json.loads(json_string)
         self.token = data['access_token']
@@ -267,10 +269,10 @@ class VkApi:
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except urllib.error.HTTPError as e:
-            logging.warning('longpoll http error ' + str(e.code))
+            logger.warning('longpoll http error ' + str(e.code))
             return []
         except OSError as e:
-            logging.warning('longpoll failed ({})'.format(e))
+            logger.warning('longpoll failed ({})'.format(e))
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
@@ -288,7 +290,7 @@ class VkApi:
 
     def validate(self, url):
         if not self.username or '@' in self.username:
-            logging.critical("I don't know your phone number")
+            logger.critical("I don't know your phone number")
         page = urllib.request.urlopen(url).read().decode()
         url_re = re.compile(r'/(login.php\?act=security_check&[^"]+)"')
         post_url = 'https://m.vk.com/' + url_re.search(page).group(1)

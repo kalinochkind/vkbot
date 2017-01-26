@@ -2,6 +2,8 @@ import logging
 import threading
 import time
 
+logger = logging.getLogger('tm')
+
 class ThreadManager:  # not thread-safe, should be used only from main thread
     def __init__(self):
         self.threads = {}
@@ -11,7 +13,7 @@ class ThreadManager:  # not thread-safe, should be used only from main thread
             if self.canTerminate(key):
                 self.terminate(key)
             else:
-                logging.error('Unable to run a new thread with key ' + str(key))
+                logger.error('Unable to run a new thread with key ' + str(key))
                 return
         t = threading.Thread(target=proc)
         t.terminate_func = terminate_func

@@ -4,6 +4,9 @@ import threading
 import time
 from subprocess import Popen, PIPE
 
+logger = logging.getLogger('cppbot')
+bot_logger = logging.getLogger('chatlog')
+
 def nonBlockRead(output):
     import fcntl
     fd = output.fileno()
@@ -51,23 +54,23 @@ class CppBot:
                         break
                     info = info.decode().rstrip()
                     if do_log:
-                        logging.info(info)
+                        bot_logger.info(info)
         except BrokenPipeError:
-            logging.warning('Broken pipe, restarting ' + self.exe_name)
+            logger.warning('Broken pipe, restarting ' + self.exe_name)
             self.runExe()
             return self.interact(msg, do_log)
         return answer.decode().strip()
 
     def buildExe(self):
-        logging.info('Rebuilding ' + self.exe_name)
+        logger.info('Rebuilding ' + self.exe_name)
         if os.system(self.path + 'build.sh'):
-            logging.critical('Unable to build')
-        logging.info('Build successful')
+            logger.critical('Unable to build')
+        logger.info('Build successful')
 
     def reload(self):
         self.start_time = time.time()
         self.interact('reld')
-        logging.info('Reloaded!')
+        logger.info('Reloaded!')
 
     def reloadIfChanged(self):
         data_time = max(os.path.getmtime(self.data_path + i) for i in self.data_files)

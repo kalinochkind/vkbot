@@ -5,6 +5,8 @@ import time
 
 from .utils import CONF_START
 
+logger = logging.getLogger('vkapi.receiver')
+
 class MessageReceiver:
     def __init__(self, api, get_dialogs_interval=60):
         self.api = api
@@ -40,7 +42,7 @@ class MessageReceiver:
             try:
                 messages = messages['items'][::-1]
             except TypeError:
-                logging.warning('Unable to fetch messages')
+                logger.warning('Unable to fetch messages')
                 return []
             for msg in sorted(messages, key=lambda m: m['message']['id']):
                 cur = msg['message']

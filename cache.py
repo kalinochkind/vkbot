@@ -2,6 +2,8 @@ import logging
 import threading
 import time
 
+logger = logging.getLogger('cache')
+
 class Cache:
     def __init__(self, api, invalidate_interval=0):
         self.api = api
@@ -20,7 +22,7 @@ class Cache:
                 else:
                     return None
         except Exception:
-            logging.exception('Cache error')
+            logger.exception('Cache error')
             return None
 
     def __delitem__(self, uid):
@@ -54,7 +56,7 @@ class Cache:
                     for obj in resp:
                         self.objects[obj['id']] = (ctime, obj)
         except Exception:
-            logging.exception('Cache error')
+            logger.exception('Cache error')
 
     def _load(self, ids):
         raise NotImplementedError()
