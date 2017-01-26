@@ -81,7 +81,9 @@ class CaptchaHandler:
             open(self.txt_filename, 'w').close()
             ans = self.solve()
             if ans is None:
-                time.sleep(5)
+                logger.warning('Antigate failed')
+                params['_checks_done'] = 0
+                self.delete()
             elif not ans:
                 self.receive(data_array['error']['captcha_img'])
                 params['_sid'] = data_array['error']['captcha_sid']
