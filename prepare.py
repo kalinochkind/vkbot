@@ -12,7 +12,7 @@ from args import args
 from vkapi import VkApi
 from vkbot import createCaptchaHandler
 
-os.chdir(os.path.dirname(sys.argv[0]))
+os.chdir(os.path.dirname(os.path.realpath(sys.argv[0])))
 accounts.init()
 
 class MyHandler(logging.Handler):
