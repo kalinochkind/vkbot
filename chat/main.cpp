@@ -55,6 +55,16 @@ int main(int argc, char* argv[])
             getline(wcin, s, L'\n');
             wcout << sstem(s) << endl;
         }
+        else if(cmd == L"dump")
+        {
+            wcout << Dump() << endl;
+        }
+        else if(cmd == L"load")
+        {
+            getline(wcin, s, L'\n');
+            LoadData(s);
+            wcout << L"Loaded!" << endl;
+        }
         else if(cmd.empty())
         {
             break;

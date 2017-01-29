@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 #include <ctime>
 #include <memory>
 #include "ChatBot.h"
@@ -11,6 +12,36 @@ struct userinfo
     unsigned smiles;
     int lastReply;
     long long context;
+
+    userinfo(): smiles(0), lastReply(0), context(0) {}
+
+    explicit userinfo(const wstring &s): userinfo()
+    {
+        wstring t;
+        unsigned i = 0;
+        for(;s[i]!=L';'&&i<s.length();i++)
+            t.push_back(s[i]);
+        if(i == s.length())
+            return;
+        smiles = stoi(t);
+        t.clear();
+        i++;
+        for(;s[i]!=L';'&&i<s.length();i++)
+            t.push_back(s[i]);
+        if(i == s.length())
+            return;
+        lastReply = stoi(t);
+        t.clear();
+        i++;
+        for(;i<s.length();i++)
+            t.push_back(s[i]);
+        context = stoll(t);
+    }
+
+    wstring dump() const
+    {
+        return to_wstring(smiles) + L';' + to_wstring(lastReply) + L';' + to_wstring(context);
+    }
 };
 
 unsigned MAX_SMILES;
@@ -397,5 +428,29 @@ void Load()
     {
         i.second.lastReply = 0;
     }
+}
+
+void LoadData(const wstring &data)
+{
+    users.clear();
+    wistringstream is;
+    is.str(data);
+    int id;
+    wstring s;
+    while(is >> id)
+    {
+        is >> s;
+        users[id] = userinfo(s);
+    }
+}
+
+wstring Dump()
+{
+    wstring res;
+    for(auto &i : users)
+    {
+        res += to_wstring(i.first) + L' ' + i.second.dump() + L' ';
+    }
+    return res;
 }
 
