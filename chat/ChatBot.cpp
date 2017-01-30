@@ -305,7 +305,6 @@ shared_ptr<pair<vector<wstring>, long long> > splitReply(const wstring &t)
     }
     if(s.length())
         ans.push_back(s);
-    SwapFirst(ans, 1);
     context_map[phash(ctx)] = ctx;
     return make_shared<pair<vector<wstring>, long long> >(make_pair(ans, phash(ctx)));
 }
@@ -314,6 +313,7 @@ void AddReply(const wstring &req, const wstring &rep)
 {
     auto v = splitReply(rep);
     auto u = *splitReply(req);
+    SwapFirst(v->first, 1);
     for(wstring& i : u.first)
     {
         reply.push_back(v);
