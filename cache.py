@@ -94,3 +94,14 @@ class MessageCache:
         if newtime is None:
             newtime = time.time()
         self.sender_msg.setdefault(sender, {})['time'] = newtime
+
+    def dump(self):
+        messages = {id(i): i.copy() for i in self.user_msg.values()}
+        messages.update({id(i): i.copy() for i in self.sender_msg.values()})
+        um = {i: id(self.user_msg[i]) for i in self.user_msg}
+        sm = {i: id(self.sender_msg[i]) for i in self.sender_msg}
+        return {'messages': messages, 'user': um, 'sender': sm}
+
+    def load(self, data):
+        self.user_msg = {int(i): data['messages'][str(j)] for i, j in data['user'].items()}
+        self.sender_msg = {int(i): data['messages'][str(j)] for i, j in data['sender'].items()}

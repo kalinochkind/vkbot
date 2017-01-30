@@ -2,6 +2,7 @@ import datetime
 import html
 import json
 import logging
+import os
 import random
 import re
 import threading
@@ -87,6 +88,14 @@ class VkBot:
         self.good_conf = {}
         self.tm = ThreadManager()
         self.last_message = MessageCache()
+        if os.path.isfile(accounts.getFile('msgdump.json')):
+            try:
+                self.last_message.load(json.load(open(accounts.getFile('msgdump.json'))))
+            except json.JSONDecodeError:
+                logging.warning('Failed to load messages')
+            os.remove(accounts.getFile('msgdump.json'))
+        else:
+            logging.info('Message dump does not exist')
         self.bad_conf_title = lambda s: False
         self.admin = None
         self.banned_list = []
@@ -468,6 +477,8 @@ class VkBot:
     def waitAllThreads(self):
         for t in self.tm.all():
             t.join(60)
+        with open(accounts.getFile('msgdump.json'), 'w') as f:
+            json.dump(self.last_message.dump(), f)
 
     # {name} - first_name last_name
     # {id} - id
