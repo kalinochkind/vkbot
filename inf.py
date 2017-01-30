@@ -359,6 +359,7 @@ def onExit(*p):
     loop_thread.join(60)
     vk.waitAllThreads()
     logging.info('Bye')
+    bot.dump()
     logging.shutdown()
     sys.exit()
 
@@ -377,7 +378,7 @@ vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('My name: ' + vk.vars['name'][0])
-bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'))
+bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'), accounts.getFile('chatdump.dat'))
 
 logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))

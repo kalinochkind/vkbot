@@ -24,7 +24,7 @@ class CppBot:
     data_path = 'data/'
     data_files = ['bot.txt', 'blacklist.txt', 'fixedstem.txt', 'names.txt', 'noans.txt', 'smiles.txt']
 
-    def __init__(self, name, max_smiles):
+    def __init__(self, name, max_smiles, dump_filename):
         try:
             exe_time = os.path.getmtime(self.path + self.exe_name)
             src_time = max(os.path.getmtime(self.path + i) for i in self.source_files)
@@ -38,6 +38,8 @@ class CppBot:
         self.bot = None
         self.runExe()
         self.bot_lock = threading.Lock()
+        self.dump_filename = dump_filename
+        self.load()
 
     def runExe(self):
         self.bot = Popen([self.path + self.exe_name, str(self.max_smiles), str(self.name)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
@@ -72,7 +74,30 @@ class CppBot:
         self.interact('reld')
         logger.info('Reloaded!')
 
+    def dataTime(self):
+        return max(os.path.getmtime(self.data_path + i) for i in self.data_files)
+
     def reloadIfChanged(self):
-        data_time = max(os.path.getmtime(self.data_path + i) for i in self.data_files)
+        data_time = self.dataTime()
         if data_time > self.start_time and time.time() > data_time + 5:
             self.reload()
+
+    def dump(self):
+        data = self.interact('dump')
+        data = str(int(self.start_time)) + '\n' + data
+        with open(self.dump_filename, 'w') as f:
+            f.write(data)
+
+    def load(self):
+        if not os.path.isfile(self.dump_filename):
+            logging.info('Chat dump does not exist')
+            return
+        data = open(self.dump_filename).read().splitlines()
+        if len(data) < 2:
+            return
+        modtime = int(data[0])
+        if modtime < self.dataTime():
+            logging.info('Chat database has been modified')
+        else:
+            self.interact('load ' + data[1])
+        os.remove(self.dump_filename)
