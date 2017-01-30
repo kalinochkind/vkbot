@@ -377,10 +377,8 @@ vk = vkbot.VkBot(login, password, includeread_interval)
 vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
-logging.info('My name: ' + vk.vars['name'][0])
+logging.info('I am {}, {}'.format(vk.vars['name'][0], vk.self_id))
 bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'), accounts.getFile('chatdump.dat'))
-
-logging.info('My id: ' + str(vk.self_id))
 banign = BanManager(accounts.getFile('banned.txt'))
 vk.banned = banign.banned
 if args['whitelist']:
