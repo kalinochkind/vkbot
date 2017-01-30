@@ -37,8 +37,10 @@ class MyHandler(logging.Handler):
             log.warning(msg)
         elif lvl == 'INFO':
             log.info(msg)
+        elif lvl == 'DEBUG':
+            log.debug(msg)
 
-logging.basicConfig(handlers=[MyHandler()], level=logging.INFO)
+logging.basicConfig(handlers=[MyHandler()], level=logging.DEBUG)
 logging.getLogger('antigate').setLevel(logging.CRITICAL)
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 if config.get('vkbot.suppress_chat_stderr', 'b'):

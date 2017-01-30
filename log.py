@@ -35,6 +35,9 @@ def info(s, color=''):
 def warning(s):
     info(s, 'warning')
 
+def debug(s):
+    info(s, 'debug')
+
 def error(s, need_exc_info=False, fatal=False):
     info(s, 'fatal' if fatal else 'error')
     if not isinstance(s, str):
