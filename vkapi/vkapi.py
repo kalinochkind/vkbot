@@ -34,9 +34,7 @@ class VkApi:
         self.max_delayed = 25
         self.ignored_errors = ignored_errors or {}
         self.timeout = timeout
-        self.longpoll_server = ''
-        self.longpoll_key = ''
-        self.longpoll_ts = 0
+        self.longpoll = {'server': '', 'key': '', 'ts': 0}
         self.api_lock = threading.RLock()
         self.ch = captcha_handler
         self.token = None
@@ -258,14 +256,13 @@ class VkApi:
 
     def initLongpoll(self):
         r = self.messages.getLongPollServer()
-        self.longpoll_server = r['server']
-        self.longpoll_key = r['key']
-        self.longpoll_ts = self.longpoll_ts or r['ts']
+        self.longpoll = {'server': r['server'], 'key': r['key'], 'ts': self.longpoll['ts'] or r['ts']}
 
     def getLongpoll(self, mode=2):
-        if not self.longpoll_server:
+        if not self.longpoll['server']:
             self.initLongpoll()
-        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version=1'.format(self.longpoll_server, self.longpoll_key, self.longpoll_ts, mode)
+        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version=1'.format(
+            self.longpoll['server'], self.longpoll['key'], self.longpoll['ts'], mode)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except urllib.error.HTTPError as e:
@@ -278,7 +275,7 @@ class VkApi:
         data_array = json.loads(json_string.decode('utf-8'))
         self.writeLog('longpoll request\nresponse: {}'.format(json.dumps(data_array)))
         if 'ts' in data_array:
-            self.longpoll_ts = data_array['ts']
+            self.longpoll['ts'] = data_array['ts']
 
         if 'updates' in data_array:
             return data_array['updates']
