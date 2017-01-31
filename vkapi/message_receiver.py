@@ -21,6 +21,7 @@ class MessageReceiver:
         self.last_get_dialogs = 0
         self.longpolled_messages = set()
         self.used_get_dialogs = False
+        self.terminate_monitor = False
 
 
     def monitor(self):
@@ -66,6 +67,8 @@ class MessageReceiver:
 
     def _getLongpoll(self):
         arr = self.api.getLongpoll()
+        if self.terminate_monitor:
+            return []
         need_extra = []
         result = []
         for record in arr:

@@ -356,8 +356,7 @@ def reloadHandler(*p):
 # noinspection PyUnusedLocal
 def onExit(*p):
     logging.info('Received SIGTERM')
-    loop_thread.join(60)
-    vk.waitAllThreads()
+    vk.waitAllThreads(loop_thread, reply)
     logging.info('Bye')
     bot.dump()
     logging.shutdown()

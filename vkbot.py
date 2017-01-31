@@ -74,7 +74,6 @@ class VkBot:
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
                                token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
-        self.api.initLongpoll()
         stats.update('logging', bool(self.api.log_file))
         # hi java
         self.users = UserCache(self.api, self.fields + ',' + FriendController.requiredFields(_getFriendControllerParams()),
@@ -90,7 +89,9 @@ class VkBot:
         self.last_message = MessageCache()
         if os.path.isfile(accounts.getFile('msgdump.json')):
             try:
-                self.last_message.load(json.load(open(accounts.getFile('msgdump.json'))))
+                data = json.load(open(accounts.getFile('msgdump.json')))
+                self.last_message.load(data['cache'])
+                self.api.longpoll = data['longpoll']
             except json.JSONDecodeError:
                 logging.warning('Failed to load messages')
             os.remove(accounts.getFile('msgdump.json'))
@@ -474,11 +475,16 @@ class VkBot:
         self.vars['bf'] = self.users[uid]
         self.logSender('Set relationship with %sender%', {'user_id': uid})
 
-    def waitAllThreads(self):
+    def waitAllThreads(self, loop_thread, reply):
+        lp = self.api.longpoll.copy()
+        self.receiver.terminate_monitor = True
+        loop_thread.join(60)
+        while not self.receiver.longpoll_queue.empty():
+            self.replyAll(reply)
         for t in self.tm.all():
             t.join(60)
         with open(accounts.getFile('msgdump.json'), 'w') as f:
-            json.dump(self.last_message.dump(), f)
+            json.dump({'cache': self.last_message.dump(), 'longpoll': lp}, f)
 
     # {name} - first_name last_name
     # {id} - id
