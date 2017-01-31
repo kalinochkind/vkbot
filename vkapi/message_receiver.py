@@ -31,7 +31,7 @@ class MessageReceiver:
 
     def getMessages(self, get_dialogs=False):
         ctime = time.time()
-        if ctime - self.last_get_dialogs > self.get_dialogs_interval or get_dialogs:
+        if (self.get_dialogs_interval >=0 and ctime - self.last_get_dialogs > self.get_dialogs_interval) or get_dialogs:
             self.used_get_dialogs = True
             self.last_get_dialogs = ctime
             res = []

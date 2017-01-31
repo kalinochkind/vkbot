@@ -356,7 +356,7 @@ def reloadHandler(*p):
 # noinspection PyUnusedLocal
 def onExit(*p):
     logging.info('Received SIGTERM')
-    vk.waitAllThreads(loop_thread, reply)
+    vk.waitAllThreads(loop_thread, reply if includeread_interval >= 0 else lambda x: None)
     logging.info('Bye')
     bot.dump()
     logging.shutdown()
@@ -484,6 +484,7 @@ def main_loop():
         if includeread_interval >= 0:
             vk.replyAll(reply)
         else:
+            vk.replyAll(lambda x: None)
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
