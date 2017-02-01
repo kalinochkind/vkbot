@@ -91,6 +91,8 @@ for attempt in range(100):
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
+        if attempt == 0:
+            print('Another instance is running, waiting...', flush=True)
         time.sleep(5)
     else:
         single = True
