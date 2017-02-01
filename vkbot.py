@@ -246,7 +246,8 @@ class VkBot:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
-            self.last_message.byUser(message['user_id'])['text'] = message['body']
+            if answer is not None:
+                self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
             if sender > CONF_START and 'action' not in message:
                 sender_msg.setdefault('ignored', {})[message['user_id']] = time.time()
