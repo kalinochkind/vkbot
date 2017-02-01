@@ -354,8 +354,9 @@ def reloadHandler(*p):
     return 'Reloaded!'
 
 # noinspection PyUnusedLocal
-def onExit(*p):
-    logging.info('Received SIGTERM')
+def onExit(num, frame):
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    logging.info('Received ' + ('SIGTERM' if num == signal.SIGTERM else 'SIGINT'))
     vk.waitAllThreads(loop_thread, reply if includeread_interval >= 0 else lambda x: None)
     logging.info('Bye')
     bot.dump()
@@ -370,6 +371,7 @@ def getNameIndex(name):
     return -1
 
 signal.signal(signal.SIGTERM, onExit)
+signal.signal(signal.SIGINT, onExit)
 
 includeread_interval = config.get('intervals.includeread', 'i')
 vk = vkbot.VkBot(login, password, includeread_interval)

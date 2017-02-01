@@ -1,5 +1,6 @@
 #include <clocale>
 #include <cstring>
+#include <csignal>
 #include "ChatBot.h"
 
 using namespace std;
@@ -9,6 +10,7 @@ extern int myName;
 
 int main(int argc, char* argv[])
 {
+    signal(SIGINT, SIG_IGN);
     setlocale(LC_ALL, "ru_RU.UTF-8");
     if(argc >= 3)
     {
