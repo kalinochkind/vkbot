@@ -199,6 +199,9 @@ class VkBot:
         if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
             self.good_conf[sender] = False
             return True
+        if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_invite_user', 'from': str(self.self_id)} and sender in self.good_conf:
+            del self.good_conf[sender]
+            return True
 
         if opt.get('source_act') == 'chat_title_update':
             del self.confs[sender - CONF_START]
