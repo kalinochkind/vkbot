@@ -86,18 +86,10 @@ import fcntl
 pid_file = accounts.getFile('inf.pid')
 lock_file = accounts.getFile('inf.lock')
 fp = open(lock_file, 'w')
-single = False
-for attempt in range(100):
-    try:
-        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        if attempt == 0:
-            print('Another instance is running, waiting...', flush=True)
-        time.sleep(5)
-    else:
-        single = True
-        break
-if not single:
+try:
+    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print('Another instance is running, pid', open(pid_file).read())
     sys.exit(1)
 with open(pid_file, 'w') as f:
     f.write(str(os.getpid()))
