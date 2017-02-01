@@ -14,6 +14,11 @@ logger = logging.getLogger('vkapi')
 
 CALL_INTERVAL = 0.35
 
+
+def retOrCall(s, *p):
+    return s(*p) if callable(s) else s
+
+
 class VkApi:
     api_version = '5.62'
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
@@ -223,10 +228,10 @@ class VkApi:
         if not handler:
             return False
         if retry or not handler[1]:
-            logger.warning(handler[0])
+            logger.warning(retOrCall(handler[0], params, method))
             return False
         else:
-            logger.warning(handler[0] + ', retrying')
+            logger.warning(retOrCall(handler[0], params, method) + ', retrying')
             return True
 
     def login(self):
