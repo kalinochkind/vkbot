@@ -117,7 +117,11 @@ class VkBot:
     def initSelf(self, sync=False):
 
         def do():
-            res = self.api.users.get(fields='contacts,relation,bdate')[0]
+            try:
+                res = self.api.users.get(fields='contacts,relation,bdate')[0]
+            except IndexError:
+                self.api.login()
+                do()
             self.self_id = res['id']
             self.vars['phone'] = res.get('mobile_phone') or self.vars['phone']
             self.vars['name'] = (res['first_name'], res['last_name'])
