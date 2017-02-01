@@ -255,7 +255,7 @@ def preprocessMessage(message):
                 r = preprocessMessage(fwd)
                 if r is None:
                     return None
-                result += ' {' + str(r) + '}'
+                result += ' {' + str(r).strip() + '}'
         else:
             return None
 
