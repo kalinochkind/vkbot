@@ -61,6 +61,7 @@ def log(message, kind, text_msg=None):
             elif engine == 'postgresql':
                 import psycopg2
                 try:
+                    message = message.replace('\\', '\\\\')
                     _connect()
                     cur.execute('INSERT INTO vkbot_logmessage(message, kind, "time", message_text) VALUES (%s, %s, NOW(), %s)', (message, kind, text_msg))
                     conn.commit()
