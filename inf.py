@@ -185,7 +185,7 @@ def reply(message):
                 vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
             return ('', False)
 
-        if 'reply' in user_msg and message['body'].upper() == user_msg['reply'].upper():
+        if 'reply' in user_msg and message['body'].upper() == user_msg['reply'].upper() and len(message['body'].split()) > 1:
             vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
             user_msg['text'] = user_msg['reply']  # this modifies the cache entry too
             # user_msg['count'] = 1  # do we need it?
