@@ -11,7 +11,7 @@ extern int myName;
 int main(int argc, char* argv[])
 {
     signal(SIGINT, SIG_IGN);
-    setlocale(LC_ALL, "ru_RU.UTF-8");
+    setlocale(LC_ALL, "C.UTF-8");
     if(argc >= 3)
     {
         MAX_SMILES = atoi(argv[1]);
