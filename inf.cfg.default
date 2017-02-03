@@ -52,4 +52,3 @@ host =
 username =
 password =
 database =
-engine = mysql
