@@ -1,3 +1,4 @@
+import accounts
 import vkapi
 need_auth = True
 
@@ -6,7 +7,7 @@ def main(a, args):
     if not args:
         print('Config file required')
         return
-    data = open(args[0]).read().split()
+    data = open(accounts.abspath(args[0])).read().split()
     self_id = str(a.users.get()[0]['id'])
     print('My id:', self_id, flush=True)
     while True:

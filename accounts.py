@@ -8,6 +8,13 @@ import pack
 account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
 current_account = None
 default_config = 'inf.cfg.default'
+old_dir = os.getcwd()
+
+def abspath(path):
+    path = os.path.expanduser(path)
+    if os.path.isabs(path):
+        return path
+    return os.path.join(old_dir, path)
 
 def forceInput(text, password=False):
     s = ''
@@ -52,13 +59,13 @@ def listAccounts():
 
 def init():
     if args.args.get('pack'):
-        pack.pack(args.args['pack'])
+        pack.pack(abspath(args.args['pack']))
         sys.exit()
     if args.args.get('pack_data'):
-        pack.pack_data(args.args['pack_data'])
+        pack.pack_data(abspath(args.args['pack_data']))
         sys.exit()
     if args.args.get('unpack'):
-        pack.unpack(args.args['unpack'])
+        pack.unpack(abspath(args.args['unpack']))
         sys.exit()
 
     if not os.path.isdir('accounts'):
