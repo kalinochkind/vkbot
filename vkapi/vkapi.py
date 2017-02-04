@@ -237,7 +237,7 @@ class VkApi:
     def login(self):
         logger.info('Fetching new token')
         url = ('https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username +
-               '&password=' + self.password)
+               '&password=' + urllib.parse.quote(self.password))
         if not self.username or not self.password:
             logger.critical('I don\'t know your login or password, sorry')
         try:
