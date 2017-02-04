@@ -39,3 +39,17 @@ def main(a, args):
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
             print()
         print('-------------------------\n')
+
+    if args:
+        print(flush=True)
+        mr = vkapi.MessageReceiver(a)
+        while True:
+            time.sleep(1)
+            for m in mr.getMessages():
+                if 'chat_id' in m:
+                    print('Chat "{}" ({}), {} {}:'.format(cc[m['chat_id']]['title'], m['chat_id'],
+                                                          uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name']))
+                else:
+                    print('{} {} ({}):'.format(uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name'], m['user_id']))
+                print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(m['date'])), m['body']))
+                print(flush=True)

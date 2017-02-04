@@ -8,7 +8,7 @@ from .utils import CONF_START
 logger = logging.getLogger('vkapi.receiver')
 
 class MessageReceiver:
-    def __init__(self, api, get_dialogs_interval=60):
+    def __init__(self, api, get_dialogs_interval=-1):
         self.api = api
         self.get_dialogs_interval = get_dialogs_interval
         self.longpoll_queue = queue.Queue()
