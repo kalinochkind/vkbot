@@ -164,6 +164,8 @@ class VkBot:
                 return
             if self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
                 return
+        if message['user_id'] == self.self_id:  # chat with myself
+            return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
             return
         try:
