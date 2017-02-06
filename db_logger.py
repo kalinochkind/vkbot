@@ -9,7 +9,7 @@ import config
 import log as _log
 
 MAX_TEXT_LENGTH = 1024
-PG_QUERY = 'INSERT INTO vkbot_logmessage(message, kind, "time", message_text) VALUES (%s, %s, NOW(), %s)'
+PG_QUERY = 'INSERT INTO vkbot_logmessage(message, kind, "time", message_text) VALUES (%s, %s, to_timestamp(%s), %s)'
 
 enabled = bool(args.args['database'])
 conn = None
@@ -70,7 +70,7 @@ def execute(attempt, params):
             return True
 
 
-def log(message, kind, text_msg=None, *, attempt=0):
+def log(message, kind, text_msg=None, timestamp=None, *, attempt=0):
     global enabled, conn
     if not enabled:
         return
@@ -79,8 +79,10 @@ def log(message, kind, text_msg=None, *, attempt=0):
             text_msg = message
         text_msg = text_msg[:MAX_TEXT_LENGTH]
         message = message.replace('\\', '\\\\')
+        if timestamp is None:
+            timestamp = time.time()
 
     with db_lock:
-        if not execute(attempt, (message, kind, text_msg)):
+        if not execute(attempt, (message, kind, timestamp, text_msg)):
             time.sleep(3)
-            log(message, kind, text_msg, attempt=attempt+1)
+            log(message, kind, text_msg, timestamp, attempt=attempt+1)
