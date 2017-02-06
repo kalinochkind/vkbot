@@ -274,7 +274,7 @@ class VkApi:
             logger.warning('longpoll http error ' + str(e.code))
             return []
         except OSError as e:
-            logger.warning('longpoll failed ({})'.format(e))
+            logger.warning('longpoll failed ({})'.format(html.escape(str(e).strip())))
             time.sleep(1)
             return []
         data_array = json.loads(json_string.decode('utf-8'))
