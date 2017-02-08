@@ -1,3 +1,4 @@
+import html
 import os
 import sys
 import threading

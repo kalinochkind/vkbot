@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import html
 import logging
 import random
 import re
@@ -120,7 +121,8 @@ def getBotReply(message):
     if message.get('_method'):
         console_message += ' (' + message['_method'] + ')'
     text_msg = '({}) {} : {}{}'.format(vk.printableSender(message, False), message['body'], renderSmile(answer), console_message)
-    html_msg = '({}) {} : {}{}'.format(vk.printableSender(message, True), message['body'], renderSmile(answer).replace('&', '&amp;'), console_message)
+    html_msg = '({}) {} : {}{}'.format(vk.printableSender(message, True), html.escape(message['body']), renderSmile(answer).replace('&', '&amp;'),
+                                       console_message)
     logging.info(text_msg, extra={'db': html_msg})
     return answer
 

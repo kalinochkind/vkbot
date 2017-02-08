@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import threading
@@ -54,9 +55,9 @@ class CppBot:
                     info = nonBlockRead(self.bot.stderr)
                     if not info:
                         break
-                    info = info.decode().rstrip()
+                    info = info.decode().rstrip().replace('\x07', ' ')
                     if do_log:
-                        bot_logger.info(info)
+                        bot_logger.info(info, extra={'db': html.escape(info)})
         except BrokenPipeError:
             logger.warning('Broken pipe, restarting ' + self.exe_name)
             self.runExe()

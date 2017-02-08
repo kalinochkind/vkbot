@@ -508,7 +508,7 @@ class VkBot:
 
     def logSender(self, text, message):
         text_msg = text.replace('%sender%', self.printableSender(message, False))
-        html_msg = text.replace('%sender%', self.printableSender(message, True))
+        html_msg = html.escape(text).replace('%sender%', self.printableSender(message, True))
         logging.info(text_msg, extra={'db': html_msg})
 
     def printableSender(self, message, need_html):

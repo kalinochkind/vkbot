@@ -1,3 +1,4 @@
+import html
 import logging
 import queue
 import threading
@@ -82,7 +83,7 @@ class MessageReceiver:
 
                 if flags & 2:
                     continue
-                msg = {'id': mid, 'date': ts, 'body': text, 'out': 0, '_method': ''}
+                msg = {'id': mid, 'date': ts, 'body': html.unescape(text).replace('<br>', '\n'), 'out': 0, '_method': ''}
                 if opt.get('source_act'):
                     msg['body'] = None
                     msg['action'] = opt['source_act']
