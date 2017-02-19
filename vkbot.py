@@ -477,11 +477,11 @@ class VkBot:
         self.api.likes.add(type='photo', owner_id=photo['owner_id'], item_id=photo['id'])
         self.logSender('Liked %sender%', {'user_id': uid})
 
-    def setRelation(self, uid):
+    def setRelation(self, uid, set_by=None):
         if uid:
             log.write('relation', self.loggableName(uid))
         else:
-            log.write('relation', 'Removed')
+            log.write('relation', self.loggableName(set_by) + ' (removed)')
             uid = self.vars['default_bf']
         self.api.account.saveProfileInfo(relation_partner_id=uid)
         self.vars['bf'] = self.users[uid]
