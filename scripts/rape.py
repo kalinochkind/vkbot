@@ -4,6 +4,9 @@ need_auth = True
 
 
 def main(a, args):
+    a.ignored_errors = {
+        (15, 'messages.addChatUser'): ('Failed', False),
+    }
     if not args:
         print('Config file required')
         return
