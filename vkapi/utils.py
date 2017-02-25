@@ -20,6 +20,8 @@ class DelayedCall:
     def __eq__(self, a):
         return self.method == a.method and self.params == a.params and self.callback_func is None and a.callback_func is None
 
+class VkError(Exception):
+    pass
 
 def getSender(message):
     if 'chat_id' in message:

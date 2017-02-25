@@ -8,7 +8,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .utils import DelayedCall
+from .utils import DelayedCall, VkError
 
 logger = logging.getLogger('vkapi')
 
@@ -240,11 +240,12 @@ class VkApi:
                '&password=' + urllib.parse.quote(self.password))
         if not self.username or not self.password:
             logger.critical('I don\'t know your login or password, sorry')
+            raise VkError('Username and password required')
         try:
             json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
         except Exception:
             logger.critical('Authorization failed')
-            return
+            raise VkError('Login failed')
         data = json.loads(json_string)
         self.token = data['access_token']
         if self.token_file:
@@ -293,6 +294,7 @@ class VkApi:
     def validate(self, url):
         if not self.username or '@' in self.username:
             logger.critical("I don't know your phone number")
+            raise VkError('Phone number required')
         page = urllib.request.urlopen(url).read().decode()
         url_re = re.compile(r'/(login.php\?act=security_check&[^"]+)"')
         post_url = 'https://m.vk.com/' + url_re.search(page).group(1)
