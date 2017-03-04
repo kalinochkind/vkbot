@@ -73,7 +73,7 @@ def escape(message):
     return message
 
 last_reply_lower = set()
-_cmd_re = re.compile(r'\\[a-zA-Z]+')
+_cmd_re = re.compile(r'\\([a-zA-Z]+)((?:\[[^\]]+\])*)')
 
 def getBotReplyComment(message):
     return bot.interact('comm ' + escape(message)) == '$blacklisted'
@@ -101,8 +101,9 @@ def getBotReply(message):
         answer, gender = applyGender(answer, message['user_id'])
         console_message += ' (' + gender + ')'
 
-    if '\\' in answer:
-        res = _cmd_re.sub(lambda m: preprocessReply(m.group(0)[1:], message['user_id'], message.setdefault('_onsend_actions', [])), answer)
+    while '\\' in answer:
+        res = _cmd_re.sub(lambda m: preprocessReply(m.group(1), m.group(2).strip('][').split(']['),
+                          message['user_id'], message.setdefault('_onsend_actions', [])), answer)
         console_message += ' (' + answer + ')'
         answer = res
 
@@ -263,7 +264,7 @@ def preprocessMessage(message):
 
     return result.strip()
 
-def preprocessReply(s, uid, onsend_actions):
+def preprocessReply(s, params, uid, onsend_actions):
     if s == 'myname':
         return vk.users[uid]['first_name']
     if s == 'mylastname':
@@ -302,6 +303,14 @@ def preprocessReply(s, uid, onsend_actions):
             return vk.vars['bf']['last_name']
         else:
             return ''
+    if s == 'ifbf':
+        if len(params) != 2:
+            logging.error('ifbf: 2 arguments required')
+            return ''
+        if uid == vk.vars['bf']['id']:
+            return params[0]
+        else:
+            return params[1]
     logging.error('Unknown variable: ' + s)
 
 # 1: female, 2: male
