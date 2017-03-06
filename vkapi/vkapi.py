@@ -262,11 +262,17 @@ class VkApi:
 
     def initLongpoll(self):
         r = self.messages.getLongPollServer()
+        if not r:
+            logger.warning('Unable to initialize longpoll')
+            self.longpoll = {}
+            return
         self.longpoll = {'server': r['server'], 'key': r['key'], 'ts': self.longpoll['ts'] or r['ts']}
 
     def getLongpoll(self, mode=2):
-        if not self.longpoll['server']:
+        if not self.longpoll.get('server'):
             self.initLongpoll()
+        if not self.longpoll:
+            return []
         url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version=1'.format(
             self.longpoll['server'], self.longpoll['key'], self.longpoll['ts'], mode)
         try:
