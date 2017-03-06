@@ -2,6 +2,7 @@
 # nodup - do not like the same user twice
 # nogroup - do not like group posts
 # skipold - do not break if the post is already liked
+# avas - like avatars too
 
 
 import logging
@@ -47,6 +48,12 @@ def main(a, args):
                 continue
             logging.info('Like ' + str(i['id']))
             a.likes.add(owner_id=i['owner_id'], item_id=i['id'], type='post')
+            if 'avas' in args and i['from_id'] > 0:
+                ava = a.users.get(user_ids=i['from_id'], fields='photo_id')[0].get('photo_id')
+                if ava:
+                    owner, photo = ava.split('_')
+                    time.sleep(1)
+                    a.likes.add(owner_id=int(owner), item_id=int(photo), type='photo')
             total += 1
             time.sleep(3)
     finally:
