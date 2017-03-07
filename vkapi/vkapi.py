@@ -266,7 +266,7 @@ class VkApi:
             logger.warning('Unable to initialize longpoll')
             self.longpoll = {}
             return
-        self.longpoll = {'server': r['server'], 'key': r['key'], 'ts': self.longpoll['ts'] or r['ts']}
+        self.longpoll = {'server': r['server'], 'key': r['key'], 'ts': self.longpoll.get('ts') or r['ts']}
 
     def getLongpoll(self, mode=2):
         if not self.longpoll.get('server'):
