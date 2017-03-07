@@ -27,8 +27,12 @@ class MessageReceiver:
 
     def monitor(self):
         while True:
-            for i in self._getLongpoll():
-                self.longpoll_queue.put(i)
+            try:
+                for i in self._getLongpoll():
+                    self.longpoll_queue.put(i)
+            except Exception:
+                logger.exception('MessageReceiver error')
+                time.sleep(5)
 
     def getMessages(self, get_dialogs=False):
         ctime = time.time()
