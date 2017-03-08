@@ -33,8 +33,8 @@ ignored_errors = {
     (100, 'messages.markAsRead'): None,
     (113, 'users.get'): None,
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
-    (8, '*'): ('Error code 8', True),
-    (10, '*'): ('Error code 10', True),
+    (8, '*'): (lambda p, m: '{}: error code 8'.format(m), True),
+    (10, '*'): (lambda p, m: '{}: error code 10'.format(m), True),
     (100, 'messages.getChat'): None,
 }
 
