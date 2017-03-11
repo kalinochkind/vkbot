@@ -217,6 +217,9 @@ class VkBot:
                            {'user_id': int(opt['from'])})
             if not self.no_leave_conf and int(opt['from']) not in self.banned:
                 self.deleteFriend(int(opt['from']))
+        if opt.get('source_act') == 'chat_create' and opt['from'] != str(self.self_id):
+            self.logSender('%sender% created conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
+                           {'user_id': int(opt['from'])})
         if flags & 2:  # out
             if not opt.get('source_act'):
                 self.tm.terminate(sender)
