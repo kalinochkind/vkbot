@@ -10,8 +10,6 @@ inline bool isLetter(wchar_t c)
         return 1;
     if(L'А' <= c && c <= L'я')
         return 1;
-    if(c == L'і' || c == L'І')
-        return 1;
     return 0;
 }
 
@@ -38,6 +36,23 @@ long long phash(const wstring &s)
 
 long long phname = phash(L"firstname");
 
+void makeRussian(wstring &s)
+{
+    for(auto &i : s)
+    {
+        if(i == L'A') i = L'А';
+        if(i == L'C') i = L'С';
+        if(i == L'E') i = L'Е';
+        if(i == L'K') i = L'К';
+        if(i == L'M') i = L'М';
+        if(i == L'O') i = L'О';
+        if(i == L'P') i = L'Р';
+        if(i == L'T') i = L'Т';
+        if(i == L'X') i = L'Х';
+        if(i == L'Y') i = L'У';
+    }
+}
+
 // <hash, <start, len> >
 vector<pair<long long, pair<int, int> > > splitWords(const wstring &s, vector<pair<long long, long long> > &fixedstem, vector<pair<long long, long long> > &replaced, set<long long> &names)
 {
@@ -63,6 +78,7 @@ vector<pair<long long, pair<int, int> > > splitWords(const wstring &s, vector<pa
             if(word.length())
             {
                 bool st = 1;
+                makeRussian(word);
                 long long pw = phash(word);
                 for(auto &t : fixedstem)
                 {
