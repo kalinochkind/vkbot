@@ -313,8 +313,14 @@ class VkApi:
         phone = self.username[-10:-2]
         urllib.request.urlopen(post_url, ('code=' + phone).encode('utf-8'))
 
-    def uploadMessagePhoto(self, path):
+    def uploadMessagePhoto(self, paths):
+        if isinstance(paths, str):
+            paths = [paths]
         server = self.photos.getMessagesUploadServer()
-        resp = uploadFile(server['upload_url'], path, 'photo')
-        self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
-        return self.photos.saveMessagesPhoto(photo=resp['photo'], server=resp['server'], hash=resp['hash'])
+        result = []
+        for path in paths:
+            resp = uploadFile(server['upload_url'], path, 'photo')
+            self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
+            self.photos.saveMessagesPhoto.delayed(photo=resp['photo'], server=resp['server'], hash=resp['hash']).callback(lambda a, b: result.extend(b))
+        self.sync()
+        return result
