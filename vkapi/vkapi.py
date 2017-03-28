@@ -146,15 +146,20 @@ class VkApi:
 
     def apiCall(self, method, params, retry=False, full_response=False):
         params['v'] = self.api_version
-        url = 'https://api.vk.com/method/' + method + '?' + urllib.parse.urlencode(
-            {i: params[i] for i in params if not i.startswith('_')}) + '&access_token=' + self.getToken()
+        encoded = urllib.parse.urlencode({i: params[i] for i in params if not i.startswith('_')})
+        post_params = None
+        if len(encoded) > 1024:
+            url = 'https://api.vk.com/method/' + method + '?access_token=' + self.getToken()
+            post_params = encoded.encode()
+        else:
+            url = 'https://api.vk.com/method/' + method + '?' + encoded + '&access_token=' + self.getToken()
         with self.api_lock:
             now = time.time()
             if now - self.last_call < CALL_INTERVAL:
                 time.sleep(CALL_INTERVAL - now + self.last_call)
             self.last_call = now
             try:
-                json_string = urllib.request.urlopen(url, timeout=self.timeout).read()
+                json_string = urllib.request.urlopen(url, data=post_params, timeout=self.timeout).read()
             except OSError as e:
                 err = str(e)
                 logger.warning(method + ' failed ({})'.format(html.escape(err.strip())))
@@ -174,7 +179,7 @@ class VkApi:
             except json.decoder.JSONDecodeError:
                 logger.error('Invalid JSON')
                 data_array = None
-            self.writeLog('method: {}, params: {}\nresponse: {}'.format(method, json.dumps(params), json.dumps(data_array)))
+            self.writeLog('method: {}, params: {}\nresponse: {}'.format(method + (' (POST)' if post_params else ''), json.dumps(params), json.dumps(data_array)))
             duration = time.time() - now
             if duration > self.timeout:
                 logger.warning('{} timeout'.format(method))
