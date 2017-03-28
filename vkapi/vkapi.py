@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 
 from .utils import DelayedCall, VkError
+from .upload import uploadFile
 
 logger = logging.getLogger('vkapi')
 
@@ -306,3 +307,9 @@ class VkApi:
         post_url = 'https://m.vk.com/' + url_re.search(page).group(1)
         phone = self.username[-10:-2]
         urllib.request.urlopen(post_url, ('code=' + phone).encode('utf-8'))
+
+    def uploadMessagePhoto(self, path):
+        server = self.photos.getMessagesUploadServer()
+        resp = uploadFile(server['upload_url'], path, 'photo')
+        self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
+        return self.photos.saveMessagesPhoto(photo=resp['photo'], server=resp['server'], hash=resp['hash'])
