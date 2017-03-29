@@ -23,6 +23,7 @@ def main(a, args):
     uc.load(users)
     cc.load(chats)
     a.sync()
+    mids = []
     if dialogs:
         print('-------------------------\n')
     else:
@@ -38,9 +39,11 @@ def main(a, args):
         for i in messages[vkapi.utils.getSender(msg['message'])]:
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
             print()
+            if 'chat_id' not in m:
+                mids.append(i['id'])
         print('-------------------------\n')
 
-    if args:
+    if 't' in args:
         print(flush=True)
         mr = vkapi.MessageReceiver(a)
         while True:
@@ -53,3 +56,6 @@ def main(a, args):
                     print('{} {} ({}):'.format(uc[m['user_id']]['first_name'], uc[m['user_id']]['last_name'], m['user_id']))
                 print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(m['date'])), m['body']))
                 print(flush=True)
+    elif 'd' in args and mids:
+        print('Deleting {} messages'.format(len(mids)))
+        a.messages.delete(message_ids=','.join(map(str, mids)))
