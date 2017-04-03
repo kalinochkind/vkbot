@@ -201,6 +201,8 @@ class VkApi:
                     time.sleep(5)
                 return self.apiCall(method, params, retry, full_response)
             elif code == 5:  # Auth error
+                if data_array['error']['error_msg'] == 'User authorization failed: method is unavailable with group auth.':
+                    raise VkError('User token required')
                 self.login()
                 return self.apiCall(method, params, retry, full_response)
             elif code == 6:  # Too many requests per second
