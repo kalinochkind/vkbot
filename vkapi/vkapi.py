@@ -323,6 +323,7 @@ class VkApi:
         for path in paths:
             resp = uploadFile(server['upload_url'], path, 'photo')
             self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
-            self.photos.saveMessagesPhoto.delayed(photo=resp['photo'], server=resp['server'], hash=resp['hash']).callback(lambda a, b: result.extend(b))
+            if resp['photo'] != '[]':
+                self.photos.saveMessagesPhoto.delayed(photo=resp['photo'], server=resp['server'], hash=resp['hash']).callback(lambda a, b: result.extend(b or []))
         self.sync()
         return result
