@@ -149,10 +149,10 @@ class VkApi:
         encoded = urllib.parse.urlencode({i: params[i] for i in params if not i.startswith('_')})
         post_params = None
         if len(encoded) > 1024:
-            url = 'https://api.vk.com/method/' + method + '?access_token=' + self.getToken()
+            url = 'https://api.vk.com/method/' + method + '?access_token=' + (params.get('_token') or self.getToken())
             post_params = encoded.encode()
         else:
-            url = 'https://api.vk.com/method/' + method + '?' + encoded + '&access_token=' + self.getToken()
+            url = 'https://api.vk.com/method/' + method + '?' + encoded + '&access_token=' + (params.get('_token') or self.getToken())
         with self.api_lock:
             now = time.time()
             if now - self.last_call < CALL_INTERVAL:
