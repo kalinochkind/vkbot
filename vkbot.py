@@ -160,7 +160,7 @@ class VkBot:
 
     def replyOne(self, message, gen_reply):
         if self.whitelist and getSender(message) not in self.whitelist:
-            if getSender(message) > CONF_START:
+            if getSender(message) > CONF_START or getSender(message) < 0:
                 return
             if self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
                 return
