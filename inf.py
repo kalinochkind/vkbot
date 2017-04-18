@@ -465,6 +465,16 @@ def banlistHandler(*p):
     else:
         return 'No one banned!'
 
+# noinspection PyUnusedLocal
+def ignlistHandler(*p):
+    if friend_controller.noadd:
+        result = sorted(i for i in friend_controller.noadd if i > CONF_START)
+        result = [str(j) + ' ' + vk.printableName(j, user_fmt='') for j in result]
+        return '\n'.join(result)
+    else:
+        return 'No confs ignored!'
+
+
 if config.get('server.port', 'i') > 0:
     srv = MessageServer(config.get('server.port', 'i'))
     srv.addHandler('reply', lambda x: bot.interact('flat ' + x, False))
@@ -477,6 +487,7 @@ if config.get('server.port', 'i') > 0:
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
     srv.addHandler('banlist', banlistHandler)
+    srv.addHandler('ignlist', ignlistHandler)
     srv.listen()
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
