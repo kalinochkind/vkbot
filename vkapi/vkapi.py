@@ -100,7 +100,7 @@ class VkApi:
 
     @staticmethod
     def encodeApiCall(s):
-        return "API." + s.method + '(' + str(s.params).replace('"', '\\"').replace("'", '"') + ')'
+        return "API." + s.method + '(' + json.dumps(s.params, ensure_ascii=False) + ')'
 
     def writeLog(self, msg):
         if self.log_file:
