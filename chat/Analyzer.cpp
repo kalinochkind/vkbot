@@ -23,19 +23,6 @@ inline bool isVowel(wchar_t i)
     return i == L'а' || i == L'я' || i == L'о' || i == L'у' || i == L'ю' || i == L'и' || i == L'е';
 }
 
-long long phash(const wstring &s)
-{
-    long long ans = 0;
-    for(auto i: s)
-    {
-        ans *= 1000000007LL;
-        ans += i;
-    }
-    return ans;
-}
-
-long long phname = phash(L"firstname");
-
 void makeRussian(wstring &s)
 {
     for(auto &i : s)
@@ -52,6 +39,21 @@ void makeRussian(wstring &s)
         if(i == L'Y') i = L'У';
     }
 }
+
+long long phash(const wstring &s)
+{
+    auto word = s;
+    makeRussian(word);
+    long long ans = 0;
+    for(auto i: word)
+    {
+        ans *= 1000000007LL;
+        ans += i;
+    }
+    return ans;
+}
+
+long long phname = phash(L"firstname");
 
 // <hash, <start, len> >
 vector<pair<long long, pair<int, int> > > splitWords(const wstring &s, vector<pair<long long, long long> > &fixedstem, vector<pair<long long, long long> > &replaced, set<long long> &names)
@@ -78,7 +80,6 @@ vector<pair<long long, pair<int, int> > > splitWords(const wstring &s, vector<pa
             if(word.length())
             {
                 bool st = 1;
-                makeRussian(word);
                 long long pw = phash(word);
                 for(auto &t : fixedstem)
                 {
