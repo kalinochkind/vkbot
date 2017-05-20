@@ -21,7 +21,7 @@ def retOrCall(s, *p):
 
 
 class VkApi:
-    api_version = '5.62'
+    api_version = '5.64'
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
                'market', 'messages', 'newsfeed',
                'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',
