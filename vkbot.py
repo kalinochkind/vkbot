@@ -230,13 +230,15 @@ class VkBot:
         except Exception:
             pass
 
-    def sendMessage(self, to, msg, forward=None):
+    def sendMessage(self, to, msg, forward=None, sticker_id=None):
         if not self.good_conf.get(to, 1):
             return
         with self.message_lock:
             self.guid += 1
             time.sleep(1)
-            if forward:
+            if sticker_id:
+                return self.api.messages.send(peer_id=to, sticker_id=sticker_id, random_id=self.guid)
+            elif forward:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid, forward_messages=forward)
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
@@ -247,7 +249,7 @@ class VkBot:
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
             return
 
-        if not answer:
+        if not answer and not message.get('_sticker_id'):
             if self.tm.isBusy(sender):
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
@@ -273,7 +275,7 @@ class VkBot:
 
         resend = False
         # answer is not empty
-        if sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
+        if not message.get('_sticker_id') and sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
             logging.info('Resending')
             typing_time = 0
             resend = True
@@ -285,7 +287,9 @@ class VkBot:
                     if uid != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
                         attr['reply'] = True
             try:
-                if resend:
+                if message.get('_sticker_id'):
+                    res = self.sendMessage(sender, '', sticker_id=message['_sticker_id'])
+                elif resend:
                     res = self.sendMessage(sender, '', sender_msg['id'])
                 elif attr.get('reply'):
                     res = self.sendMessage(sender, answer, message['id'])

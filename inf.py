@@ -73,6 +73,7 @@ def escape(message):
     return message
 
 last_reply_lower = set()
+_sticker_re = re.compile(r'^\\sticker\[(\d+)\]$')
 _cmd_re = re.compile(r'\\([a-zA-Z]+)((?:\[[^\]]+\])*)')
 
 def getBotReplyComment(message):
@@ -102,6 +103,12 @@ def getBotReply(message):
         console_message += ' (' + gender + ')'
 
     while '\\' in answer:
+        sticker = _sticker_re.match(answer)
+        if sticker:
+            console_message += ' (' + answer + ')'
+            answer = ''
+            message['_sticker_id'] = int(sticker.group(1))
+            break
         res = _cmd_re.sub(lambda m: preprocessReply(m.group(1), m.group(2).strip('][').split(']['),
                           message['user_id'], message.setdefault('_onsend_actions', [])), answer)
         console_message += ' (' + answer + ')'
