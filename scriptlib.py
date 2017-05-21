@@ -42,6 +42,21 @@ def getDialogs(a):
             break
     return dialogs
 
+def getMessageHistory(a, pid):
+    logging.info('Fetching messages: {}'.format(pid))
+    first = True
+    res = []
+    for i in itertools.count():
+        r = a.messages.getHistory(peer_id=pid, count=200, offset=i * 200)
+        if first:
+            logging.info('Total: {}'.format(r['count']))
+            first = False
+        res.extend(r['items'])
+        logging.info('fetched {}'.format((i + 1) * 200))
+        if len(r['items']) < 200:
+            break
+    return res[::-1]
+
 def resolvePid(a, pid, conf_allowed=True):
     if conf_allowed:
         if pid.isdigit():
