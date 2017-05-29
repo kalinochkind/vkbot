@@ -31,6 +31,7 @@ ignored_errors = {
     (15, 'friends.delete'): None,
     (15, 'messages.setActivity'): None,
     (100, 'messages.markAsRead'): None,
+    (100, 'messages.getHistory'): ('Unable to get message history', True),
     (113, 'users.get'): None,
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
     (8, '*'): (lambda p, m: '{}: error code 8'.format(m), True),
