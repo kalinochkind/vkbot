@@ -14,7 +14,6 @@ default_timeout = 5
 
 [vkbot]
 max_smiles = -1
-admin = 62715647
 no_ignore = yes
 add_everyone = yes
 no_leave_conf = yes

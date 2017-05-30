@@ -100,7 +100,6 @@ class VkBot:
         else:
             logging.info('Message dump does not exist')
         self.bad_conf_title = lambda s: False
-        self.admin = None
         self.banned_list = []
         self.message_lock = threading.Lock()
         self.banned = set()
@@ -309,7 +308,7 @@ class VkBot:
         cur_delay = (self.delay_on_reply - 1) * random.random() + 1
         send_time = cur_delay + typing_time
         user_delay = 0
-        if sender_msg and sender != self.admin:
+        if sender_msg:
             user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < CONF_START else self.same_conf_interval)
             # can be negative
         tl = Timeline(max(send_time, user_delay))

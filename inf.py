@@ -356,7 +356,6 @@ def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
             return prev_len - len(friend_controller.noadd)
         else:
             users -= friend_controller.noadd
-            users.discard(vk.admin)
             if not users:
                 return 0
             text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in users]) + (
@@ -396,7 +395,6 @@ signal.signal(signal.SIGINT, onExit)
 
 includeread_interval = config.get('intervals.includeread', 'i')
 vk = vkbot.VkBot(login, password, includeread_interval)
-vk.admin = config.get('vkbot.admin', 'i')
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('I am {}, {}'.format(vk.vars['name'][0], vk.self_id))
