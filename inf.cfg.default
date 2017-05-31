@@ -20,6 +20,8 @@ no_leave_conf = yes
 ignore_stickers = no
 ignore_caps = yes
 suppress_chat_stderr = no
+unfriend_on_invite = no
+leave_created_conf = no
 
 [stats]
 dialog_count = 10

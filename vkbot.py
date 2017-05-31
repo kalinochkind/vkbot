@@ -72,6 +72,8 @@ class VkBot:
         self.delay_on_first_reply = config.get('vkbot_timing.delay_on_first_reply', 'i')
         self.stats_dialog_count = config.get('stats.dialog_count', 'i')
         self.no_leave_conf = config.get('vkbot.no_leave_conf', 'b')
+        self.unfriend_on_invite = config.get('vkbot.unfriend_on_invite', 'b')
+        self.leave_created_conf = config.get('vkbot.leave_created_conf', 'b')
 
         self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
                                token_file=accounts.getFile('token.txt'),
@@ -215,11 +217,13 @@ class VkBot:
         if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
             self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
                            {'user_id': int(opt['from'])})
-            if not self.no_leave_conf and int(opt['from']) not in self.banned:
+            if self.unfriend_on_invite and int(opt['from']) not in self.banned:
                 self.deleteFriend(int(opt['from']))
         if opt.get('source_act') == 'chat_create' and opt['from'] != str(self.self_id):
             self.logSender('%sender% created conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
                            {'user_id': int(opt['from'])})
+            if self.unfriend_on_invite and int(opt['from']) not in self.banned:
+                self.deleteFriend(int(opt['from']))
         if flags & 2:  # out
             if not opt.get('source_act'):
                 self.tm.terminate(sender)
@@ -334,19 +338,16 @@ class VkBot:
         self.tm.run(sender, tl, tl.terminate)
 
     def checkConf(self, cid):
-        if self.no_leave_conf:
-            return True
         if cid + CONF_START in self.good_conf:
             return self.good_conf[cid + CONF_START]
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
-            if i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
+            if self.leave_created_conf and i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
                 self.leaveConf(cid)
-                self.deleteFriend(i['user_id'])
                 log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
                 return False
         title = self.confs[cid]['title']
-        if self.bad_conf_title(title):
+        if not self.no_leave_conf and self.bad_conf_title(title):
             self.leaveConf(cid)
             log.write('conf', 'conf ' + str(cid) + ' (name: {})'.format(title))
             return False
