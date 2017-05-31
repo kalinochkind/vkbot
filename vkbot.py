@@ -79,13 +79,13 @@ class VkBot:
                                token_file=accounts.getFile('token.txt'),
                                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
         stats.update('logging', bool(self.api.log_file))
-        # hi java
-        self.users = UserCache(self.api, self.fields + ',' + FriendController.requiredFields(_getFriendControllerParams()),
-                               config.get('cache.user_invalidate_interval', 'i'))
-        self.confs = ConfCache(self.api, config.get('cache.conf_invalidate_interval', 'i'))
         self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))
         self.vars['default_bf'] = self.vars['bf']['id']
         self.initSelf(True)
+        # hi java
+        self.users = UserCache(self.api, self.fields + ',' + FriendController.requiredFields(_getFriendControllerParams()),
+                               config.get('cache.user_invalidate_interval', 'i'))
+        self.confs = ConfCache(self.api, self.self_id, config.get('cache.conf_invalidate_interval', 'i'))
         self.guid = int(time.time() * 5)
         self.last_viewed_comment = stats.get('last_comment', 0)
         self.good_conf = {}
@@ -202,9 +202,11 @@ class VkBot:
     def longpollCallback(self, mid, flags, sender, ts, random_id, text, opt):
         if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
             self.good_conf[sender] = False
+            del self.confs[sender - CONF_START]
             return True
         if opt.get('source_mid') == str(self.self_id) and opt.get('source_act') == 'chat_invite_user' and sender in self.good_conf:
             del self.good_conf[sender]
+            del self.confs[sender - CONF_START]
             return True
 
         if opt.get('source_act') == 'chat_title_update':
@@ -346,6 +348,11 @@ class VkBot:
                 self.leaveConf(cid)
                 log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
                 return False
+            if i.get('action') == 'chat_kick_user' and i['user_id'] == self.self_id and  i.get('action_mid') == self.self_id:
+                if self.confs[cid]['invited_by'] not in self.banned:
+                    self.leaveConf(cid)
+                    log.write('conf', 'conf ' + str(cid) + ' (left)')
+                    return False
         title = self.confs[cid]['title']
         if not self.no_leave_conf and self.bad_conf_title(title):
             self.leaveConf(cid)

@@ -70,8 +70,21 @@ class UserCache(Cache):
         return self.api.users.get(user_ids=','.join(map(str, ids)), fields=self.fields)
 
 class ConfCache(Cache):
+    def __init__(self, api, self_id, invalidate_interval=0):
+        super().__init__(api, invalidate_interval)
+        self.self_id = self_id
+
     def _load(self, ids):
-        return self.api.messages.getChat(chat_ids=','.join(map(str, ids))) or []
+        r = self.api.messages.getChat(chat_ids=','.join(map(str, ids)), fields='id') or []
+        for conf in r:
+            for user in conf['users']:
+                if user['id'] == self.self_id:
+                    conf['invited_by'] = user['invited_by']
+                    break
+            else:
+                conf['invited_by'] = 0
+            del conf['users']
+        return r
 
 class MessageCache:
     def __init__(self):
