@@ -344,6 +344,9 @@ class VkBot:
             return self.good_conf[cid + CONF_START]
         messages = self.api.messages.getHistory(chat_id=cid)['items']
         for i in messages:
+            if i.get('action') == 'chat_invite_user' and i['user_id'] == self.self_id and i.get('action_mid') == self.self_id:
+                self.good_conf[cid + CONF_START] = True
+                return True
             if self.leave_created_conf and i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
                 self.leaveConf(cid)
                 log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
