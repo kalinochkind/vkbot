@@ -23,6 +23,24 @@ def restoreRecords():
     conn.commit()
     os.remove(accounts.getFile('db_log.csv'))
 
+def monitor():
+    global conn, emergency
+    import psycopg2
+    while True:
+        time.sleep(10)
+        with db_lock:
+            if conn:
+                break
+            try:
+                conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(config.get('db_logger.database'),
+                                                                                            config.get('db_logger.username'),
+                                                                                            config.get('db_logger.host'),
+                                                                                            config.get('db_logger.password')))
+            except psycopg2.OperationalError as e:
+                con = None
+            else:
+                break
+
 def execute(attempt, params):
     import psycopg2
     global conn, enabled, emergency
@@ -51,6 +69,17 @@ def execute(attempt, params):
                         emergency = True
 
     if emergency or attempt >= 5:
+        if emergency and conn is not None:
+            emergency = False
+            try:
+                restoreRecords()
+            except psycopg2.Error:
+                emergency = True
+                return False
+            return execute(attempt, params)
+        if not emergency:
+            t = threading.Thread(target=monitor)
+            t.start()
         emergency = True
         with open(accounts.getFile('db_log.csv'), 'a') as f:
             csv.writer(f).writerow(params)
@@ -71,7 +100,7 @@ def execute(attempt, params):
 
 
 def log(message, kind, text_msg=None, timestamp=None, *, attempt=0):
-    global enabled, conn
+    global conn
     if not enabled:
         return
     if attempt == 0:
