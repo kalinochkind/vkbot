@@ -395,10 +395,10 @@ signal.signal(signal.SIGINT, onExit)
 
 includeread_interval = config.get('intervals.includeread', 'i')
 vk = vkbot.VkBot(login, password, includeread_interval)
+bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'), accounts.getFile('chatdump.dat'))
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('I am {}, {}'.format(vk.vars['name'][0], vk.self_id))
-bot = CppBot(getNameIndex(vk.vars['name'][0]), config.get('vkbot.max_smiles', 'i'), accounts.getFile('chatdump.dat'))
 banign = BanManager(accounts.getFile('banned.txt'))
 vk.banned = banign.banned
 if args['whitelist']:

@@ -214,7 +214,7 @@ class VkBot:
             logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
             if not self.no_leave_conf and self.bad_conf_title(opt['source_text']):
                 self.leaveConf(sender - CONF_START)
-                log.write('conf', 'conf ' + str(sender - CONF_START) + ' (name: {})'.format(opt['source_text']))
+                log.write('conf', self.loggableConf(sender - CONF_START) + ' (name)')
                 return True
         if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
             self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
@@ -349,17 +349,17 @@ class VkBot:
                 return True
             if self.leave_created_conf and i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
                 self.leaveConf(cid)
-                log.write('conf', self.loggableName(i.get('user_id')) + ' ' + str(cid))
+                log.write('conf',  self.loggableName(i['user_id']) + ', ' + self.loggableConf(cid) + ' (left)')
                 return False
             if i.get('action') == 'chat_kick_user' and i['user_id'] == self.self_id and  i.get('action_mid') == self.self_id:
                 if self.confs[cid]['invited_by'] not in self.banned:
                     self.leaveConf(cid)
-                    log.write('conf', 'conf ' + str(cid) + ' (left)')
+                    log.write('conf', self.loggableName(self.confs[cid]['invited_by']) + ', ' + self.loggableConf(cid) + ' (left)')
                     return False
         title = self.confs[cid]['title']
         if not self.no_leave_conf and self.bad_conf_title(title):
             self.leaveConf(cid)
-            log.write('conf', 'conf ' + str(cid) + ' (name: {})'.format(title))
+            log.write('conf', self.loggableConf(cid) + ' (name)')
             return False
         self.good_conf[cid + CONF_START] = True
         return True
@@ -545,6 +545,9 @@ class VkBot:
 
     def loggableName(self, uid):
         return self.printableName(uid, '{id} ({name})')
+
+    def loggableConf(self, cid):
+        return 'conf ({}) `{}`'.format(cid, self.confs[cid]['title'].replace('`', "'"))
 
     def blacklist(self, uid):
         self.api.account.banUser(user_id=uid)
