@@ -571,11 +571,19 @@ class VkBot:
                 self.api.messages.getHistory.delayed(peer_id=getSender(dialog['message']), count=0).callback(cb)
                 if 'title' in dialog['message']:
                     confs[getSender(dialog['message'])] = dialog['message']['title']
+            self.confs.load([i - CONF_START for i in confs])
+            invited = {}
+            for i in confs:
+                if self.confs[i - CONF_START]:
+                    invited[i] = self.confs[i - CONF_START].get('invited_by')
+            self.users.load(invited.values())
+            for i in invited.copy():
+                invited[i] = [invited[i], self.printableName(invited[i], '{name}')]
             self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')
-            return (None, None, None)
-        return (dialogs['count'], d, confs)
+            return (None, None, None, None)
+        return (dialogs['count'], d, confs, invited)
 
     def acceptGroupInvites(self):
         for i in self.api.groups.getInvites()['items']:

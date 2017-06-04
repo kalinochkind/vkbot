@@ -522,10 +522,10 @@ def main_loop():
             vk.initSelf(True)
             stats.update('ignored', len(friend_controller.noadd))
             stats.update('blacklisted', vk.blacklistedCount())
-            count, dialogs, confs = vk.lastDialogs()
+            count, dialogs, confs, invited = vk.lastDialogs()
             if count is not None:
                 vk.loadUsers(dialogs, lambda x: x[0])
-                dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid).replace('{', '{{').replace('}', '}}')), cnt]
+                dialogs = [[uid, vk.printableName(uid, '{name}', conf_fmt='Conf "%s"' % confs.get(uid).replace('{', '{{').replace('}', '}}')), cnt, invited.get(uid)]
                            for uid, cnt in dialogs if uid > 0]
                 stats.update('dialogs', count)
                 stats.update('dialogs_list', dialogs)
