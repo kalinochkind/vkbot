@@ -574,8 +574,8 @@ class VkBot:
             self.confs.load([i - CONF_START for i in confs])
             invited = {}
             for i in confs:
-                if self.confs[i - CONF_START]:
-                    invited[i] = self.confs[i - CONF_START].get('invited_by')
+                if self.confs[i - CONF_START] and self.confs[i - CONF_START].get('invited_by'):
+                    invited[i] = self.confs[i - CONF_START]['invited_by']
             self.users.load(invited.values())
             for i in invited.copy():
                 invited[i] = [invited[i], self.printableName(invited[i], '{name}')]
