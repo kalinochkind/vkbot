@@ -558,7 +558,8 @@ class VkBot:
     def lastDialogs(self):
 
         def cb(req, resp):
-            d.append((req['peer_id'], resp['count']))
+            if resp:
+                d.append((req['peer_id'], resp['count']))
 
         dialogs = self.api.messages.getDialogs(count=self.stats_dialog_count, preview_length=1)
         d = []
