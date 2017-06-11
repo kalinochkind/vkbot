@@ -65,6 +65,10 @@ class UserCache(Cache):
     def __init__(self, api, fields, invalidate_interval=0):
         super().__init__(api, invalidate_interval)
         self.fields = fields
+        if ',' in fields and 'id' in fields.split(','):
+            l = fields.split(',')
+            l.remove('id')
+            self.fields = ','.join(l)
 
     def _load(self, ids):
         return self.api.users.get(user_ids=','.join(map(str, ids)), fields=self.fields)
