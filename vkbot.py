@@ -353,8 +353,9 @@ class VkBot:
                 return False
             if i.get('action') == 'chat_kick_user' and i['user_id'] == self.self_id and  i.get('action_mid') == self.self_id:
                 if self.confs[cid]['invited_by'] not in self.banned:
+                    inviter = self.confs[cid]['invited_by']
                     self.leaveConf(cid)
-                    log.write('conf', self.loggableName(self.confs[cid]['invited_by']) + ', ' + self.loggableConf(cid) + ' (left)')
+                    log.write('conf', self.loggableName(inviter) + ', ' + self.loggableConf(cid) + ' (left)')
                     return False
         title = self.confs[cid]['title']
         if not self.no_leave_conf and self.bad_conf_title(title):
