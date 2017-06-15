@@ -74,7 +74,7 @@ class UserCache(Cache):
         return self.api.users.get(user_ids=','.join(map(str, ids)), fields=self.fields)
 
 class ConfCache(Cache):
-    def __init__(self, api, self_id, invalidate_interval=0):
+    def __init__(self, api, self_id=0, invalidate_interval=0):
         super().__init__(api, invalidate_interval)
         self.self_id = self_id
 
