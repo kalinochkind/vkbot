@@ -37,6 +37,10 @@ def main(a, args):
                   ', online' if uc[m['user_id']]['online'] else '', msg['unread']))
         print()
         for i in messages[vkapi.utils.getSender(msg['message'])]:
+            if 'attachments' in i:
+                for a in i['attachments']:
+                    if a['type'] == 'photo':
+                        i['body'] += ' (' + a['photo'].get('photo_604') + ')'
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
             print()
             if 'chat_id' not in m:
