@@ -280,7 +280,7 @@ def preprocessReply(s, params, uid, onsend_actions):
     if s == 'mylastname':
         return vk.users[uid]['last_name']
     if s == 'curtime':
-        return time.strftime("%H:%M", time.localtime())
+        return time.strftime("%l:%M", time.localtime()).lstrip()
     if s == 'likeava':
         onsend_actions.append(lambda: vk.likeAva(uid))
         return ''
