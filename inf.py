@@ -531,6 +531,7 @@ def main_loop():
                 stats.update('dialogs_list', dialogs)
                 stats.update('phone', vk.vars['phone'])
                 stats.update('bf', vk.printableSender({'user_id': vk.vars['bf']['id']}, True))
+                stats.update('overload', vk.tracker.overload())
         if timeto('groupinvites', groupinvites_interval):
             vk.acceptGroupInvites()
         bot.reloadIfChanged()

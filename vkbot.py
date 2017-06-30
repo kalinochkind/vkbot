@@ -59,6 +59,18 @@ def createFriendController():
     controller_params = _getFriendControllerParams()
     return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'))
 
+
+class TimeTracker:
+    def __init__(self, size, delay):
+        self.times = [0] * size
+        self.delay = delay
+
+    def hit(self):
+        self.times = self.times[1:] + [time.time()]
+
+    def overload(self):
+        return time.time() - self.times[0] < self.delay
+
 class VkBot:
     fields = 'sex,crop_photo,blacklisted,blacklisted_by_me'
 
@@ -107,6 +119,8 @@ class VkBot:
         self.banned = set()
         self.receiver = MessageReceiver(self.api, get_dialogs_interval)
         self.receiver.longpoll_callback = self.longpollCallback
+        self.tracker = TimeTracker(config.get('vkbot.tracker_message_count', 'i'), config.get('vkbot.tracker_interval', 'i'))
+        self.tracker_multiplier = config.get('vkbot.tracker_multiplier', 'f')
 
     @property
     def whitelist(self):
@@ -243,6 +257,7 @@ class VkBot:
         with self.message_lock:
             self.guid += 1
             time.sleep(1)
+            self.tracker.hit()
             if sticker_id:
                 return self.api.messages.send(peer_id=to, sticker_id=sticker_id, random_id=self.guid)
             elif forward:
@@ -316,7 +331,10 @@ class VkBot:
         send_time = cur_delay + typing_time
         user_delay = 0
         if sender_msg:
-            user_delay = sender_msg['time'] - time.time() + (self.same_user_interval if sender < CONF_START else self.same_conf_interval)
+            same_interval = self.same_user_interval if sender < CONF_START else self.same_conf_interval
+            if self.tracker.overload():
+                same_interval *= self.tracker_multiplier
+            user_delay = sender_msg['time'] - time.time() + same_interval
             # can be negative
         tl = Timeline(max(send_time, user_delay))
         if 'chat_id' in message:
