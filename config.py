@@ -48,4 +48,6 @@ def rebuild(current, default):
         new.write(f)
     with open(current + '.old', 'w') as f:
         old.write(f)
-    print('Deleted keys have been saved to {}.old'.format(current))
+    old_keys = [s + '.' + k for s in old for k in old[s]]
+    if old_keys:
+        print('Deleted keys have been saved to {}.old ({})'.format(current, ', '.join(old_keys)))
