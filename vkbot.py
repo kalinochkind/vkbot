@@ -103,11 +103,15 @@ class VkBot:
         self.good_conf = {}
         self.tm = ThreadManager()
         self.last_message = MessageCache()
+        self.tracker = TimeTracker(config.get('vkbot.tracker_message_count', 'i'), config.get('vkbot.tracker_interval', 'i'))
+        self.tracker_multiplier = config.get('vkbot.tracker_multiplier', 'f')
         if os.path.isfile(accounts.getFile('msgdump.json')):
             try:
                 data = json.load(open(accounts.getFile('msgdump.json')))
                 self.last_message.load(data['cache'])
                 self.api.longpoll = data['longpoll']
+                if len(data['tracker']) == len(self.tracker.times):
+                    self.tracker.times = data['tracker']
             except json.JSONDecodeError:
                 logging.warning('Failed to load messages')
             os.remove(accounts.getFile('msgdump.json'))
@@ -119,8 +123,6 @@ class VkBot:
         self.banned = set()
         self.receiver = MessageReceiver(self.api, get_dialogs_interval)
         self.receiver.longpoll_callback = self.longpollCallback
-        self.tracker = TimeTracker(config.get('vkbot.tracker_message_count', 'i'), config.get('vkbot.tracker_interval', 'i'))
-        self.tracker_multiplier = config.get('vkbot.tracker_multiplier', 'f')
 
     @property
     def whitelist(self):
@@ -534,7 +536,7 @@ class VkBot:
         for t in self.tm.all():
             t.join(60)
         with open(accounts.getFile('msgdump.json'), 'w') as f:
-            json.dump({'cache': self.last_message.dump(), 'longpoll': lp}, f)
+            json.dump({'cache': self.last_message.dump(), 'longpoll': lp, 'tracker': self.tracker.times}, f)
 
     # {name} - first_name last_name
     # {id} - id
