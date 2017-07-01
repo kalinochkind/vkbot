@@ -80,7 +80,7 @@ class MessageReceiver:
         result = []
         for record in arr:
             if record[0] == 4:  # new message
-                mid, flags, sender, ts, random_id, text, opt = record[1:]
+                mid, flags, sender, ts, text, opt = record[1:]
 
                 if self.longpoll_callback and self.longpoll_callback(*record[1:]):
                     continue

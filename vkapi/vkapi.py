@@ -21,7 +21,8 @@ def retOrCall(s, *p):
 
 
 class VkApi:
-    api_version = '5.64'
+    api_version = '5.65'
+    longpoll_version = 2
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
                'market', 'messages', 'newsfeed',
                'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',
@@ -269,7 +270,7 @@ class VkApi:
         return self.token
 
     def initLongpoll(self):
-        r = self.messages.getLongPollServer()
+        r = self.messages.getLongPollServer(lp_version=self.longpoll_version)
         if not r:
             logger.warning('Unable to initialize longpoll')
             self.longpoll = {}
@@ -281,8 +282,8 @@ class VkApi:
             self.initLongpoll()
         if not self.longpoll:
             return []
-        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version=1'.format(
-            self.longpoll['server'], self.longpoll['key'], self.longpoll['ts'], mode)
+        url = 'https://{}?act=a_check&key={}&ts={}&wait=25&mode={}&version={}'.format(
+            self.longpoll['server'], self.longpoll['key'], self.longpoll['ts'], mode, self.longpoll_version)
         try:
             json_string = urllib.request.urlopen(url, timeout=30).read()
         except urllib.error.HTTPError as e:

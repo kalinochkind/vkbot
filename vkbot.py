@@ -213,7 +213,7 @@ class VkBot:
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
     # noinspection PyUnusedLocal
-    def longpollCallback(self, mid, flags, sender, ts, random_id, text, opt):
+    def longpollCallback(self, mid, flags, sender, ts, text, opt):
         if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
             self.good_conf[sender] = False
             del self.confs[sender - CONF_START]
