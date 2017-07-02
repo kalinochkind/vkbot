@@ -122,7 +122,7 @@ class MessageReceiver:
                 for i in list(opt):
                     if i.startswith('attach'):
                         del opt[i]
-                if not set(opt) <= {'from', 'emoji'} and not opt.get('source_act'):
+                if not set(opt) <= {'from', 'emoji', 'title'} and not opt.get('source_act'):
                     need_extra.append(str(mid))
                     continue
                 result.append(msg)
