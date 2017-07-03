@@ -601,7 +601,7 @@ class VkBot:
                     invited[i] = self.confs[i - CONF_START]['invited_by']
             self.users.load(invited.values())
             for i in invited.copy():
-                invited[i] = [invited[i], self.printableName(invited[i], '{name}')]
+                invited[i] = [invited[i], self.printableName(invited[i], '{name}'), self.users[invited[i]]['sex'] == 1]
             self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')
