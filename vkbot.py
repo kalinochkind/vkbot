@@ -214,42 +214,41 @@ class VkBot:
         if self.receiver.used_get_dialogs:
             stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
-    # noinspection PyUnusedLocal
-    def longpollCallback(self, mid, flags, sender, ts, text, opt):
-        if opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
-            self.good_conf[sender] = False
-            del self.confs[sender - CONF_START]
+    def longpollCallback(self, msg):
+        if msg.opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
+            self.good_conf[msg.sender] = False
+            del self.confs[msg.sender - CONF_START]
             return True
-        if opt.get('source_mid') == str(self.self_id) and opt.get('source_act') == 'chat_invite_user' and sender in self.good_conf:
-            del self.good_conf[sender]
-            del self.confs[sender - CONF_START]
+        if msg.opt.get('source_mid') == str(self.self_id) and msg.opt.get('source_act') == 'chat_invite_user' and msg.sender in self.good_conf:
+            del self.good_conf[msg.sender]
+            del self.confs[msg.sender - CONF_START]
             return True
 
-        if opt.get('source_act') == 'chat_title_update':
-            del self.confs[sender - CONF_START]
-            if sender not in self.banned:
-                logging.info('Conf {} renamed into "{}"'.format(sender - CONF_START, opt['source_text']))
-            if not self.no_leave_conf and self.bad_conf_title(opt['source_text']):
-                self.leaveConf(sender - CONF_START)
-                log.write('conf', self.loggableConf(sender - CONF_START) + ' (name)')
+        if msg.opt.get('source_act') == 'chat_title_update':
+            del self.confs[msg.sender - CONF_START]
+            if msg.sender not in self.banned:
+                logging.info('Conf {} renamed into "{}"'.format(msg.sender - CONF_START, msg.opt['source_text']))
+            if not self.no_leave_conf and self.bad_conf_title(msg.opt['source_text']):
+                self.leaveConf(msg.sender - CONF_START)
+                log.write('conf', self.loggableConf(msg.sender - CONF_START) + ' (name)')
                 return True
-        if opt.get('source_act') == 'chat_invite_user' and opt['source_mid'] == str(self.self_id) and opt['from'] != str(self.self_id):
-            self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
-                           {'user_id': int(opt['from'])})
-            if self.unfriend_on_invite and int(opt['from']) not in self.banned:
-                self.deleteFriend(int(opt['from']))
-        if opt.get('source_act') == 'chat_create' and opt['from'] != str(self.self_id):
-            self.logSender('%sender% created conf "{}" ({})'.format(self.confs[sender - CONF_START]['title'], sender - CONF_START),
-                           {'user_id': int(opt['from'])})
-            if self.unfriend_on_invite and int(opt['from']) not in self.banned:
-                self.deleteFriend(int(opt['from']))
-        if flags & 2:  # out
-            if not opt.get('source_act'):
-                self.tm.terminate(sender)
+        if msg.opt.get('source_act') == 'chat_invite_user' and msg.opt['source_mid'] == str(self.self_id) and msg.opt['from'] != str(self.self_id):
+            self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
+                           {'user_id': int(msg.opt['from'])})
+            if self.unfriend_on_invite and int(msg.opt['from']) not in self.banned:
+                self.deleteFriend(int(msg.opt['from']))
+        if msg.opt.get('source_act') == 'chat_create' and msg.opt['from'] != str(self.self_id):
+            self.logSender('%sender% created conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
+                           {'user_id': int(msg.opt['from'])})
+            if self.unfriend_on_invite and int(msg.opt['from']) not in self.banned:
+                self.deleteFriend(int(msg.opt['from']))
+        if msg.flags & 2:  # out
+            if not msg.opt.get('source_act'):
+                self.tm.terminate(msg.sender)
             return True
         try:
-            if 'from' in opt and int(opt['from']) != self.tm.get(sender).attr['user_id'] and not opt.get('source_act'):
-                self.tm.get(sender).attr['reply'] = True
+            if 'from' in msg.opt and int(msg.opt['from']) != self.tm.get(msg.sender).attr['user_id'] and not msg.opt.get('source_act'):
+                self.tm.get(msg.sender).attr['reply'] = True
         except Exception:
             pass
 

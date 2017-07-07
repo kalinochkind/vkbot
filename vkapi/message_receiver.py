@@ -4,7 +4,7 @@ import queue
 import threading
 import time
 
-from .utils import CONF_START
+from .utils import CONF_START, LongpollMessage
 
 logger = logging.getLogger('vkapi.receiver')
 
@@ -80,50 +80,49 @@ class MessageReceiver:
         result = []
         for record in arr:
             if record[0] == 4:  # new message
-                mid, flags, sender, ts, text, opt = record[1:]
-
-                if self.longpoll_callback and self.longpoll_callback(*record[1:]):
+                lm = LongpollMessage(record[1:])
+                if self.longpoll_callback and self.longpoll_callback(lm):
                     continue
 
-                if flags & 2:
+                if lm.flags & 2:
                     continue
-                msg = {'id': mid, 'date': ts, 'body': html.unescape(text).replace('<br>', '\n'), 'out': 0, '_method': ''}
-                if opt.get('source_act'):
+                msg = {'id': lm.mid, 'date': lm.ts, 'body': html.unescape(lm.text).replace('<br>', '\n'), 'out': 0, '_method': ''}
+                if lm.opt.get('source_act'):
                     msg['body'] = None
-                    msg['action'] = opt['source_act']
-                if 'from' in opt:
-                    msg['chat_id'] = sender - CONF_START
-                    msg['user_id'] = int(opt['from'])
+                    msg['action'] = lm.opt['source_act']
+                if 'from' in lm.opt:
+                    msg['chat_id'] = lm.sender - CONF_START
+                    msg['user_id'] = int(lm.opt['from'])
                 else:
-                    msg['user_id'] = sender
+                    msg['user_id'] = lm.sender
 
                 attachments = []
                 for number in range(1, 11):
                     prefix = 'attach' + str(number)
-                    kind = opt.get(prefix + '_type')
+                    kind = lm.opt.get(prefix + '_type')
                     if kind is None:
                         continue  # or break
                     if kind == 'photo':
                         attachments.append({'type': 'photo'})
                     elif kind == 'sticker':
                         attachments.append({'type': 'sticker'})
-                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'audiomsg':
+                    elif kind == 'doc' and lm.opt.get(prefix + '_kind') == 'audiomsg':
                         attachments.append({'type': 'doc', 'doc': {'type': 5}})
-                    elif kind == 'doc' and opt.get(prefix + '_kind') == 'graffiti':
+                    elif kind == 'doc' and lm.opt.get(prefix + '_kind') == 'graffiti':
                         attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
                     else:  # something hard
-                        need_extra.append(str(mid))
+                        need_extra.append(str(lm.mid))
                         msg = None
                         break
                 if not msg:
                     continue
                 if attachments:
                     msg['attachments'] = attachments
-                for i in list(opt):
+                for i in list(lm.opt):
                     if i.startswith('attach'):
-                        del opt[i]
-                if not set(opt) <= {'from', 'emoji', 'title'} and not opt.get('source_act'):
-                    need_extra.append(str(mid))
+                        del lm.opt[i]
+                if not set(lm.opt) <= {'from', 'emoji', 'title'} and not lm.opt.get('source_act'):
+                    need_extra.append(str(lm.mid))
                     continue
                 result.append(msg)
 

@@ -20,6 +20,10 @@ class DelayedCall:
     def __eq__(self, a):
         return self.method == a.method and self.params == a.params and self.callback_func is None and a.callback_func is None
 
+class LongpollMessage:
+    def __init__(self, record):
+        self.mid, self.flags, self.sender, self.ts, self.text, self.opt = record
+
 class VkError(Exception):
     pass
 

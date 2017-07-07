@@ -19,7 +19,7 @@ def main(a, args):
         for i in lp:
             if i[0] != 4:
                 continue
-            mid, flags, sender, ts, text, opt = i[1:]
-            if opt.get('source_act') == 'chat_kick_user' and opt['source_mid'] in data and opt['source_mid'] != self_id:
-                print('Adding', opt['source_mid'], flush=True)
-                a.messages.addChatUser(user_id=opt['source_mid'], chat_id=sender - vkapi.CONF_START)
+            msg = vkapi.utils.LongpollMessage(i[1:])
+            if msg.opt.get('source_act') == 'chat_kick_user' and msg.opt['source_mid'] in data and msg.opt['source_mid'] != self_id:
+                print('Adding', msg.opt['source_mid'], flush=True)
+                a.messages.addChatUser(user_id=msg.opt['source_mid'], chat_id=msg.sender - vkapi.CONF_START)
