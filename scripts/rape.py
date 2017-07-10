@@ -7,6 +7,7 @@ def main(a, args):
     a.ignored_errors = {
         (15, 'messages.addChatUser'): ('Failed', False),
         (100, 'messages.addChatUser'): ('Failed', False),
+        (10, 'messages.getLongPollServer'): ('Longpoll error', True),
     }
     if not args:
         print('Config file required')
