@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import time
+import html
 
 import accounts
 import config
@@ -24,7 +25,7 @@ class MyHandler(logging.Handler):
         lvl = record.levelname
         if any(msg.lower().startswith(i) for i in ('red|', 'green|', 'yellow|')):
             color, msg = msg.split('|', maxsplit=1)
-            log.info(msg, color.lower())
+            log.info((msg, html.escape(msg)), color.lower())
             return
         db_msg = getattr(record, 'db', None)
         if db_msg:
