@@ -229,7 +229,7 @@ class VkBot:
             del self.confs[msg.sender - CONF_START]
             if msg.sender not in self.banned:
                 logging.info('Conf {} renamed into "{}"'.format(msg.sender - CONF_START, msg.opt['source_text']))
-            if not self.no_leave_conf and self.bad_conf_title(msg.opt['source_text']):
+            if not self.no_leave_conf and self.confs[msg.sender - CONF_START]['invited_by'] not in self.banned and self.bad_conf_title(msg.opt['source_text']):
                 self.leaveConf(msg.sender - CONF_START)
                 log.write('conf', self.loggableConf(msg.sender - CONF_START) + ' (name)')
                 return True
@@ -379,7 +379,7 @@ class VkBot:
                     log.write('conf', self.loggableName(inviter) + ', ' + self.loggableConf(cid) + ' (left)')
                     return False
         title = self.confs[cid]['title']
-        if not self.no_leave_conf and self.bad_conf_title(title):
+        if not self.no_leave_conf and self.confs[cid]['invited_by'] not in self.banned and self.bad_conf_title(title):
             self.leaveConf(cid)
             log.write('conf', self.loggableConf(cid) + ' (name)')
             return False
