@@ -86,14 +86,14 @@ def getBotReply(message):
     message['body'] = escape(message['body'])
     answer = bot.interact('{} {} {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], message['body']))
 
-    if answer == '$noans':
+    if answer == '$noans' and not (message.get('_is_sticker') and message.get('chat_id')):
         if (message['body'].upper() == message['body'].lower() and '?' not in message['body']) or message.get('_is_sticker'):
             answer = random.choice(smiles)
         else:
             answer = noans[0]
             next_ans = random.randint(1, len(noans) - 1)
             noans[0], noans[next_ans] = noans[next_ans], noans[0]
-    elif answer == '$blacklisted':
+    elif answer == '$blacklisted' or answer == '$noans':
         answer = ''
 
     console_message = ''

@@ -141,6 +141,16 @@ void Highlight(wstring &line, const vector<pair<long long, pair<int, int> > > &w
 long long phnamec = phash(L"firstnamec");
 
 
+bool HasLetters(const wstring &line)
+{
+    for(auto i : line)
+    {
+        if(towupper(i) != towlower(i) || i == '?')
+            return true;
+    }
+    return false;
+}
+
 //-1: comment
 //-2: flat
 wstring Say(wstring &line, int id, bool conf)
@@ -203,9 +213,10 @@ wstring Say(wstring &line, int id, bool conf)
 
     if(mx == 0)
     {
-        if(conf)
+        if(conf && !HasLetters(line))
         {
             wcerr << "red|" << line << "- no match\n";
+            users[id].smiles++;
             return L"";
         }
         if(id >= 0 && users[id].smiles >= MAX_SMILES)
