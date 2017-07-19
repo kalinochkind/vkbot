@@ -243,6 +243,10 @@ class VkBot:
                            {'user_id': int(msg.opt['from'])})
             if self.unfriend_on_invite and int(msg.opt['from']) not in self.banned:
                 self.deleteFriend(int(msg.opt['from']))
+            if not self.no_leave_conf and int(msg.opt['from']) not in self.banned and self.bad_conf_title(self.confs[msg.sender - CONF_START]['title']):
+                self.leaveConf(msg.sender - CONF_START)
+                log.write('conf', self.loggableName(int(msg.opt['from'])) + ', ' + self.loggableConf(msg.sender - CONF_START) + ' (created, name)')
+                return True
         if msg.flags & 2:  # out
             if not msg.opt.get('source_act'):
                 self.tm.terminate(msg.sender)
