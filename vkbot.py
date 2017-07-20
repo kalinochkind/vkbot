@@ -325,7 +325,7 @@ class VkBot:
                     res = self.sendMessage(sender, answer)
                 if res is None:
                     del self.users[sender]
-                    self.logSender('Failed to send a message to %sender%', message)
+                    self.logSender('Failed to send a message to %sender%', message, short=True)
                     return
                 msg = self.last_message.add(sender, message, res, answer)
                 if resend:
@@ -550,13 +550,15 @@ class VkBot:
         else:
             return user_fmt.format(id=pid, name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
 
-    def logSender(self, text, message):
-        text_msg = text.replace('%sender%', self.printableSender(message, False))
-        html_msg = html.escape(text).replace('%sender%', self.printableSender(message, True))
+    def logSender(self, text, message, short=False):
+        text_msg = text.replace('%sender%', self.printableSender(message, False, short=short))
+        html_msg = html.escape(text).replace('%sender%', self.printableSender(message, True, short=short))
         logging.info(text_msg, extra={'db': html_msg})
 
-    def printableSender(self, message, need_html):
+    def printableSender(self, message, need_html, short=False):
         if message.get('chat_id', 0) > 0:
+            if short:
+                return self.printableName(message['chat_id'] + CONF_START, '', 'conf "{name}" ({id})')
             if need_html:
                 res = self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>')
                 return res.replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
