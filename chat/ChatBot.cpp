@@ -44,11 +44,21 @@ struct userinfo
     }
 };
 
+struct replyinfo
+{
+    vector<wstring> replies;
+    wstring limiter;
+    long long context;
+
+    replyinfo(): replies(), limiter(), context(0) {}
+    replyinfo(vector<wstring> &r, wstring &l, long long c): replies(r), limiter(l), context(c) {}
+};
+
 unsigned MAX_SMILES;
 int myName;
 
 vector<wstring> request;
-vector<shared_ptr<pair<vector<wstring>, long long> > > reply;
+vector<shared_ptr<replyinfo> > reply;
 vector<pair<vector<long long>, long long> > tf;
 vector<pair<long long, long long> > fixedstem;
 vector<pair<long long, long long> > replaced;
@@ -155,7 +165,17 @@ bool HasLetters(const wstring &line)
 //-2: flat
 wstring Say(wstring &line, int id, bool conf)
 {
+    wstring limiter = L"";
     line += L' ';
+    if(line[1] == L'@')
+    {
+        int i;
+        for(i=2;line[i]!=L' ';i++)
+        {
+            limiter += line[i];
+        }
+        line = line.substr(i);
+    }
     long long context = users[id].context;
     if(line[1] == L'$' && id == -2)
     {
@@ -240,7 +260,7 @@ wstring Say(wstring &line, int id, bool conf)
 
     if(id >= 0)
     {
-        users[id].context = reply[imx]->second;
+        users[id].context = reply[imx]->context;
         if(users[id].lastReply == imx + 1)
         {
             users[id].lastReply = -(imx + 1);
@@ -258,40 +278,62 @@ wstring Say(wstring &line, int id, bool conf)
     }
     if(id >= 0)
     {
-        wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
-        if(reply[imx]->first.size() > 1)
+        if(limiter.length() && limiter.length() < reply[imx]->limiter.length() && reply[imx]->limiter.substr(0, limiter.length()) == limiter
+            && reply[imx]->limiter[limiter.length()] == L'[')
         {
-            wcerr << L", " << reply[imx]->first.size() << L" replies";
+            wcerr << "red|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")" << " - limited\n";
+            return L"";
+        }
+        wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
+        if(reply[imx]->replies.size() > 1)
+        {
+            wcerr << L", " << reply[imx]->replies.size() << L" replies";
         }
         wcerr << L"\n";
     }
     if(id == -2)
     {
-        for(int i=0;i<(int)reply[imx]->first.size();i++)
+        for(int i=0;i<(int)reply[imx]->replies.size();i++)
         {
             req += '|';
-            req += reply[imx]->first[i];
+            req += reply[imx]->replies[i];
         }
         req += '|';
         req += to_wstring(mx / norm(words));
         req += '|';
-        req += context_map[reply[imx]->second];
+        req += context_map[reply[imx]->context];
+        req += '|';
+        req += reply[imx]->limiter;
         return req;
     }
-    wstring ans = reply[imx]->first[0];
-    SwapFirst(reply[imx]->first, 0);
+    wstring ans = reply[imx]->replies[0];
+    SwapFirst(reply[imx]->replies, 0);
     return ans;
 }
 
-shared_ptr<pair<vector<wstring>, long long> > splitReply(const wstring &t)
+shared_ptr<replyinfo> splitReply(const wstring &t)
 {
     vector<wstring> ans;
     wstring s;
     wstring ctx;
+    wstring lim;
     int i = 0;
-    if(t[0] == L'$')
+    if(t[0] == L'@')
     {
         for(i=1;i<(int)t.size();i++)
+        {
+            if(t[i] == L' ')
+            {
+                i++;
+                break;
+            }
+            lim += t[i];
+        }
+    }
+    if(t[i] == L'$')
+    {
+        i++;
+        for(;i<(int)t.size();i++)
         {
             if(t[i] == L' ')
             {
@@ -317,15 +359,15 @@ shared_ptr<pair<vector<wstring>, long long> > splitReply(const wstring &t)
     if(s.length())
         ans.push_back(s);
     context_map[phash(ctx)] = ctx;
-    return make_shared<pair<vector<wstring>, long long> >(make_pair(ans, phash(ctx)));
+    return make_shared<replyinfo>(ans, lim, phash(ctx));
 }
 
 void AddReply(const wstring &req, const wstring &rep)
 {
     auto v = splitReply(rep);
     auto u = *splitReply(req);
-    SwapFirst(v->first, 1);
-    for(wstring& i : u.first)
+    SwapFirst(v->replies, 1);
+    for(wstring& i : u.replies)
     {
         reply.push_back(v);
         request.push_back(i);
@@ -337,7 +379,7 @@ void AddReply(const wstring &req, const wstring &rep)
         {
             df[j]++;
         }
-        tf.push_back({words, u.second});
+        tf.push_back({words, u.context});
     }
 }
 
