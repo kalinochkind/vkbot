@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from collections import defaultdict
 
 logger = logging.getLogger('cache')
 
@@ -122,3 +123,32 @@ class MessageCache:
     def load(self, data):
         self.user_msg = {int(i): data['messages'][str(j)] for i, j in data['user'].items()}
         self.sender_msg = {int(i): data['messages'][str(j)] for i, j in data['sender'].items()}
+
+
+class LimiterCache:
+
+    def __init__(self, config_file):
+        self.data = defaultdict(dict)
+        self.intervals = {}
+        self.config_file = config_file
+        self.reload()
+
+    def reload(self):
+        with open(self.config_file) as f:
+            lines = filter(str.strip, f.readlines())
+            self.intervals = {limit: int(interval) for limit, interval in map(str.split, lines)}
+
+    def add(self, pid, limiters):
+        t = time.time()
+        for l in limiters.split():
+            self.data[pid][l[1:]] = t
+
+    def get(self, pid):
+        t = time.time()
+        res = []
+        for l in self.data[pid]:
+            if l not in self.intervals:
+                logger.error('Unknown limiter: ' + l)
+            elif self.data[pid][l] + self.intervals[l] > t:
+                res.append(l)
+        return ' '.join('@' + i for i in res)

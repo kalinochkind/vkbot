@@ -165,16 +165,23 @@ bool HasLetters(const wstring &line)
 //-2: flat
 wstring Say(wstring &line, int id, bool conf)
 {
-    wstring limiter = L"";
+    vector<wstring> limiters;
     line += L' ';
-    if(line[1] == L'@')
+    if(id > 0)
     {
-        int i;
-        for(i=2;line[i]!=L' ';i++)
+        wistringstream is;
+        is.str(line);
+        wstring t;
+        is >> t;
+        while(t.length() && t[0] != L'|')
         {
-            limiter += line[i];
+            if(t[0] == L'@')
+            {
+                limiters.push_back(t.substr(1));
+            }
+            is >> t;
         }
-        line = line.substr(i);
+        getline(is, line);
     }
     long long context = users[id].context;
     if(line[1] == L'$' && id == -2)
@@ -278,11 +285,13 @@ wstring Say(wstring &line, int id, bool conf)
     }
     if(id >= 0)
     {
-        if(limiter.length() && limiter.length() < reply[imx]->limiter.length() && reply[imx]->limiter.substr(0, limiter.length()) == limiter
-            && reply[imx]->limiter[limiter.length()] == L'[')
+        for(auto &limiter : limiters)
         {
-            wcerr << "red|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")" << " - limited\n";
-            return L"";
+            if(limiter == reply[imx]->limiter)
+            {
+                wcerr << "red|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")" << " - limited\n";
+                return L"";
+            }
         }
         wcerr << "green|" << line << L"== " << req << (tf[imx].second ? L" (context, " : L" (") << mx / norm(words) << L")";
         if(reply[imx]->replies.size() > 1)
@@ -306,7 +315,7 @@ wstring Say(wstring &line, int id, bool conf)
         req += reply[imx]->limiter;
         return req;
     }
-    wstring ans = reply[imx]->replies[0];
+    wstring ans = (reply[imx]->limiter.length() ? L"@" + reply[imx]->limiter : L"") + L"|" + reply[imx]->replies[0];
     SwapFirst(reply[imx]->replies, 0);
     return ans;
 }

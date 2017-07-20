@@ -14,6 +14,7 @@ import log
 import stats
 import vkbot
 from args import args
+from cache import LimiterCache
 from calc import evalExpression
 from cppbot import CppBot
 from prepare import login, password
@@ -84,7 +85,13 @@ def getBotReplyFlat(message):
 
 def getBotReply(message):
     message['body'] = escape(message['body'])
-    answer = bot.interact('{} {} {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], message['body']))
+    raw_answer = bot.interact('{} {} {} | {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], limiter_cache.get(getSender(message)), message['body']))
+    if '|' in raw_answer:
+        limiters, answer = raw_answer.split('|', maxsplit=1)
+    else:
+        limiters = ''
+        answer = raw_answer
+    limiter_cache.add(getSender(message), limiters)
 
     if answer == '$noans' and not (message.get('_is_sticker') and message.get('chat_id')):
         if (message['body'].upper() == message['body'].lower() and '?' not in message['body']) or message.get('_is_sticker'):
@@ -135,6 +142,8 @@ def getBotReply(message):
     return answer
 
 bot_users = {}
+
+limiter_cache = LimiterCache('data/limiters.txt')
 
 # returns (text, is_friendship_request)
 # for friendship requests we do not call markAsRead
