@@ -475,21 +475,15 @@ def leaveHandler(conf):
 
 # noinspection PyUnusedLocal
 def banlistHandler(*p):
-    if banign.banned:
-        result = sorted(banign.banned)
-        result = [str(j) + ' ' + vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a>') for j in result]
-        return '\n'.join(result)
-    else:
-        return 'No one banned!'
+    result = sorted(banign.banned)
+    result = [str(j) + ' ' + vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a>') for j in result]
+    return '\n'.join(result)
 
 # noinspection PyUnusedLocal
 def ignlistHandler(*p):
-    if friend_controller.noadd:
-        result = sorted(i for i in friend_controller.noadd if i > CONF_START)
-        result = [str(j) + ' ' + vk.printableName(j, user_fmt='') for j in result]
-        return '\n'.join(result)
-    else:
-        return 'No confs ignored!'
+    result = sorted(i for i in friend_controller.noadd if i > CONF_START)
+    result = [str(j) + ' ' + vk.printableName(j, user_fmt='') for j in result]
+    return '\n'.join(result)
 
 
 if config.get('server.port', 'i') > 0:

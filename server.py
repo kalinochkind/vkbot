@@ -29,7 +29,7 @@ class MessageServer:
                 continue
             try:
                 res = self.handlers[data[0]](data[1])
-                conn.send(res.encode('utf-8'))
+                conn.send(res.encode('utf-8') or b' ')
             except Exception:
                 logger.exception('MessageServer error')
                 conn.send(b'error')
