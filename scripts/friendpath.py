@@ -11,6 +11,7 @@ def main(a, args):
         (15, 'friends.get'): None,
         (18, 'friends.get'): None,
     }
+    direct_ignored = False
 
     def getName(u):
         r = a.users.get(user_ids=u)[0]
@@ -38,6 +39,12 @@ def main(a, args):
                     c = parent[c]
                     chain2.append(c)
                 chain = chain1[::-1] + chain2
+                if len(chain) == 2:
+                    nonlocal direct_ignored
+                    if not direct_ignored:
+                        print('Ignoring direct friendship')
+                        direct_ignored = True
+                    continue
                 if chain[0] == end:
                     chain = chain[::-1]
                 for uid in chain:
@@ -52,6 +59,7 @@ def main(a, args):
         print('No such user')
         return
     if start == end:
+        print('Too easy')
         return
     print(start, end)
     dist1[start] = 0
@@ -64,3 +72,4 @@ def main(a, args):
         for j in list(parent):
             if dist1.get(j) == d or dist2.get(j) == d:
                 addFriends(j)
+    print('No path found')
