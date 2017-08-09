@@ -196,11 +196,15 @@ wstring Say(wstring &line, int id, bool conf)
         context = phash(ctx);
     }
     auto words_pos = splitWords(line, fixedstem, replaced, names);
-    vector<long long> words = PlainWords(words_pos);
     if(conf)
     {
-        replace(words.begin(), words.end(), phname, phnamec);
+        for(auto &i : words_pos)
+        {
+            if(i.first == phname)
+                i.first = phnamec;
+        }
     }
+    vector<long long> words = PlainWords(words_pos);
     sort(words.begin(), words.end());
     words.resize(unique(words.begin(), words.end()) - words.begin());
     for(auto &i : blacklist)
