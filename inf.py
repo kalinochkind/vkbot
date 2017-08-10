@@ -193,6 +193,9 @@ def reply(message):
         if message.get('_is_voice') and 'chat_id' in message:
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
+        if len(message['body']) > config.get('vkbot.max_message_length', 'i'):
+            vk.logSender('(%sender%) {}... - too long message'.format(message['body'][:50]), message)
+            return ('', False)
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too

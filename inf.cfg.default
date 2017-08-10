@@ -22,6 +22,7 @@ ignore_caps = yes
 suppress_chat_stderr = no
 unfriend_on_invite = no
 leave_created_conf = no
+max_message_length = 1000
 
 tracker_message_count = 50
 tracker_interval = 600
