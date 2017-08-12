@@ -84,7 +84,6 @@ def getBotReplyFlat(message):
     return bot.interact('flat 0 ' + escape(message)) == '$blacklisted'
 
 def getBotReply(message):
-    message['body'] = escape(message['body'])
     raw_answer = bot.interact('{} {} {} | {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], limiter_cache.get(getSender(message)), message['body']))
     if '|' in raw_answer:
         limiters, answer = raw_answer.split('|', maxsplit=1)
@@ -163,6 +162,7 @@ def reply(message):
         message['body'] = ''
     if message['body'] is None:
         return (None, False)
+    message['body'] = escape(message['body'])
 
     if 'id' not in message:  # friendship request
         message['body'] = message['message']
