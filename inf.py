@@ -491,8 +491,8 @@ def ignlistHandler(*p):
 
 if config.get('server.port', 'i') > 0:
     srv = MessageServer(config.get('server.port', 'i'))
-    srv.addHandler('reply', lambda x: bot.interact('flat ' + x, False))
-    srv.addHandler('stem', lambda x: bot.interact('stem ' + x, False))
+    srv.addHandler('reply', lambda x: bot.interact('flat ' + escape(x), False))
+    srv.addHandler('stem', lambda x: bot.interact('stem ' + escape(x), False))
     srv.addHandler('ignore', ignoreHandler)
     srv.addHandler('unignore', unignoreHandler)
     srv.addHandler('ban', banHandler)
