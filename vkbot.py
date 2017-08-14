@@ -228,7 +228,7 @@ class VkBot:
         if msg.opt.get('source_act') == 'chat_title_update':
             del self.confs[msg.sender - CONF_START]
             if msg.sender not in self.banned:
-                logging.info('Conf {} renamed into "{}"'.format(msg.sender - CONF_START, msg.opt['source_text']))
+                logging.info('Conf {} ("{}") renamed into "{}"'.format(msg.sender - CONF_START, msg.opt['source_old_text'], msg.opt['source_text']))
             if not self.no_leave_conf and self.confs[msg.sender - CONF_START]['invited_by'] not in self.banned and self.bad_conf_title(msg.opt['source_text']):
                 self.leaveConf(msg.sender - CONF_START)
                 log.write('conf', self.loggableConf(msg.sender - CONF_START) + ' (name)')
