@@ -352,8 +352,8 @@ def testFriend(uid, need_reason=False):
         return False
     return friend_controller.isGood(fr, need_reason)
 
-def noaddUsers(users, remove=False, reason=None, lock=threading.Lock()):
-    if not remove and config.get('vkbot.no_ignore', 'b') and reason != 'external command':
+def noaddUsers(users, remove=False, reason=None, sure=False, lock=threading.Lock()):
+    if not remove and config.get('vkbot.no_ignore', 'b') and not sure:
         for i in users:
             vk.logSender('Wanted to ignore %sender% ({})'.format(reason), {'user_id': i})
         return 0
@@ -428,7 +428,7 @@ def ignoreHandler(user):
     user = vk.getUserId(user)
     if not user:
         return 'Invalid user'
-    if noaddUsers([user], reason='external command'):
+    if noaddUsers([user], reason='external command', sure=True):
         return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
     else:
         return vk.printableName(user, user_fmt='{name}') + ' already ignored'
@@ -508,6 +508,7 @@ if config.get('server.port', 'i') > 0:
 friend_controller = vkbot.createFriendController()
 friend_controller.writeNoadd()
 stats.update('started', time.time())
+vk.ignore_proc = lambda user, reason: noaddUsers([user], reason=reason, sure=True)
 
 def main_loop():
     try:

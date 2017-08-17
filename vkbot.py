@@ -124,6 +124,7 @@ class VkBot:
         self.banned_list = []
         self.message_lock = threading.Lock()
         self.banned = set()
+        self.ignore_proc = lambda user, reson: None
 
     @property
     def whitelist(self):
@@ -326,6 +327,8 @@ class VkBot:
                 if res is None:
                     del self.users[sender]
                     self.logSender('Failed to send a message to %sender%', message, short=True)
+                    if sender < CONF_START and self.users[sender].get('blacklisted'):
+                        self.ignore_proc(sender, 'blacklisted me')
                     return
                 msg = self.last_message.add(sender, message, res, answer)
                 if resend:
