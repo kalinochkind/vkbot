@@ -144,6 +144,8 @@ bot_users = {}
 
 limiter_cache = LimiterCache('data/limiters.txt')
 
+ref_re = re.compile(r'\[id(\d+)\|.*\]')
+
 # returns (text, is_friendship_request)
 # for friendship requests we do not call markAsRead
 # None: just ignore the message
@@ -195,6 +197,9 @@ def reply(message):
             return ('', False)
         if len(message['body']) > config.get('vkbot.max_message_length', 'i'):
             vk.logSender('(%sender%) {}... - too long message'.format(message['body'][:50]), message)
+            return ('', False)
+        if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}):
+            vk.logSender('(%sender%) {} - ignored (mention)'.format(message['body']), message)
             return ('', False)
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
