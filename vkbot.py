@@ -377,7 +377,7 @@ class VkBot:
                 return True
             if self.leave_created_conf and i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
                 self.leaveConf(cid)
-                log.write('conf',  self.loggableName(i['user_id']) + ', ' + self.loggableConf(cid) + ' (left)')
+                log.write('conf',  self.loggableName(i['user_id']) + ', ' + self.loggableConf(cid) + ' (created)')
                 return False
             if i.get('action') == 'chat_kick_user' and i['user_id'] == self.self_id and i.get('action_mid') == self.self_id:
                 if self.confs[cid]['invited_by'] not in self.banned:
