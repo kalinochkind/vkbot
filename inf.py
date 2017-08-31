@@ -164,15 +164,14 @@ def reply(message):
         message['body'] = ''
     if message['body'] is None:
         return (None, False)
-    message['body'] = escape(message['body'])
 
     if 'id' not in message:  # friendship request
-        message['body'] = message['message']
+        message['body'] = escape(message['message'])
         message['_method'] = 'friendship request'
         return (getBotReply(message), True)
 
     if isBotMessage(message['body']):
-        vk.logSender('(%sender%) {} - ignored (bot message)'.format(message['body']), message)
+        vk.logSender('(%sender%) {} - ignored (bot message)'.format(escape(message['body'])), message)
         if 'chat_id' in message and not vk.no_leave_conf:
             bot_users[uid] = bot_users.get(uid, 0) + 1
             if bot_users[uid] >= 3:
@@ -189,6 +188,7 @@ def reply(message):
         return ('', False)
 
     if message['body']:
+        message['body'] = escape(message['body'])
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers', 'b'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
