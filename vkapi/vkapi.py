@@ -19,6 +19,19 @@ CALL_INTERVAL = 0.35
 def retOrCall(s, *p):
     return s(*p) if callable(s) else s
 
+def jsonToUTF8(d):
+    if isinstance(d, str):
+        try:
+            return d.encode('latin1').decode('utf-8')
+        except UnicodeDecodeError:
+            return d.encode('latin1').decode('cp1251')
+    elif isinstance(d, list):
+        return [jsonToUTF8(i) for i in d]
+    elif isinstance(d, dict):
+        return {jsonToUTF8(i): jsonToUTF8(d[i]) for i in d}
+    else:
+        return d
+
 
 class VkApi:
     api_version = '5.68'
@@ -176,7 +189,11 @@ class VkApi:
                     return self.apiCall(method, params, True, full_response)
 
             try:
-                data_array = json.loads(json_string.decode('utf-8'))
+                try:
+                    data_array = json.loads(json_string.decode('utf-8'))
+                except UnicodeDecodeError:
+                    logger.warning('Invalid JSON received, trying to parse anyway')
+                    data_array = jsonToUTF8(json.loads(json_string.decode('latin1')))
             except json.decoder.JSONDecodeError:
                 logger.error('Invalid JSON')
                 data_array = None
