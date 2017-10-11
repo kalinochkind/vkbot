@@ -157,6 +157,8 @@ def reply(message):
     uid = message['user_id']
     if getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
         return (None, False)
+    if uid < 0:
+        return (None, False)
     if 'deactivated' in vk.users[uid] or vk.users[uid]['blacklisted'] or vk.users[uid]['blacklisted_by_me']:
         return (None, False)
 
