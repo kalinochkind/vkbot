@@ -34,6 +34,7 @@ ignored_errors = {
     (100, 'messages.getHistory'): ('Unable to get message history', True),
     (113, 'users.get'): None,
     (100, 'messages.removeChatUser'): ('Unable to leave', False),
+    (15, 'messages.removeChatUser'): ('Already kicked', False),
     (8, '*'): (lambda p, m: '{}: error code 8'.format(m), True),
     (10, '*'): (lambda p, m: '{}: error code 10'.format(m), True),
     (100, 'messages.getChat'): None,
@@ -187,6 +188,7 @@ class VkBot:
         if message['user_id'] == self.self_id:  # chat with myself
             return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
+            self.replyMessage(message, None, False)
             return
         try:
             if self.tm.isBusy(getSender(message)) and not self.tm.get(getSender(message)).attr['unimportant']:
@@ -272,7 +274,7 @@ class VkBot:
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
-    def replyMessage(self, message, answer, skip_mark_as_read=False):
+    def replyMessage(self, message, answer, skip_mark_as_read):
         sender = getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
