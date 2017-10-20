@@ -582,6 +582,9 @@ class VkBot:
     def loggableConf(self, cid):
         return 'conf ({}) `{}`'.format(cid, self.confs[cid]['title'].replace('`', "'"))
 
+    def loggableGroup(self, gid, name):
+        return 'group ({}) `{}`'.format(gid, name.replace('`', "'"))
+
     def blacklist(self, uid):
         self.api.account.banUser(user_id=uid)
 
@@ -623,8 +626,8 @@ class VkBot:
         for i in self.api.groups.getInvites()['items']:
             logging.info('Joining group "{}"'.format(i['name']))
             self.api.groups.join(group_id=i['id'])
-            log.write('groups', '{}: <a target="_blank" href="https://vk.com/club{}">{}</a>{}'.format(
-                self.loggableName(i['invited_by']), i['id'], i['name'], ['', ' (closed)', ' (private)'][i['is_closed']]))
+            log.write('groups', '{}: {}{}'.format(
+                self.loggableName(i['invited_by']), self.loggableGroup(i['id'], i['name']), ['', ' (closed)', ' (private)'][i['is_closed']]))
 
     def clearCache(self):
         self.users.clear()
