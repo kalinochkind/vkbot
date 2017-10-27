@@ -155,6 +155,11 @@ def reply(message):
         vk.banned_list.append(getSender(message))
         return None
     uid = message['user_id']
+    if 'chat_id' in message and not vk.no_leave_conf and uid in friend_controller.bots:
+        logging.info('A bot detected')
+        log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot found)')
+        vk.leaveConf(message['chat_id'])
+        return (None, False)
     if getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
         return (None, False)
     if uid < 0:

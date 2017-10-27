@@ -14,9 +14,13 @@ checks = [
 ]
 
 class FriendController:
-    def __init__(self, params, ignore_filename, allowed_names_filename):
+    def __init__(self, params, ignore_filename, allowed_names_filename, bots_filename):
         self.ignore_filename = ignore_filename
         self.allowed_filename = allowed_names_filename
+        try:
+            self.bots = set(map(int, open(bots_filename).read().split()))
+        except FileNotFoundError:
+            self.bots = set()
         self.noadd = set(map(int, open(ignore_filename).read().split()))
         line1, line2 = open(allowed_names_filename, encoding='utf-8').readlines()
         self.allowed = set(line1 + ' ')

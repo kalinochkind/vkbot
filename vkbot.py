@@ -58,7 +58,7 @@ def _getFriendControllerParams():
 
 def createFriendController():
     controller_params = _getFriendControllerParams()
-    return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'))
+    return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'), accounts.getFile('bots.txt'))
 
 
 class TimeTracker:
