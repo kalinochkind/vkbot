@@ -97,9 +97,15 @@ class VkApi:
                     def walk(self, callback, **dp):
                         def cb(req, resp):
                             callback(req, resp)
+                            if resp is None:
+                                return
                             if 'next_from' in resp:
                                 req['start_from'] = resp['next_from']
                                 self.delayed(**req).callback(cb)
+                            elif 'count' in resp and 'count' in req and req['count'] + req.get('offset', 0) < resp['count']:
+                                req['offset'] = req.get('offset', 0) + req['count']
+                                self.delayed(**req).callback(cb)
+
 
                         self.delayed(**dp).callback(cb)
 
@@ -132,7 +138,9 @@ class VkApi:
                 dc = dl[0]
                 response = self.apiCall(dc.method, dc.params, dc.retry)
                 dc.called(response)
-                return
+                if once:
+                    return
+                continue
 
             query = ['return[']
             for num, i in enumerate(dl):
