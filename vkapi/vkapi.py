@@ -100,14 +100,16 @@ class VkApi:
                             if resp is None:
                                 return
                             if 'next_from' in resp:
-                                req['start_from'] = resp['next_from']
-                                self.delayed(**req).callback(cb)
+                                if resp['next_from']:
+                                    req['start_from'] = resp['next_from']
+                                    self.delayed(**req).callback(cb)
                             elif 'count' in resp and 'count' in req and req['count'] + req.get('offset', 0) < resp['count']:
                                 req['offset'] = req.get('offset', 0) + req['count']
                                 self.delayed(**req).callback(cb)
 
 
                         self.delayed(**dp).callback(cb)
+                        return handler
 
                 return _MethodWrapper(self.group + '.' + subitem)
 

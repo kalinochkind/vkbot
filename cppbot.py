@@ -84,12 +84,16 @@ class CppBot:
             self.reload()
 
     def dump(self):
+        if not self.dump_filename:
+            return
         data = self.interact('dump')
         data = str(int(self.start_time)) + '\n' + data
         with open(self.dump_filename, 'w') as f:
             f.write(data)
 
     def load(self):
+        if not self.dump_filename:
+            return
         if not os.path.isfile(self.dump_filename):
             logging.info('Chat dump does not exist')
             return
@@ -102,3 +106,14 @@ class CppBot:
         else:
             self.interact('load ' + data[1])
         os.remove(self.dump_filename)
+
+    @staticmethod
+    def escape(message):
+        message = message.replace('\u0401', '\u0415').replace('\u0451', '\u0435')  # yo
+        message = message.replace('\u0490', '\u0413').replace('\u0491', '\u0433')  # g
+        message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
+        message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
+        message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
+        message = message.replace("`", "'")
+        message = message.replace('{', '\u200b{\u200b').replace('}', '\u200b}\u200b')  # zero width spaces
+        return message

@@ -63,15 +63,7 @@ def timeto(name, interval, d={}):
 def renderSmile(s, regex=re.compile(r'&#(\d+);')):
     return regex.sub(lambda x: chr(int(x.group(1))), s)
 
-def escape(message):
-    message = message.replace('\u0401', '\u0415').replace('\u0451', '\u0435')  # yo
-    message = message.replace('\u0490', '\u0413').replace('\u0491', '\u0433')  # g
-    message = message.replace('\u0404', '\u042d').replace('\u0454', '\u044d')  # e
-    message = message.replace('\u0406', '\u0418').replace('\u0456', '\u0438')  # i
-    message = message.replace('\u0407', '\u0418').replace('\u0457', '\u0438')  # i
-    message = message.replace("`", "'")
-    message = message.replace('{', '\u200b{\u200b').replace('}', '\u200b}\u200b')  # zero width spaces
-    return message
+escape = CppBot.escape
 
 last_reply_lower = set()
 _sticker_re = re.compile(r'^\\sticker\[(\d+)\]$')
