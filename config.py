@@ -10,6 +10,8 @@ def get(param, typename='s'):
     if not cp:
         cp = configparser.ConfigParser()
         cp.read(accounts.getFile('inf.cfg'))
+    if '.' not in param:
+        return cp[param] if param in cp else {}
     param = param.split('.')
     try:
         if typename == 'b':

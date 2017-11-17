@@ -51,10 +51,8 @@ def createCaptchaHandler():
     return captcha.CaptchaHandler(captcha_params)
 
 def _getFriendControllerParams():
-    return {
-        'offline_allowed': config.get('check_friend.offline_allowed', 'i'),
-        'add_everyone': config.get('vkbot.add_everyone', 'b'),
-    }
+    conf = config.get('friend_checks')
+    return {i: conf.get(i) for i in conf}
 
 def createFriendController():
     controller_params = _getFriendControllerParams()
