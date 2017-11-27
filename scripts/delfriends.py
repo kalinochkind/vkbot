@@ -25,7 +25,7 @@ def main(a, args):
 
     def checkHistory(req, resp):
         nonlocal cnt
-        if resp['count'] == 0 or now - resp['items'][0]['date'] > 3600 * 24 * days:
+        if resp['count'] == 0 or (resp['items'] and now - resp['items'][0]['date'] > 3600 * 24 * days):
             if prepare:
                 f.write(str(req['user_id']) + '\n')
             else:
