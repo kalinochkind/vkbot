@@ -496,16 +496,17 @@ class VkBot:
                 txt = html.escape(rep['feedback']['text'])
                 res = 'good'
                 frid = int(rep['feedback']['from_id'])
-                if self.users[frid]['blacklisted']:
+                if frid > 0 and self.users[frid]['blacklisted']:
                     res = 'blacklisted'
                     log.write('comments', self.loggableName(frid) + ' (blacklisted): ' + txt)
                     self.deleteComment(rep)
                     to_bl.add(frid)
                 elif test(txt):
                     res = 'bad'
-                    log.write('comments', self.loggableName(frid) + ': ' + txt)
+                    log.write('comments', (self.loggableName(frid) if frid > 0 else str(frid)) + ': ' + txt)
                     self.deleteComment(rep)
-                    to_del.add(frid)
+                    if frid > 0:
+                        to_del.add(frid)
                 elif 'attachments' in rep['feedback'] and any(i.get('type') in ['video', 'link'] for i in rep['feedback']['attachments']):
                     res = 'attachment'
                     log.write('comments', self.loggableName(frid) + ' (attachment)')
@@ -550,8 +551,10 @@ class VkBot:
     def printableName(self, pid, user_fmt, conf_fmt='Conf "{name}" ({id})'):
         if pid > CONF_START:
             return conf_fmt.format(id=(pid - CONF_START), name=self.confs[pid - CONF_START]['title'])
-        else:
+        elif pid > 0:
             return user_fmt.format(id=pid, name=self.users[pid]['first_name'] + ' ' + self.users[pid]['last_name'])
+        else:
+            return 'Group ' + str(-pid)
 
     def logSender(self, text, message, short=False):
         text_msg = text.replace('%sender%', self.printableSender(message, False, short=short))
