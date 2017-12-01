@@ -34,7 +34,7 @@ def jsonToUTF8(d):
 
 
 class VkApi:
-    api_version = '5.68'
+    api_version = '5.69'
     longpoll_version = 2
     methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
                'market', 'messages', 'newsfeed',
