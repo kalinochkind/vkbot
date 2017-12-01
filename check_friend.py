@@ -34,7 +34,8 @@ class Checks:
 
     @check('Bad substring in name')
     def namesubstr(fc, guy, args):
-        return not any(i in (guy['first_name'] + ' ' + guy['last_name']).lower() for i in fc.banned_substrings)
+        return not any((' ' + i.lower() + ' ') in (' ' + guy['first_name'] + ' ' + guy['last_name'] + ' ').lower() 
+                       for i in fc.banned_substrings)
 
     @check('First name equal to last name')
     def equalnames(fc, guy, args):
