@@ -49,7 +49,7 @@ class CaptchaHandler:
         import antigate
         try:
             return str(antigate.AntiGate(self.key, self.png_filename)) or None
-        except (urllib.error.URLError, antigate.AntiGateError) as e:
+        except (OSError, antigate.AntiGateError) as e:
             logger.warning(str(e))
             return None
         except Exception:
