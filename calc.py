@@ -13,12 +13,15 @@ rep = {
 op = {"плюс": "+", "минус": "-", "прибавить": "+", "отнять": "-", "умножить": "*", "разделить": "//", "делить": "//"}
 allowed = set('йцукенгшщзхъфывапролджэячсмитьбю.1234567890()+-*/ ')
 not_a_minus = re.compile(r'(?<=[a-zа-я])-(?=[a-zа-я])', re.IGNORECASE)
+seq_minus = re.compile(r'([^\d\-\*\+]+\d+(-\d+)+)|(\d+(-\d+)+[^\d\-\*\+=]+)')
 
 def isnum(s):
     return s and (s.isdigit() or s[0] == '-' and len(s) > 1 and s[1:].isdigit())
 
 def evalExpression(s):
     s = s.replace('\u00d7', '*').replace('\u2022', '*').replace('\u00f7', '/')
+    if seq_minus.match(s):
+        return None
     s = not_a_minus.sub(' ', s)
     s = s.replace('(', ' ( ').replace(')', ' ) ').replace('+', ' + ').replace('-', ' - ').replace('*', ' * ').replace('/', ' // ')
     if '[' in s:
@@ -64,9 +67,13 @@ def evalExpression(s):
             res = str(eval(s, {'__builtins__': {}}))
         except Exception:
             return None
-    if set(s) <= set('0123456789-') and s.lstrip('-').count('-') == 1 and int(res) <= 0:
+    s = s.lstrip('-')
+    if set(s) <= set('0123456789-') and s.count('-') == 1 and int(res) <= 0:
         return None
-    if s == '50//50' or s == '24//7':
+    if s == '24//7':
+        return None
+    ss = s.split('//')
+    if len(ss) == 2 and ss[0] == ss[1]:
         return None
     if isnum(res) and res != '0' and len(res) < 80:
         return res
