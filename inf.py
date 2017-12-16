@@ -188,6 +188,8 @@ def reply(message):
 
     if message['body']:
         message['body'] = escape(message['body'])
+        if message.get('_is_sticker') and 'chat_id' in message:
+            return ('', False)
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers', 'b'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
             return ('', False)
