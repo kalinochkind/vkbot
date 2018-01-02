@@ -501,6 +501,10 @@ class VkBot:
                     log.write('comments', self.loggableName(frid) + ' (blacklisted): ' + txt)
                     self.deleteComment(rep)
                     to_bl.add(frid)
+                elif 'vk.com/' in txt:
+                    res = 'link'
+                    log.write('comments', self.loggableName(frid) + ' (link): ' + txt)
+                    self.deleteComment(rep)
                 elif test(txt):
                     res = 'bad'
                     log.write('comments', (self.loggableName(frid) if frid > 0 else str(frid)) + ': ' + txt)
