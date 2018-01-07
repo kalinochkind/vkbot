@@ -3,6 +3,7 @@ from argparse import ArgumentParser, REMAINDER
 parser = ArgumentParser()
 parser.add_argument('-l', '--logging', action='store_true')
 parser.add_argument('-d', '--database', action='store_true')
+parser.add_argument('-q', '--quiet', action='store_true')
 parser.add_argument('-a', '--account')
 parser.add_argument('-w', '--whitelist')
 parser.add_argument('--pack')
