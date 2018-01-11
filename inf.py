@@ -359,12 +359,13 @@ def testFriend(uid, need_reason=False):
     return friend_controller.isGood(fr, need_reason)
 
 def noaddUsers(users, remove=False, reason=None, sure=False, lock=threading.Lock()):
+    users = set(users)
+    if not users:
+        return 0
+    vk.users.load(users)
     if not remove and config.get('vkbot.no_ignore', 'b') and not sure:
         for i in users:
             vk.logSender('Wanted to ignore %sender% ({})'.format(reason), {'user_id': i})
-        return 0
-    users = set(users)
-    if not users:
         return 0
     with lock:
         if remove:
