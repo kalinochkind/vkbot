@@ -387,6 +387,8 @@ def noaddUsers(users, remove=False, reason=None, sure=False, lock=threading.Lock
 
 # noinspection PyUnusedLocal
 def reloadHandler(*p):
+    global friend_controller
+    friend_controller = vkbot.createFriendController()
     bot.reload()
     vk.initSelf()
     vk.clearCache()
@@ -513,7 +515,6 @@ if config.get('server.port', 'i') > 0:
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
 friend_controller = vkbot.createFriendController()
-friend_controller.writeNoadd()
 stats.update('started', time.time())
 vk.ignore_proc = lambda user, reason: noaddUsers([user], reason=reason, sure=True)
 
