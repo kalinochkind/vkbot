@@ -33,7 +33,7 @@ class CppBot:
                 self.buildExe()
         except FileNotFoundError:
             self.buildExe()
-        self.name = name
+        self.name = name.upper()
         self.max_smiles = max_smiles
         self.start_time = time.time()
         self.bot = None
@@ -43,7 +43,7 @@ class CppBot:
         self.load()
 
     def runExe(self):
-        self.bot = Popen([self.path + self.exe_name, str(self.max_smiles), str(self.name)], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        self.bot = Popen([self.path + self.exe_name, str(self.max_smiles), str(self.getNameIndex())], stdout=PIPE, stdin=PIPE, stderr=PIPE)
 
     def interact(self, msg, do_log=True):
         try:
@@ -72,7 +72,7 @@ class CppBot:
 
     def reload(self):
         self.start_time = time.time()
-        self.interact('reld')
+        self.interact('reld ' + str(self.getNameIndex()))
         logger.info('Reloaded!')
 
     def dataTime(self):
@@ -117,3 +117,10 @@ class CppBot:
         message = message.replace("`", "'")
         message = message.replace('{', '\u200b{\u200b').replace('}', '\u200b}\u200b')  # zero width spaces
         return message
+
+    def getNameIndex(self):
+        names = open('data/names.txt', encoding='utf-8').readlines()
+        for i, n in enumerate(names):
+            if self.name in n.upper().split():
+                return i
+        return -1

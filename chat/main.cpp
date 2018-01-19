@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
         wcin >> cmd;
         if(cmd == L"reld")
         {
+            wcin >> myName;
             Load();
             wcout << L"Reloaded!" << endl;
         }
