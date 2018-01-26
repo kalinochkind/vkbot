@@ -11,7 +11,7 @@ import config
 import log
 from args import args
 from vkapi import VkApi
-from vkbot import createCaptchaHandler
+from vkbot import createVkApi
 
 os.chdir(os.path.dirname(os.path.realpath(sys.argv[0])))
 accounts.init()
@@ -74,8 +74,7 @@ if args['script']:
         print('Invalid script')
         availableScripts()
         sys.exit()
-    v = VkApi(login, password, timeout=config.get('vkbot_timing.default_timeout', 'i'), token_file=accounts.getFile('token.txt'),
-              log_file=accounts.getFile('inf.log') if args['logging'] else '', captcha_handler=createCaptchaHandler())
+    v = createVkApi(login, password)
     if need_auth:
         v.initLongpoll()
     main(v, args['args'])

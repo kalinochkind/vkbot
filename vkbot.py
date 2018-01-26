@@ -58,6 +58,17 @@ def createFriendController():
     controller_params = _getFriendControllerParams()
     return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'), accounts.getFile('bots.txt'))
 
+def createVkApi(username, password, ignored_errors=None):
+    if not ignored_errors:
+        ignored_errors = {}
+    v = vkapi.VkApi(ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
+                token_file=accounts.getFile('token.txt'),
+                log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
+    from vkapi.auth import perms
+    v.login_params = {'username': username, 'password': password, 'client_id': config.get('vkapi.client_id'), 'perms': 
+                        (perms.FRIENDS | perms.MESSAGES | perms.WALL | perms.OFFLINE | perms.NOTIFICATIONS)}
+    return v
+
 
 class TimeTracker:
     def __init__(self, size, delay):
@@ -86,9 +97,7 @@ class VkBot:
         self.unfriend_on_invite = config.get('vkbot.unfriend_on_invite', 'b')
         self.leave_created_conf = config.get('vkbot.leave_created_conf', 'b')
 
-        self.api = vkapi.VkApi(username, password, ignored_errors=ignored_errors, timeout=config.get('vkbot_timing.default_timeout', 'i'),
-                               token_file=accounts.getFile('token.txt'),
-                               log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
+        self.api = createVkApi(username, password, ignored_errors)
         stats.update('logging', bool(self.api.log_file))
         self.vars = json.load(open('data/defaultvars.json', encoding='utf-8'))
         self.vars['default_bf'] = self.vars['bf']['id']

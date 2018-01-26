@@ -54,3 +54,6 @@ host =
 username =
 password =
 database =
+
+[vkapi]
+client_id = 6347828

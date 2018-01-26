@@ -10,6 +10,7 @@ import urllib.request
 
 from .utils import DelayedCall, VkError
 from .upload import uploadFile
+from . import auth
 
 logger = logging.getLogger('vkapi')
 
@@ -41,14 +42,12 @@ class VkApi:
                'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',
                'wall', 'widgets'}
 
-    def __init__(self, username='', password='', *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
+    def __init__(self, *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file
         self.token_file = token_file
         if self.log_file:
             logger.info('Logging enabled')
             open(self.log_file, 'w').close()
-        self.username = username
-        self.password = password
         self.last_call = 0
         self.delayed_list = []
         self.max_delayed = 25
@@ -58,7 +57,9 @@ class VkApi:
         self.api_lock = threading.RLock()
         self.ch = captcha_handler
         self.token = None
+        self.login_params = None
         self.getToken()
+
 
     def __getattr__(self, item):
         handler = self
@@ -271,19 +272,13 @@ class VkApi:
             return True
 
     def login(self):
+        if not self.login_params:
+            logger.critical('Unable to log in, no login_params provided')
+            raise VkError('login_params required')
         logger.info('Fetching new token')
-        url = ('https://oauth.vk.com/token?grant_type=password&client_id=2274003&client_secret=hHbZxrka2uZ6jB1inYsH&username=' + self.username +
-               '&password=' + urllib.parse.quote(self.password))
-        if not self.username or not self.password:
-            logger.critical('I don\'t know your login or password, sorry')
-            raise VkError('Username and password required')
-        try:
-            json_string = urllib.request.urlopen(url, timeout=self.timeout).read().decode()
-        except Exception:
-            logger.critical('Authorization failed')
-            raise VkError('Login failed')
-        data = json.loads(json_string)
-        self.token = data['access_token']
+        self.token = auth.login(self.login_params['username'], self.login_params['password'], self.login_params['client_id'], self.login_params['perms'])
+        if not self.token:
+            logger.critical('Login failed')
         if self.token_file:
             with open(self.token_file, 'w') as f:
                 f.write(self.token)
@@ -334,13 +329,13 @@ class VkApi:
             return self.getLongpoll(mode)
 
     def validate(self, url):
-        if not self.username or '@' in self.username:
+        if not self.login_params or '@' in self.login_params['username']:
             logger.critical("I don't know your phone number")
             raise VkError('Phone number required')
         page = urllib.request.urlopen(url).read().decode()
         url_re = re.compile(r'/(login.php\?act=security_check&[^"]+)"')
         post_url = 'https://m.vk.com/' + url_re.search(page).group(1)
-        phone = self.username[-10:-2]
+        phone = self.login_params['username'][-10:-2]
         urllib.request.urlopen(post_url, ('code=' + phone).encode('utf-8'))
 
     def uploadMessagePhoto(self, paths):
