@@ -8,6 +8,7 @@ import logging
 
 FORM_ELEMENT = re.compile(r'<input type="hidden" name="([^"]+)" value="([^"]+)"')
 ACCESS_TOKEN = re.compile(r'access_token=([0-9a-f]+)($|&)')
+ALLOW_FORM = re.compile(r'<form method="post" action="([^"]+)"')
 
 logger = logging.getLogger('vkapi.auth')
 
@@ -24,14 +25,23 @@ def login(username, password, client_id, perms):
     auth_page = auth_page.read().decode()
     fields = dict(FORM_ELEMENT.findall(auth_page))
     fields['email'], fields['pass'] = username, password
-    token_url = opener.open('https://login.vk.com/?act=login&soft=1&utf8=1', 
-                            data=urllib.parse.urlencode(fields).encode()).geturl()
+    redir_page = opener.open('https://login.vk.com/?act=login&soft=1&utf8=1',
+                            data=urllib.parse.urlencode(fields).encode())
+    token_url = redir_page.geturl()
     match = ACCESS_TOKEN.search(token_url)
-    if match:
-        return match.group(1)
-    else:
-        print(url)
-        return None
+    if not match:
+        content = redir_page.read().decode()
+        match = ALLOW_FORM.search(content)
+        if not match:
+            print(url)
+            return None
+        token_url = opener.open(match.group(1)).geturl()
+        match = ACCESS_TOKEN.search(token_url)
+        if not match:
+            print(url)
+            return None
+    return match.group(1)
+
 
 
 class perms:
