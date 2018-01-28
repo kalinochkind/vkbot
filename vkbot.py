@@ -66,7 +66,8 @@ def createVkApi(username, password, ignored_errors=None):
                 log_file=accounts.getFile('inf.log') if args.args['logging'] else '', captcha_handler=createCaptchaHandler())
     from vkapi.auth import perms
     v.login_params = {'username': username, 'password': password, 'client_id': config.get('vkapi.client_id'), 'perms': 
-                        (perms.FRIENDS | perms.MESSAGES | perms.WALL | perms.OFFLINE | perms.NOTIFICATIONS)}
+                        (perms.FRIENDS | perms.MESSAGES | perms.WALL | perms.OFFLINE | perms.NOTIFICATIONS
+                         | perms.PHOTOS | perms.VIDEO | perms.GROUPS)}
     return v
 
 
