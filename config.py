@@ -37,6 +37,8 @@ def rebuild(current, default):
     new.add_section('login')
     new['login']['login'] = ''
     new['login']['password'] = ''
+    if 'friend_checks' in old:
+        new['friend_checks'] = old['friend_checks']
     for section in new:
         for key in new[section]:
             try:
