@@ -75,6 +75,8 @@ def getBotReplyComment(message):
 def getBotReplyFlat(message):
     return bot.interact('flat 0 ' + escape(message)) == '$blacklisted'
 
+STARTS_WITH_URL_RE = re.compile('(https?://)?[a-z0-9\-]+\.[a-z0-9\-]+')
+
 def getBotReply(message):
     raw_answer = bot.interact('{} {} {} | {}'.format(('conf' if message.get('chat_id') else 'user'), message['user_id'], limiter_cache.get(getSender(message)), message['body']))
     if '|' in raw_answer:
@@ -114,8 +116,9 @@ def getBotReply(message):
 
     if '_old_body' not in message:
         message['_old_body'] = message['body']
-    if message['_old_body'] and message['_old_body'][0].isdigit() and message['_old_body'] == message['_old_body'].lower():
-        message['_old_body'] = ''
+    if message['_old_body'] and message['_old_body'] == message['_old_body'].lower():
+        if message['_old_body'][0].isdigit() or STARTS_WITH_URL_RE.match(message['_old_body']):
+            message['_old_body'] = ''
     if message['_old_body'] == message['_old_body'].lower() and message['_old_body'] != message['_old_body'].upper():
         last_reply_lower.add(message['user_id'])
         answer = answer.lower()
