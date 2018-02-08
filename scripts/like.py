@@ -23,7 +23,8 @@ def main(a, args):
     if uid is None:
         print('fail')
         return
-    data = a.wall.get(owner_id=uid, count=100, extended=1, fields="sex,blacklisted,blacklisted_by_me")
+    controller = scriptlib.createFriendController()
+    data = a.wall.get(owner_id=uid, count=100, extended=1, fields="sex,blacklisted,blacklisted_by_me," + controller.fields)
     profiles = {i['id']: i for i in data['profiles']}
     liked = set()
     total = 0
@@ -41,6 +42,9 @@ def main(a, args):
                 continue
             if 'nodup' in args and i['from_id'] in liked:
                 logging.info('Duplicate ' + str(i['id']))
+                continue
+            if 'friendly' in args and not controller.isGood(profiles[i['from_id']]):
+                logging.info('Unfriendly ' + str(i['id']))
                 continue
             liked.add(i['from_id'])
             if i['from_id'] > 0 and (profiles[i['from_id']].get('blacklisted') or profiles[i['from_id']].get('blacklisted_by_me')):
