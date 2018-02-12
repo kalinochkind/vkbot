@@ -296,7 +296,7 @@ class VkBot:
                 tl.attr['unimportant'] = True
                 self.tm.run(sender, tl, tl.terminate)
             elif answer is None:  # ignored
-                self.api.messages.markAsRead.delayed(peer_id=sender, _once=True)
+                self.api.messages.markAsRead(peer_id=sender)
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
@@ -414,23 +414,23 @@ class VkBot:
         data = self.api.friends.getRequests(extended=1)
         to_rep = []
         self.loadUsers(data['items'], lambda x: x['user_id'], True)
-        for i in data['items']:
-            if self.users[i['user_id']].get('blacklisted'):
-                self.api.friends.delete.delayed(user_id=i['user_id'])
-                continue
-            res = is_good(i['user_id'], True)
-            if res is None:
-                self.api.friends.add.delayed(user_id=i['user_id'])
-                self.logSender('Adding %sender%', i)
-                if 'message' in i:
-                    ans = gen_reply(i)
-                    to_rep.append((i, ans))
-            else:
-                self.api.friends.delete.delayed(user_id=i['user_id'])
-                self.logSender('Not adding %sender% ({})'.format(res), i)
+        with self.api.delayed() as dm:
+            for i in data['items']:
+                if self.users[i['user_id']].get('blacklisted'):
+                    dm.friends.delete(user_id=i['user_id'])
+                    continue
+                res = is_good(i['user_id'], True)
+                if res is None:
+                    dm.friends.add(user_id=i['user_id'])
+                    self.logSender('Adding %sender%', i)
+                    if 'message' in i:
+                        ans = gen_reply(i)
+                        to_rep.append((i, ans))
+                else:
+                    dm.friends.delete(user_id=i['user_id'])
+                    self.logSender('Not adding %sender% ({})'.format(res), i)
         for i in to_rep:
             self.replyMessage(i[0], i[1][0], i[1][1])
-        self.api.sync()
 
     def unfollow(self):
         result = []
@@ -439,8 +439,9 @@ class VkBot:
         for i in requests:
             if i not in self.banned:
                 result.append(i)
-        for i in suggested:
-            self.api.friends.delete.delayed(user_id=i)
+        with self.api.delayed() as dm:
+            for i in suggested:
+                dm.delete.delayed(user_id=i)
         self.deleteFriend(result)
         return result
 
@@ -448,9 +449,9 @@ class VkBot:
         if type(uid) == int:
             self.api.friends.delete(user_id=uid)
         else:
-            for i in uid:
-                self.api.friends.delete.delayed(user_id=i)
-            self.api.sync()
+            with self.api.delayed() as dm:
+                for i in uid:
+                    dm.friends.delete(user_id=i)
 
     def setOnline(self):
         self.api.account.setOnline()
@@ -617,12 +618,13 @@ class VkBot:
         confs = {}
         try:
             items = list(dialogs['items'])
-            for dialog in items:
-                if getSender(dialog['message']) in self.banned:
-                    continue
-                self.api.messages.getHistory.delayed(peer_id=getSender(dialog['message']), count=0).callback(cb)
-                if 'title' in dialog['message']:
-                    confs[getSender(dialog['message'])] = dialog['message']['title']
+            with self.api.delayed() as dm:
+                for dialog in items:
+                    if getSender(dialog['message']) in self.banned:
+                        continue
+                    dm.messages.getHistory(peer_id=getSender(dialog['message']), count=0).set_callback(cb)
+                    if 'title' in dialog['message']:
+                        confs[getSender(dialog['message'])] = dialog['message']['title']
             self.confs.load([i - CONF_START for i in confs])
             invited = {}
             for i in confs:
@@ -631,7 +633,6 @@ class VkBot:
             self.users.load(invited.values())
             for i in invited.copy():
                 invited[i] = [invited[i], self.printableName(invited[i], '{name}'), self.users[invited[i]]['sex'] == 1]
-            self.api.sync()
         except TypeError:
             logging.warning('Unable to fetch dialogs')
             return (None, None, None, None)

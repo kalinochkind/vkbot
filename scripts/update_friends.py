@@ -15,19 +15,19 @@ def main(a, args):
     friends = scriptlib.getFriends(a, fields=controller.fields)
 
     logging.info('Starting to delete')
-    for i in friends:
-        if not (controller.isGood(i) or i['id'] in banned):
-            a.friends.delete.delayed(user_id=i['id'])
-            logging.info('deleted ' + str(i['id']))
-            log.write('_update_friends', 'deleted ' + str(i['id']))
-    a.sync()
+    with a.delayed() as dm:
+        for i in friends:
+            if not (controller.isGood(i) or i['id'] in banned):
+                dm.friends.delete(user_id=i['id'])
+                logging.info('deleted ' + str(i['id']))
+                log.write('_update_friends', 'deleted ' + str(i['id']))
 
     foll = scriptlib.getFollowers(a, fields=controller.fields)
     logging.info('Starting to add')
     def cb(req, resp):
         logging.info(('added ' if resp else 'error ') + str(req['user_id']))
-    for i in foll:
-        if controller.isGood(i):
-            a.friends.add.delayed(user_id=i['id']).callback(cb)
-    a.sync()
+    with a.delayed() as dm:
+        for i in foll:
+            if controller.isGood(i):
+                dm.friends.add(user_id=i['id']).set_callback(cb)
     logging.info('\nFinished')

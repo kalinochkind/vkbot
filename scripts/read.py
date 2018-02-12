@@ -9,20 +9,20 @@ def main(a, args):
     messages = {}
     users = []
     chats = []
-    for msg in dialogs:
-        def cb(req, resp):
-            messages[req['peer_id']] = resp['items'][::-1]
+    with a.delayed() as dm:
+        for msg in dialogs:
+            def cb(req, resp):
+                messages[req['peer_id']] = resp['items'][::-1]
 
-        a.messages.getHistory.delayed(peer_id=vkapi.utils.getSender(msg['message']), count=min(msg['unread'], 10)).callback(cb)
-        if 'chat_id' in msg['message']:
-            chats.append(msg['message']['chat_id'])
-        else:
-            users.append(msg['message']['user_id'])
+            dm.messages.getHistory.(peer_id=vkapi.utils.getSender(msg['message']), count=min(msg['unread'], 10)).set_callback(cb)
+            if 'chat_id' in msg['message']:
+                chats.append(msg['message']['chat_id'])
+            else:
+                users.append(msg['message']['user_id'])
     uc = cache.UserCache(a, 'online')
     cc = cache.ConfCache(a)
     uc.load(users)
     cc.load(chats)
-    a.sync()
     mids = []
     if dialogs:
         print('-------------------------\n')

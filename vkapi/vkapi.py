@@ -8,13 +8,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .utils import DelayedCall, VkError
+from .utils import *
 from .upload import uploadFile
 from . import auth
 
-logger = logging.getLogger('vkapi')
-
 CALL_INTERVAL = 0.35
+MAX_CALLS_IN_EXECUTE = 25
 
 
 def retOrCall(s, *p):
@@ -34,13 +33,9 @@ def jsonToUTF8(d):
         return d
 
 
-class VkApi:
-    api_version = '5.68'
+class VkApi(VkMethodDispatcher):
+    api_version = '5.71'
     longpoll_version = 2
-    methods = {'account', 'ads', 'apps', 'audio', 'auth', 'board', 'database', 'docs', 'fave', 'friends', 'gifts', 'groups', 'leads', 'likes',
-               'market', 'messages', 'newsfeed',
-               'notes', 'notifications', 'pages', 'photos', 'places', 'polls', 'search', 'stats', 'status', 'storage', 'users', 'utils', 'video',
-               'wall', 'widgets'}
 
     def __init__(self, *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file
@@ -49,8 +44,6 @@ class VkApi:
             logger.info('Logging enabled')
             open(self.log_file, 'w').close()
         self.last_call = 0
-        self.delayed_list = []
-        self.max_delayed = 25
         self.ignored_errors = ignored_errors or {}
         self.timeout = timeout
         self.longpoll = {'server': '', 'key': '', 'ts': 0}
@@ -61,115 +54,22 @@ class VkApi:
         self.getToken()
 
 
-    def __getattr__(self, item):
-        handler = self
-
-        class _GroupWrapper:
-            def __init__(self, group):
-                self.group = group
-
-            def __getattr__(self, subitem):
-                class _MethodWrapper:
-                    def __init__(self, method):
-                        self.method = method
-
-                    def __call__(self, **dp):
-                        response = None
-
-                        # noinspection PyUnusedLocal
-                        def cb(req, resp):
-                            nonlocal response
-                            response = resp
-
-                        with handler.api_lock:
-                            self.delayed(**dp).callback(cb)
-                            handler.sync()
-                        return response
-
-                    def delayed(self, *, _once=False, **dp):
-                        with handler.api_lock:
-                            if len(handler.delayed_list) >= handler.max_delayed:
-                                handler.sync(True)
-                            dc = DelayedCall(self.method, dp)
-                            if not _once or dc not in handler.delayed_list:
-                                handler.delayed_list.append(dc)
-                        return dc
-
-                    def walk(self, callback, **dp):
-                        def cb(req, resp):
-                            callback(req, resp)
-                            if resp is None:
-                                return
-                            if 'next_from' in resp:
-                                if resp['next_from']:
-                                    req['start_from'] = resp['next_from']
-                                    self.delayed(**req).callback(cb)
-                            elif 'count' in resp and 'count' in req and req['count'] + req.get('offset', 0) < resp['count']:
-                                req['offset'] = req.get('offset', 0) + req['count']
-                                self.delayed(**req).callback(cb)
-
-
-                        self.delayed(**dp).callback(cb)
-                        return handler
-
-                return _MethodWrapper(self.group + '.' + subitem)
-
-        if item not in self.methods:
-            raise AttributeError(item)
-        return _GroupWrapper(item)
+    def _callMethod(self, method, kwargs):
+        return self.apiCall(method, kwargs)
 
     def execute(self, code):
         return self.apiCall('execute', {"code": code}, full_response=True)
 
     @staticmethod
-    def encodeApiCall(s):
-        return "API." + s.method + '(' + json.dumps(s.params, ensure_ascii=False) + ')'
+    def encodeApiCall(method, params):
+        return "API." + method + '(' + json.dumps({i:params[i] for i in params if not i.startswith(')')}, ensure_ascii=False) + ')'
 
     def writeLog(self, msg):
         if self.log_file:
             with open(self.log_file, 'a') as f:
                 f.write('[{}]\n'.format(time.strftime('%d.%m.%Y %H:%M:%S', time.localtime())) + msg + '\n\n')
 
-    def sync(self, once=False):
-        while True:
-            with self.api_lock:
-                dl = self.delayed_list[:]
-                self.delayed_list = []
-            if not dl:
-                return
-            if len(dl) == 1:
-                dc = dl[0]
-                response = self.apiCall(dc.method, dc.params, dc.retry)
-                dc.called(response)
-                if once:
-                    return
-                continue
-
-            query = ['return[']
-            for num, i in enumerate(dl):
-                query.append(self.encodeApiCall(i) + ',')
-            query.append('];')
-            query = ''.join(query)
-            response = self.execute(query)
-            errors = response.get('execute_errors', [])
-            for dc, r in zip(dl, response['response']):
-                if r is False:  # it's fine here
-                    error = errors.pop(0)
-                    if error['method'] != dc.method:
-                        logger.error('Failed to match errors with methods. Response: ' + str(response))
-                        return
-                    if self.processError(dc.method, dc.params, {'error': error}, dc.retry):
-                        dc.retry = True
-                        self.delayed_list.append(dc)
-                        once = False
-                    else:
-                        dc.called(None)
-                else:
-                    dc.called(r)
-            if once:
-                return
-
-    def apiCall(self, method, params, retry=False, full_response=False):
+    def apiCall(self, method, params, full_response=False):
         params['v'] = self.api_version
         encoded = urllib.parse.urlencode({i: params[i] for i in params if not i.startswith('_')})
         post_params = None
@@ -189,15 +89,16 @@ class VkApi:
                 err = str(e)
                 logger.warning(method + ' failed ({})'.format(html.escape(err.strip())))
                 time.sleep(1)
-                return self.apiCall(method, params, retry, full_response)
+                return self.apiCall(method, params, full_response)
             except Exception as e:
-                if retry:
+                if params.get('_retry'):
                     logger.exception('({}) {}: {}'.format(method, e.__class__.__name__, str(e)))
                     return None
                 else:
                     time.sleep(1)
                     logger.warning('({}) {}: {}, retrying'.format(method, e.__class__.__name__, str(e)))
-                    return self.apiCall(method, params, True, full_response)
+                    params['_retry'] = True
+                    return self.apiCall(method, params, full_response)
 
             try:
                 try:
@@ -228,32 +129,33 @@ class VkApi:
                 else:
                     logger.warning('Captcha needed')
                     time.sleep(5)
-                return self.apiCall(method, params, retry, full_response)
+                return self.apiCall(method, params, full_response)
             elif code == 5:  # Auth error
                 if data_array['error']['error_msg'] == 'User authorization failed: method is unavailable with group auth.':
                     raise VkError('User token required')
                 self.login()
-                return self.apiCall(method, params, retry, full_response)
+                return self.apiCall(method, params, full_response)
             elif code == 6:  # Too many requests per second
                 logger.warning('{}: too many requests per second'.format(method))
                 time.sleep(2)
-                return self.apiCall(method, params, retry, full_response)
+                return self.apiCall(method, params, full_response)
             elif code == 17:  # Validation required
                 logger.warning('Validation required')
                 self.validate(data_array['error']['redirect_uri'])
                 time.sleep(1)
-                return self.apiCall(method, params, retry, full_response)
-            elif self.processError(method, params, data_array, retry):
+                return self.apiCall(method, params, full_response)
+            elif self.processError(method, params, data_array):
                 time.sleep(1)
-                return self.apiCall(method, params, True, full_response)
+                params['_retry'] = True
+                return self.apiCall(method, params, full_response)
             else:
                 return None
         elif full_response:
             return data_array
         else:
-            return self.apiCall(method, params, retry, full_response)
+            return self.apiCall(method, params, full_response)
 
-    def processError(self, method, params, response, retry=False):
+    def processError(self, method, params, response):
         code = response['error']['error_code']
         if (code, method) not in self.ignored_errors and (code, '*') not in self.ignored_errors:
             logger.error('{}, params {}\ncode {}: {}'.format(method, json.dumps(params), code, response['error'].get('error_msg')))
@@ -264,7 +166,7 @@ class VkApi:
             handler = self.ignored_errors[(code, '*')]
         if not handler:
             return False
-        if retry or not handler[1]:
+        if params.get('_retry') or not handler[1]:
             logger.warning(retOrCall(handler[0], params, method))
             return False
         else:
@@ -343,10 +245,14 @@ class VkApi:
             paths = [paths]
         server = self.photos.getMessagesUploadServer()
         result = []
-        for path in paths:
-            resp = uploadFile(server['upload_url'], path, 'photo')
-            self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
-            if resp['photo'] != '[]':
-                self.photos.saveMessagesPhoto.delayed(photo=resp['photo'], server=resp['server'], hash=resp['hash']).callback(lambda a, b: result.extend(b or []))
-        self.sync()
+        with self.delayed() as dm:
+            for path in paths:
+                resp = uploadFile(server['upload_url'], path, 'photo')
+                self.writeLog('uploading photo {} to {}\nresponse: {}'.format(path, server['upload_url'], resp))
+                if resp['photo'] != '[]':
+                    dm.photos.saveMessagesPhoto(photo=resp['photo'], server=resp['server'], hash=resp['hash']).set_callback(lambda a, b: result.extend(b or []))
         return result
+
+    def delayed(self, *, max_calls=MAX_CALLS_IN_EXECUTE):
+        return DelayedManager(self, max_calls)
+

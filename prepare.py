@@ -78,7 +78,6 @@ if args['script']:
     if need_auth:
         v.initLongpoll()
     main(v, args['args'])
-    v.sync()
     sys.exit()
 
 import fcntl

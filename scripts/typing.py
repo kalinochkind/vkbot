@@ -11,8 +11,9 @@ def main(a, args):
     if not uids or None in uids:
         print('fail')
         return
+    dm = a.delayed()
     while True:
         for i in uids:
-            a.messages.setActivity.delayed(type='typing', user_id=i)
-        a.sync()
+            dm.messages.setActivity(type='typing', user_id=i)
+        dm.sync()
         time.sleep(vkapi.utils.TYPING_INTERVAL)

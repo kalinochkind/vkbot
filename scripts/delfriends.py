@@ -33,11 +33,11 @@ def main(a, args):
             logging.info('Found ' + str(req['user_id']))
             cnt += 1
 
-    for i in friends:
-        if not prepare and i not in f:
-            continue
-        a.messages.getHistory.delayed(count=1, user_id=i).callback(checkHistory)
-    a.sync()
+    with a.delayed() as dm:
+        for i in friends:
+            if not prepare and i not in f:
+                continue
+            dm.messages.getHistory(count=1, user_id=i).set_callback(checkHistory)
     if prepare:
         f.close()
     else:
