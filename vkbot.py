@@ -412,8 +412,11 @@ class VkBot:
 
     def addFriends(self, gen_reply, is_good):
         data = self.api.friends.getRequests(extended=1)
-        to_rep = []
+        if data is None:
+            logging.info('Failed to add friends')
+            return
         self.loadUsers(data['items'], lambda x: x['user_id'], True)
+        to_rep = []
         with self.api.delayed() as dm:
             for i in data['items']:
                 if self.users[i['user_id']].get('blacklisted'):
@@ -434,8 +437,13 @@ class VkBot:
 
     def unfollow(self):
         result = []
-        requests = self.api.friends.getRequests(out=1)['items']
-        suggested = self.api.friends.getRequests(suggested=1)['items']
+        try:
+            requests = self.api.friends.getRequests(out=1)['items']
+            suggested = self.api.friends.getRequests(suggested=1)['items']
+        except TypeError:
+            logging.info('Failed to unfollow')
+            return []
+
         for i in requests:
             if i not in self.banned:
                 result.append(i)
