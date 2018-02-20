@@ -20,6 +20,7 @@ ignore_stickers = no
 ignore_caps = yes
 suppress_chat_stderr = no
 unfriend_on_invite = no
+unfriend_on_create = no
 leave_created_conf = no
 max_message_length = 1000
 

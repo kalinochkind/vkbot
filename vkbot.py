@@ -96,6 +96,7 @@ class VkBot:
         self.stats_dialog_count = config.get('stats.dialog_count', 'i')
         self.no_leave_conf = config.get('vkbot.no_leave_conf', 'b')
         self.unfriend_on_invite = config.get('vkbot.unfriend_on_invite', 'b')
+        self.unfriend_on_create = config.get('vkbot.unfriend_on_create', 'b')
         self.leave_created_conf = config.get('vkbot.leave_created_conf', 'b')
 
         self.api = createVkApi(username, password, ignored_errors)
@@ -252,7 +253,7 @@ class VkBot:
         if msg.opt.get('source_act') == 'chat_create' and msg.opt['from'] != str(self.self_id):
             self.logSender('%sender% created conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
                            {'user_id': int(msg.opt['from'])})
-            if self.unfriend_on_invite and int(msg.opt['from']) not in self.banned:
+            if self.unfriend_on_create and int(msg.opt['from']) not in self.banned:
                 self.deleteFriend(int(msg.opt['from']))
             if not self.no_leave_conf and int(msg.opt['from']) not in self.banned and self.bad_conf_title(self.confs[msg.sender - CONF_START]['title']):
                 self.leaveConf(msg.sender - CONF_START)
