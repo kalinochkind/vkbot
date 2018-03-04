@@ -14,7 +14,7 @@ def main(a, args):
             def cb(req, resp):
                 messages[req['peer_id']] = resp['items'][::-1]
 
-            dm.messages.getHistory.(peer_id=vkapi.utils.getSender(msg['message']), count=min(msg['unread'], 10)).set_callback(cb)
+            dm.messages.getHistory(peer_id=vkapi.utils.getSender(msg['message']), count=min(msg['unread'], 10)).set_callback(cb)
             if 'chat_id' in msg['message']:
                 chats.append(msg['message']['chat_id'])
             else:
