@@ -32,7 +32,7 @@ def main(a, args):
         for i in data['items']:
             if i['likes'].get('user_likes'):
                 logging.info(str(i['id']) + ' already liked')
-                if 'skipold' in args:
+                if 'skipold' in args or 'is_pinned' in i:
                     continue
                 break
             if 'nogroup' in args and i['from_id'] < 0:
