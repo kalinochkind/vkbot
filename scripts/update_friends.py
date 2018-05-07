@@ -4,10 +4,17 @@ import accounts
 import log
 import scriptlib
 
+
+def handleAddError(api, params, method):
+    api.friends.delete(user_id=params['user_id'])
+    return 'Failed to add {}, deleted'.format(params['user_id'])
+
+
 # noinspection PyUnusedLocal
 def main(a, args):
     a.ignored_errors = {
         (177, 'friends.add'): None,
+        (1, 'friends.add'): (lambda p, m: handleAddError(a, p, m), False),
     }
     a.timeout = 10
     banned = list(map(int, open(accounts.getFile('banned.txt')).read().split()))
