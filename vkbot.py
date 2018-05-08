@@ -512,6 +512,9 @@ class VkBot:
                 if 'post' in s:
                     return s['post']['to_id'] == self.self_id
 
+            if rep['type'] == 'comment_post' and 'parent' in rep and rep['parent'].get('to_id', self.self_id) != self.self_id:
+                continue
+
             if rep['type'].startswith('comment_') or (rep['type'].startswith('reply_comment') and _check(rep['parent'])) or rep['type'] == 'wall':
                 txt = html.escape(rep['feedback']['text'])
                 res = 'good'
