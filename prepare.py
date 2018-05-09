@@ -44,6 +44,7 @@ class MyHandler(logging.Handler):
 logging.basicConfig(handlers=[MyHandler()], level=logging.DEBUG)
 logging.getLogger('antigate').setLevel(logging.CRITICAL)
 logging.getLogger('requests').setLevel(logging.CRITICAL)
+logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 if config.get('vkbot.suppress_chat_stderr', 'b'):
     logging.getLogger('chatlog').setLevel(logging.CRITICAL)
 

@@ -295,13 +295,13 @@ class VkBot:
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
                 tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
-                self.tm.run(sender, tl, tl.terminate)
+                self.tm.run(sender, tl)
             elif answer is None:  # ignored
                 self.api.messages.markAsRead(peer_id=sender)
             else:
                 tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
                 tl.attr['unimportant'] = True
-                self.tm.run(sender, tl, tl.terminate)
+                self.tm.run(sender, tl)
             if answer is not None:
                 self.last_message.byUser(message['user_id'])['text'] = message['body']
             self.last_message.updateTime(sender)
@@ -376,7 +376,7 @@ class VkBot:
         if typing_time:
             tl.doEveryFor(vkapi.utils.TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
         tl.do(_send, True)
-        self.tm.run(sender, tl, tl.terminate)
+        self.tm.run(sender, tl)
 
     def checkConf(self, cid):
         if cid + CONF_START in self.good_conf:
@@ -568,8 +568,7 @@ class VkBot:
         loop_thread.join(60)
         while not self.receiver.longpoll_queue.empty():
             self.replyAll(reply)
-        for t in self.tm.all():
-            t.join(60)
+        self.tm.shutdown(60)
         with open(accounts.getFile('msgdump.json'), 'w') as f:
             json.dump({'cache': self.last_message.dump(), 'longpoll': lp, 'tracker': self.tracker.times, 'lmid': self.receiver.last_message_id}, f)
 
