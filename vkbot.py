@@ -30,6 +30,7 @@ ignored_errors = {
     (10, 'messages.send'): ('Unable to reply', True),
     (15, 'friends.delete'): None,
     (15, 'messages.setActivity'): None,
+    (917, 'messages.setActivity'): None,
     (100, 'messages.markAsRead'): None,
     (100, 'messages.getHistory'): ('Unable to get message history', True),
     (113, 'users.get'): None,
