@@ -87,9 +87,9 @@ class MessageReceiver:
                 if lm.flags & 2:
                     continue
                 msg = {'id': lm.mid, 'date': lm.ts, 'body': html.unescape(lm.text).replace('<br>', '\n'), 'out': 0, '_method': ''}
-                if lm.opt.get('source_act'):
+                if lm.extra.get('source_act'):
                     msg['body'] = None
-                    msg['action'] = lm.opt['source_act']
+                    msg['action'] = lm.extra['source_act']
                 if 'from' in lm.opt:
                     msg['chat_id'] = lm.sender - CONF_START
                     msg['user_id'] = int(lm.opt['from'])
@@ -99,16 +99,16 @@ class MessageReceiver:
                 attachments = []
                 for number in range(1, 11):
                     prefix = 'attach' + str(number)
-                    kind = lm.opt.get(prefix + '_type')
+                    kind = lm.extra.get(prefix + '_type')
                     if kind is None:
                         continue  # or break
                     if kind == 'photo':
                         attachments.append({'type': 'photo'})
                     elif kind == 'sticker':
                         attachments.append({'type': 'sticker'})
-                    elif kind == 'doc' and lm.opt.get(prefix + '_kind') == 'audiomsg':
+                    elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'audiomsg':
                         attachments.append({'type': 'doc', 'doc': {'type': 5}})
-                    elif kind == 'doc' and lm.opt.get(prefix + '_kind') == 'graffiti':
+                    elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'graffiti':
                         attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
                     else:  # something hard
                         need_extra.append(str(lm.mid))
@@ -118,10 +118,10 @@ class MessageReceiver:
                     continue
                 if attachments:
                     msg['attachments'] = attachments
-                for i in list(lm.opt):
+                for i in list(lm.extra):
                     if i.startswith('attach'):
-                        del lm.opt[i]
-                if not set(lm.opt) <= {'from', 'emoji', 'title', 'payload'} and not lm.opt.get('source_act'):
+                        del lm.extra[i]
+                if not set(lm.extra) <= {'emoji'} and not lm.extra.get('source_act'):
                     need_extra.append(str(lm.mid))
                     continue
                 result.append(msg)

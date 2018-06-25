@@ -40,7 +40,8 @@ def main(a, args):
             if 'attachments' in i:
                 for a in i['attachments']:
                     if a['type'] == 'photo':
-                        i['body'] += ' (' + a['photo'].get('photo_604') + ')'
+                        max_photo = max(a['photo']['sizes'], key=lambda x: x['width'])
+                        i['body'] += ' (' + max_photo['url'] + ')'
             print('[{}] {}'.format(time.strftime(datetime_format, time.localtime(i['date'])), i['body']))
             print()
             if 'chat_id' not in m:

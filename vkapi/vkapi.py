@@ -34,8 +34,8 @@ def jsonToUTF8(d):
 
 
 class VkApi(VkMethodDispatcher):
-    api_version = '5.71'
-    longpoll_version = 2
+    api_version = '5.78'
+    longpoll_version = 3
 
     def __init__(self, *, ignored_errors=None, timeout=5, log_file='', captcha_handler=None, token_file=''):
         self.log_file = log_file

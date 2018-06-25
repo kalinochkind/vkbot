@@ -139,7 +139,7 @@ class DelayedManager(VkMethodDispatcher):
 
 class LongpollMessage:
     def __init__(self, record):
-        self.mid, self.flags, self.sender, self.ts, self.text, self.opt = record
+        self.mid, self.flags, self.sender, self.ts, self.text, self.opt, self.extra = record
 
 class VkError(Exception):
     pass
