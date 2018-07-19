@@ -87,9 +87,9 @@ class MessageReceiver:
                 if lm.flags & 2:
                     continue
                 msg = {'id': lm.mid, 'date': lm.ts, 'body': html.unescape(lm.text).replace('<br>', '\n'), 'out': 0, '_method': ''}
-                if lm.extra.get('source_act'):
+                if lm.opt.get('source_act'):
                     msg['body'] = None
-                    msg['action'] = lm.extra['source_act']
+                    msg['action'] = lm.opt['source_act']
                 if 'from' in lm.opt:
                     msg['chat_id'] = lm.sender - CONF_START
                     msg['user_id'] = int(lm.opt['from'])
