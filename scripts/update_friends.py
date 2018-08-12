@@ -20,15 +20,20 @@ def main(a, args):
     banned = list(map(int, open(accounts.getFile('banned.txt')).read().split()))
     controller = scriptlib.createFriendController()
     friends = scriptlib.getFriends(a, fields=controller.fields)
+    friend_count = len(friends)
+
+    dry = 'dry' in args
 
     logging.info('Starting to delete')
     with a.delayed() as dm:
         for i in friends:
             if not (controller.isGood(i) or i['id'] in banned):
-                dm.friends.delete(user_id=i['id'])
-                logging.info('deleted ' + str(i['id']))
-                log.write('_update_friends', 'deleted ' + str(i['id']))
-
+                if not dry:
+                    dm.friends.delete(user_id=i['id'])
+                    log.write('_update_friends', 'deleted ' + str(i['id']))
+                    logging.info('deleted ' + str(i['id']))
+                else:
+                    friend_count -= 1
     foll = scriptlib.getFollowers(a, fields=controller.fields)
     logging.info('Starting to add')
     def cb(req, resp):
@@ -36,5 +41,10 @@ def main(a, args):
     with a.delayed() as dm:
         for i in foll:
             if controller.isGood(i):
-                dm.friends.add(user_id=i['id']).set_callback(cb)
+                if not dry:
+                    dm.friends.add(user_id=i['id']).set_callback(cb)
+                else:
+                    friend_count += 1
+    if dry:
+        print('Friends:', friend_count)
     logging.info('\nFinished')

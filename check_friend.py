@@ -22,7 +22,7 @@ class Checks:
 
     @check('Bad country', 'country')
     def country(fc, guy, args):
-        return str(guy.get('country', {'id': 0})['id']) in ['0'] + args
+        return str(guy.get('country', {'id': 0})['id']) in args
 
     @check('Bad characters in name')
     def namechars(fc, guy, args):
