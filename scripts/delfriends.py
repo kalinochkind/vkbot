@@ -6,6 +6,8 @@ import time
 import accounts
 import config
 import scriptlib
+import storage
+
 
 def main(a, args):
     days = config.get('delfriends.days_till_unfriend', 'i')
@@ -41,5 +43,5 @@ def main(a, args):
     if prepare:
         f.close()
     else:
-        scriptlib.createFriendController().appendNoadd(to_del)
+        storage.addmany('ignored', to_del)
     logging.info('Total: ' + str(cnt))

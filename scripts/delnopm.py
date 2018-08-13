@@ -1,6 +1,7 @@
 import logging
 
 import scriptlib
+import storage
 
 # noinspection PyUnusedLocal
 def main(a, args):
@@ -10,4 +11,4 @@ def main(a, args):
         if not j['can_write_private_message']:
             to_del.append(str(j['id']))
             logging.info('Found id{} ({} {})'.format(j['id'], j['first_name'], j['last_name']))
-    scriptlib.createFriendController().appendNoadd(to_del)
+    storage.addmany('ignored', to_del)
