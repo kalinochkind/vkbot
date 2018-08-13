@@ -94,3 +94,10 @@ def all(type):
     cur = _get_connection().cursor()
     cur.execute('SELECT uid FROM users WHERE type=?', (type,))
     return [u[0] for u in cur.fetchall()]
+
+@auto_reconnect
+def count(type):
+    type = TYPES[type]
+    cur = _get_connection().cursor()
+    cur.execute('SELECT COUNT(*) FROM users WHERE type=?', (type,))
+    return cur.fetchone()[0]

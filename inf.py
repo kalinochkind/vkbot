@@ -475,6 +475,7 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
+            stats.update('ignored', storage.count('ignored'))
             stats.update('blacklisted', vk.blacklistedCount())
             count, dialogs, confs, invited = vk.lastDialogs()
             if count is not None:
