@@ -28,6 +28,7 @@ TYPES = {
     'banned': 1,
     'ignored': 2,
     'bots': 3,
+    'nodel': 4,
 }
 
 

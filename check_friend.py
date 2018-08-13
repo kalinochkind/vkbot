@@ -60,7 +60,10 @@ class FriendController:
 
     def isGood(self, fr, need_reason=False):
         reasons = []
+        nodel = storage.contains('nodel', fr['id'])
         for fname in self.params:
+            if nodel and fname != 'ignored':
+                continue
             fun = getattr(Checks, fname)
             if not fun(self, fr, self.params[fname].split()):
                 if need_reason:
