@@ -16,6 +16,7 @@ import config
 import log
 import stats
 import vkapi
+import storage
 from cache import UserCache, ConfCache, MessageCache
 from check_friend import FriendController
 from thread_manager import ThreadManager, Timeline
@@ -57,7 +58,7 @@ def _getFriendControllerParams():
 
 def createFriendController():
     controller_params = _getFriendControllerParams()
-    return FriendController(controller_params, accounts.getFile('noadd.txt'), accounts.getFile('allowed.txt'), accounts.getFile('bots.txt'))
+    return FriendController(controller_params, accounts.getFile('allowed.txt'))
 
 def createVkApi(username, password, ignored_errors=None):
     if not ignored_errors:
@@ -134,7 +135,6 @@ class VkBot:
         self.bad_conf_title = lambda s: False
         self.banned_list = []
         self.message_lock = threading.Lock()
-        self.banned = set()
         self.ignore_proc = lambda user, reson: None
 
     @property
@@ -240,23 +240,24 @@ class VkBot:
 
         if msg.opt.get('source_act') == 'chat_title_update':
             del self.confs[msg.sender - CONF_START]
-            if msg.sender not in self.banned:
+            if not storage.contains('banned', msg.sender):
                 logging.info('Conf {} ("{}") renamed into "{}"'.format(msg.sender - CONF_START, msg.opt['source_old_text'], msg.opt['source_text']))
-            if not self.no_leave_conf and self.confs[msg.sender - CONF_START]['invited_by'] not in self.banned and self.bad_conf_title(msg.opt['source_text']):
+            if not self.no_leave_conf and not storage.contains('banned', self.confs[msg.sender - CONF_START]['invited_by']) and self.bad_conf_title(msg.opt['source_text']):
                 self.leaveConf(msg.sender - CONF_START)
                 log.write('conf', self.loggableConf(msg.sender - CONF_START) + ' (name)')
                 return True
         if msg.opt.get('source_act') == 'chat_invite_user' and msg.opt['source_mid'] == str(self.self_id) and msg.opt['from'] != str(self.self_id):
             self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
                            {'user_id': int(msg.opt['from'])})
-            if self.unfriend_on_invite and int(msg.opt['from']) not in self.banned:
+            if self.unfriend_on_invite and not storage.contains('banned', msg.opt['from']):
                 self.deleteFriend(int(msg.opt['from']))
         if msg.opt.get('source_act') == 'chat_create' and msg.opt['from'] != str(self.self_id):
             self.logSender('%sender% created conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
                            {'user_id': int(msg.opt['from'])})
-            if self.unfriend_on_create and int(msg.opt['from']) not in self.banned:
+            is_banned = storage.contains('banned', msg.opt['from'])
+            if self.unfriend_on_create and not is_banned:
                 self.deleteFriend(int(msg.opt['from']))
-            if not self.no_leave_conf and int(msg.opt['from']) not in self.banned and self.bad_conf_title(self.confs[msg.sender - CONF_START]['title']):
+            if not self.no_leave_conf and not is_banned and self.bad_conf_title(self.confs[msg.sender - CONF_START]['title']):
                 self.leaveConf(msg.sender - CONF_START)
                 log.write('conf', self.loggableName(int(msg.opt['from'])) + ', ' + self.loggableConf(msg.sender - CONF_START) + ' (created, name)')
                 return True
@@ -387,18 +388,18 @@ class VkBot:
             if i.get('action') == 'chat_invite_user' and i['user_id'] == self.self_id and i.get('action_mid') == self.self_id:
                 self.good_conf[cid + CONF_START] = True
                 return True
-            if self.leave_created_conf and i.get('action') == 'chat_create' and i['user_id'] not in self.banned:
+            if self.leave_created_conf and i.get('action') == 'chat_create' and not storage.contains('banned', i['user_id']):
                 self.leaveConf(cid)
                 log.write('conf',  self.loggableName(i['user_id']) + ', ' + self.loggableConf(cid) + ' (created)')
                 return False
             if i.get('action') == 'chat_kick_user' and i['user_id'] == self.self_id and i.get('action_mid') == self.self_id:
-                if self.confs[cid]['invited_by'] not in self.banned:
+                if not storage.contains('banned', self.confs[cid]['invited_by']):
                     inviter = self.confs[cid]['invited_by']
                     self.leaveConf(cid)
                     log.write('conf', (self.loggableName(inviter) if inviter else '(???)') + ', ' + self.loggableConf(cid) + ' (left)')
                     return False
         title = self.confs[cid]['title']
-        if not self.no_leave_conf and self.confs[cid]['invited_by'] not in self.banned and self.bad_conf_title(title):
+        if not self.no_leave_conf and not storage.contains('banned', self.confs[cid]['invited_by']) and self.bad_conf_title(title):
             self.leaveConf(cid)
             log.write('conf', self.loggableConf(cid) + ' (name)')
             return False
@@ -447,11 +448,11 @@ class VkBot:
             return []
 
         for i in requests:
-            if i not in self.banned:
+            if not storage.contains('banned', i):
                 result.append(i)
         with self.api.delayed() as dm:
             for i in suggested:
-                dm.delete.delayed(user_id=i)
+                dm.friends.delete.delayed(user_id=i)
         self.deleteFriend(result)
         return result
 
@@ -632,7 +633,7 @@ class VkBot:
             items = list(dialogs['items'])
             with self.api.delayed() as dm:
                 for dialog in items:
-                    if getSender(dialog['message']) in self.banned:
+                    if storage.contains('banned', getSender(dialog['message'])):
                         continue
                     dm.messages.getHistory(peer_id=getSender(dialog['message']), count=0).set_callback(cb)
                     if 'title' in dialog['message']:

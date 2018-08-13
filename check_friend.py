@@ -1,4 +1,6 @@
 import time
+import storage
+
 
 def check(desc, fields=''):
     def fn(func):
@@ -10,7 +12,7 @@ def check(desc, fields=''):
 class Checks:
     @check('Ignored')
     def ignored(fc, guy, args):
-        return guy['id'] not in fc.noadd
+        return not fc.isIgnored(guy['id'])
 
     @check('Account is deactivated')
     def deactivated(fc, guy, args):
@@ -42,14 +44,8 @@ class Checks:
         return guy['first_name'] != guy['last_name']
 
 class FriendController:
-    def __init__(self, params, ignore_filename, allowed_names_filename, bots_filename):
-        self.ignore_filename = ignore_filename
+    def __init__(self, params, allowed_names_filename):
         self.allowed_filename = allowed_names_filename
-        try:
-            self.bots = set(map(int, open(bots_filename).read().split()))
-        except FileNotFoundError:
-            self.bots = set()
-        self.noadd = set(map(int, open(ignore_filename).read().split()))
         line1, line2 = open(allowed_names_filename, encoding='utf-8').readlines()
         self.allowed = set(line1 + ' ')
         self.banned_substrings = line2.split()
@@ -61,15 +57,6 @@ class FriendController:
     def requiredFields(params):
         fields = sum([getattr(Checks, i).fields for i in params], [])
         return ','.join(fields) or 'id'
-
-    def writeNoadd(self):
-        with open(self.ignore_filename, 'w') as f:
-            f.write('\n'.join(map(str, sorted(self.noadd))))
-
-    def appendNoadd(self, users):
-        self.noadd.update(users)
-        with open(self.ignore_filename, 'a') as f:
-            f.write('\n' + '\n'.join(map(str, sorted(users))))
 
     def isGood(self, fr, need_reason=False):
         reasons = []
@@ -84,3 +71,6 @@ class FriendController:
             return ', '.join(reasons) or None
         else:
             return True
+
+    def isIgnored(self, uid):
+        return storage.contains('ignored', uid)

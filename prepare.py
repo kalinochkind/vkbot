@@ -9,6 +9,7 @@ import html
 import accounts
 import config
 import log
+import storage
 from args import args
 from vkapi import VkApi
 from vkbot import createVkApi
@@ -54,6 +55,8 @@ sys.stdout.encoding = 'UTF-8'
 login = config.get('login.login')
 password = config.get('login.password')
 
+storage.init(accounts.getFile('storage.db'))
+
 def availableScripts():
     print('Available scripts:', ', '.join(sorted(i[:-3] for i in os.listdir('scripts') if i.endswith('.py') and not i.startswith('__'))))
 
@@ -93,5 +96,6 @@ except IOError:
     sys.exit(1)
 with open(pid_file, 'w') as f:
     f.write(str(os.getpid()))
+
 
 logging.info('Starting vkbot, pid ' + str(os.getpid()))

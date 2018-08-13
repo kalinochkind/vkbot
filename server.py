@@ -26,6 +26,7 @@ class MessageServer:
             else:
                 data = [data, None]
             if data[0] not in self.handlers:
+                conn.send(b'error')
                 continue
             try:
                 res = self.handlers[data[0]](data[1])

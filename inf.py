@@ -7,12 +7,14 @@ import signal
 import sys
 import threading
 import time
+import json
 
 import accounts
 import config
 import log
 import stats
 import vkbot
+import storage
 from args import args
 from cache import LimiterCache
 from calc import evalExpression
@@ -28,30 +30,6 @@ def isBotMessage(msg, regex=re.compile(r'^\(.+\).')):
 noans = open(accounts.getFile('noans.txt'), encoding='utf-8').read().splitlines()
 smiles = open(accounts.getFile('smiles.txt'), encoding='utf-8').read().splitlines()
 random.shuffle(noans)
-
-class BanManager:
-    def __init__(self, filename):
-        self.filename = filename
-        self.banned = set(map(int, open(filename).read().split()))
-
-    def write(self):
-        s = list(map(str, sorted(self.banned)))
-        with open(self.filename, 'w') as f:
-            f.write('\n'.join(s))
-
-    def ban(self, pid):
-        if pid in self.banned:
-            return False
-        self.banned.add(pid)
-        self.write()
-        return True
-
-    def unban(self, pid):
-        if pid not in self.banned:
-            return False
-        self.banned.discard(pid)
-        self.write()
-        return True
 
 # noinspection PyDefaultArgument
 def timeto(name, interval, d={}):
@@ -146,16 +124,16 @@ ref_re = re.compile(r'\[id(\d+)\|.*\]')
 # None: just ignore the message
 # (None, False): immediate MarkAsRead
 def reply(message):
-    if getSender(message) in banign.banned or getSender(message) < 0:
+    if getSender(message) < 0 or storage.contains('banned', getSender(message)):
         vk.banned_list.append(getSender(message))
         return None
     uid = message['user_id']
-    if 'chat_id' in message and not vk.no_leave_conf and uid in friend_controller.bots:
+    if 'chat_id' in message and not vk.no_leave_conf and storage.contains('bots', uid):
         logging.info('A bot detected')
         log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot found)')
         vk.leaveConf(message['chat_id'])
         return (None, False)
-    if getSender(message) in friend_controller.noadd or uid in friend_controller.noadd:
+    if storage.contains('ignored', getSender(message)) or storage.contains('ignored', uid):
         return (None, False)
     if uid < 0:
         return (None, False)
@@ -361,7 +339,7 @@ def testFriend(uid, need_reason=False):
         return False
     return friend_controller.isGood(fr, need_reason)
 
-def noaddUsers(users, remove=False, reason=None, sure=False, lock=threading.Lock()):
+def noaddUsers(users, remove=False, reason=None, sure=False):
     users = set(users)
     if not users:
         return 0
@@ -370,23 +348,22 @@ def noaddUsers(users, remove=False, reason=None, sure=False, lock=threading.Lock
         for i in users:
             vk.logSender('Wanted to ignore %sender% ({})'.format(reason), {'user_id': i})
         return 0
-    with lock:
-        if remove:
-            prev_len = len(friend_controller.noadd)
-            friend_controller.noadd -= users
-            friend_controller.writeNoadd()
-            return prev_len - len(friend_controller.noadd)
-        else:
-            users -= friend_controller.noadd
-            if not users:
-                return 0
-            text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in users]) + (
-                ' ({})'.format(reason) if reason else '')
-            html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, True) for i in users]) + (' ({})'.format(reason) if reason else '')
-            logging.info(text_msg, extra={'db': html_msg})
-            friend_controller.appendNoadd(users)
-            vk.deleteFriend(users)
-            return len(users)
+    if remove:
+        return storage.deletemany('ignored', users)
+    else:
+        deleted = []
+        for user in users:
+            if storage.add('ignored', user):
+                deleted.append(user)
+        if not deleted:
+            return 0
+        text_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, False) for i in deleted]) + (
+            ' ({})'.format(reason) if reason else '')
+        html_msg = 'Deleting ' + ', '.join([vk.printableSender({'user_id': i}, True) for i in deleted]) + (
+            ' ({})'.format(reason) if reason else '')
+        logging.info(text_msg, extra={'db': html_msg})
+        vk.deleteFriend(deleted)
+        return len(deleted)
 
 # noinspection PyUnusedLocal
 def reloadHandler(*p):
@@ -423,8 +400,6 @@ bot = CppBot(vk.vars['name'][0], config.get('vkbot.max_smiles', 'i'), accounts.g
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('I am {}, {}'.format(vk.vars['name'][0], vk.self_id))
-banign = BanManager(accounts.getFile('banned.txt'))
-vk.banned = banign.banned
 if args['whitelist']:
     vk.whitelist = [vk.getUserId(i) or i for i in args['whitelist'].split(',')]
     logging.info('Whitelist: ' + ', '.join(map(lambda x: x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
@@ -436,37 +411,16 @@ filtercomments_interval = config.get('intervals.filtercomments', 'i')
 stats_interval = config.get('intervals.stats', 'i')
 groupinvites_interval = config.get('intervals.groupinvites', 'i')
 
-def ignoreHandler(user):
-    user = vk.getUserId(user)
+def listHandler(data):
+    data = json.loads(data)
+    user = vk.getUserId(data['uid'])
     if not user:
-        return 'Invalid user'
-    if noaddUsers([user], reason='external command', sure=True):
-        return 'Ignored ' + vk.printableName(user, user_fmt='{name}')
+        return '{"error": "Invalid user"}'
+    if data.get('remove'):
+        result = storage.delete(data['list'], user)
     else:
-        return vk.printableName(user, user_fmt='{name}') + ' already ignored'
-
-def unignoreHandler(user):
-    user = vk.getUserId(user)
-    if not user:
-        return 'Invalid user'
-    if noaddUsers([user], True):
-        return 'Unignored ' + vk.printableName(user, user_fmt='{name}')
-    else:
-        if banign.unban(user):
-            return 'Unbanned ' + vk.printableName(user, user_fmt='{name}')
-        return vk.printableName(user, user_fmt='{name}') + ' is not ignored'
-
-def banHandler(user):
-    user = vk.getUserId(user)
-    if not user:
-        return 'Invalid user'
-    return ('Banned {}' if banign.ban(user) else '{} already banned').format(vk.printableName(user, user_fmt='{name}'))
-
-def unbanHandler(user):
-    user = vk.getUserId(user)
-    if not user:
-        return 'Invalid user'
-    return ('Unbanned {}' if banign.unban(user) else '{} is not banned').format(vk.printableName(user, user_fmt='{name}'))
+        result = storage.add(data['list'], user)
+    return json.dumps({'name': vk.printableName(user, user_fmt='{name}'), 'success': result})
 
 def isignoredHandler(user):
     user = vk.getUserId(user)
@@ -488,32 +442,15 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
-# noinspection PyUnusedLocal
-def banlistHandler(*p):
-    result = sorted(banign.banned)
-    result = [str(j) + ' ' + vk.printableName(j, user_fmt='<a href="https://vk.com/id{id}">{name}</a>') for j in result]
-    return '\n'.join(result)
-
-# noinspection PyUnusedLocal
-def ignlistHandler(*p):
-    result = sorted(i for i in friend_controller.noadd if i > CONF_START)
-    result = [str(j) + ' ' + vk.printableName(j, user_fmt='') for j in result]
-    return '\n'.join(result)
-
 
 if config.get('server.port', 'i') > 0:
     srv = MessageServer(config.get('server.port', 'i'))
     srv.addHandler('reply', lambda x: bot.interact('flat ' + escape(x), False))
     srv.addHandler('stem', lambda x: bot.interact('stem ' + escape(x), False))
-    srv.addHandler('ignore', ignoreHandler)
-    srv.addHandler('unignore', unignoreHandler)
-    srv.addHandler('ban', banHandler)
-    srv.addHandler('unban', unbanHandler)
+    srv.addHandler('list', listHandler)
     srv.addHandler('reload', reloadHandler)
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
-    srv.addHandler('banlist', banlistHandler)
-    srv.addHandler('ignlist', ignlistHandler)
     srv.listen()
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
@@ -538,7 +475,6 @@ def main_loop():
             time.sleep(1)
         if timeto('stats', stats_interval):
             vk.initSelf(True)
-            stats.update('ignored', len(friend_controller.noadd))
             stats.update('blacklisted', vk.blacklistedCount())
             count, dialogs, confs, invited = vk.lastDialogs()
             if count is not None:

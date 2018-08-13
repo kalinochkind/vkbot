@@ -5,7 +5,7 @@ import sys
 import args
 import pack
 
-account_files = ['banned.txt', 'captcha.txt', 'noadd.txt', 'token.txt']
+account_files = ['captcha.txt', 'token.txt']
 current_account = None
 default_config = 'inf.cfg.default'
 old_dir = os.getcwd()
