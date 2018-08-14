@@ -255,6 +255,8 @@ def preprocessMessage(message):
             att.append('sticker')
         elif a['type'] == 'photo':
             result += ' ..'
+        elif a['type'] == 'call':
+            return None
     for a in att:
         result += ' [' + a + ']'
 

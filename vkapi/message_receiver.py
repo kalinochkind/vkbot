@@ -110,6 +110,8 @@ class MessageReceiver:
                         attachments.append({'type': 'doc', 'doc': {'type': 5}})
                     elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'graffiti':
                         attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
+                    elif kind == 'call':
+                        attachments.append({'type': 'call'})
                     else:  # something hard
                         need_extra.append(str(lm.mid))
                         msg = None
