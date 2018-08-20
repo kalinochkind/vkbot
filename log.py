@@ -12,7 +12,6 @@ import db_logger
 err_lock = threading.Lock()
 log_lock = threading.Lock()
 local = threading.local()
-local.script_name = None
 quiet = bool(args.args['quiet'])
 
 
@@ -72,7 +71,7 @@ def initLogDir():
 def write(log, s):
     curtime = time.strftime(datetime_format, time.localtime())
     # if the name starts with _, it must be a special script log
-    if local.script_name and not log.startswith('_'):
+    if hasattr(local, 'script_name') and not log.startswith('_'):
         s = '({}) {}'.format(local.script_name, s)
     if logdir is None:
         initLogDir()
