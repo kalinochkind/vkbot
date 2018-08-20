@@ -4,8 +4,6 @@ import accounts
 import cppbot
 import log
 
-need_auth = True
-
 
 def isBad(bot, comm):
     return bot.interact('comm ' + bot.escape(comm)) == '$blacklisted'

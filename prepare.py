@@ -13,6 +13,8 @@ import storage
 from args import args
 from vkapi import VkApi
 from vkbot import createVkApi
+from scripts import runScript
+
 
 os.chdir(os.path.dirname(os.path.realpath(sys.argv[0])))
 accounts.init()
@@ -69,19 +71,13 @@ if args['script']:
         print('Invalid script')
         availableScripts()
         sys.exit()
-    log.script_name = args['script'].lower()
+    v = createVkApi(login, password)
     try:
-        script = importlib.import_module('scripts.' + args['script'].lower())
-        main = script.main
-        need_auth = getattr(script, 'need_auth', False)
+        runScript(args['script'].lower(), args['args'], v)
     except ImportError:
         print('Invalid script')
         availableScripts()
-        sys.exit()
-    v = createVkApi(login, password)
-    if need_auth:
-        v.initLongpoll()
-    main(v, args['args'])
+        sys.exit(1)
     sys.exit()
 
 import fcntl
