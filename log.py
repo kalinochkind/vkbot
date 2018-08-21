@@ -34,7 +34,8 @@ def info(s, color=''):
                 print(s[0])
         if color:
             s = ('[' + color.upper() + ']' + s[0], s[1])
-        db_logger.log(s[1], color, text_msg=s[0])
+        if not hasattr(local, 'script_name'):
+            db_logger.log(s[1], color, text_msg=s[0])
         sys.stdout.flush()
 
 def warning(s):

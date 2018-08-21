@@ -13,7 +13,7 @@ import storage
 from args import args
 from vkapi import VkApi
 from vkbot import createVkApi
-from scripts import runScript
+from scripts import runScript, runInMaster
 
 
 os.chdir(os.path.dirname(os.path.realpath(sys.argv[0])))
@@ -71,6 +71,10 @@ if args['script']:
         print('Invalid script')
         availableScripts()
         sys.exit()
+    if args['master']:
+        if runInMaster(args['script'].lower(), args['args']):
+            sys.exit()
+        logging.warning('Failed to run script in master')
     v = createVkApi(login, password)
     try:
         runScript(args['script'].lower(), args['args'], v)
@@ -79,19 +83,6 @@ if args['script']:
         availableScripts()
         sys.exit(1)
     sys.exit()
-
-import fcntl
-
-pid_file = accounts.getFile('inf.pid')
-lock_file = accounts.getFile('inf.lock')
-fp = open(lock_file, 'w')
-try:
-    fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-except IOError:
-    print('Another instance is running, pid', open(pid_file).read())
-    sys.exit(1)
-with open(pid_file, 'w') as f:
-    f.write(str(os.getpid()))
 
 
 logging.info('Starting vkbot, pid ' + str(os.getpid()))

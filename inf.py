@@ -444,6 +444,25 @@ def leaveHandler(conf):
     else:
         return 'Fail'
 
+def runScriptHandler(msg):
+
+    from scripts import runScript
+
+    def _run():
+        try:
+            runScript(data['name'], data['args'], api)
+        except BaseException:
+            logging.exception('Uncaught exception in script')
+        logging.info('Script %s exited successfully', data['name'])
+
+    data = json.loads(msg)
+    api = vkbot.createVkApi(login, password)
+    api.limiter = vk.api.limiter
+    t = threading.Thread(target=_run)
+    t.start()
+    logging.info('Running script %s', data['name'])
+    return 'ok'
+
 
 if config.get('server.port', 'i') > 0:
     srv = MessageServer(config.get('server.port', 'i'))
@@ -453,6 +472,7 @@ if config.get('server.port', 'i') > 0:
     srv.addHandler('reload', reloadHandler)
     srv.addHandler('isignored', isignoredHandler)
     srv.addHandler('leave', leaveHandler)
+    srv.addHandler('runscript', runScriptHandler)
     srv.listen()
     logging.info('Running TCP server on port ' + config.get('server.port'))
 
