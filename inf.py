@@ -422,6 +422,8 @@ def listHandler(data):
         result = storage.delete(data['list'], user)
     else:
         result = storage.add(data['list'], user)
+        if data['list'] == 'ignored' and result:
+            vk.deleteFriend(user)
     return json.dumps({'name': vk.printableName(user, user_fmt='{name}'), 'success': result})
 
 def isignoredHandler(user):
