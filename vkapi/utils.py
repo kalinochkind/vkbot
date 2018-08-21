@@ -1,5 +1,7 @@
 import logging
 import threading
+import time
+
 
 TYPING_INTERVAL = 5
 CONF_START = 2000000000
@@ -148,3 +150,22 @@ def getSender(message):
     if 'chat_id' in message:
         return CONF_START + message['chat_id']
     return message['user_id']
+
+
+class RateLimiter:
+
+    def __init__(self, interval):
+        self.last_call = 0
+        self.interval = interval
+        self.lock = threading.RLock()
+
+    def __enter__(self):
+        self.lock.acquire()
+        now = time.time()
+        if self.last_call + self.interval > now:
+            time.sleep(self.last_call + self.interval - now)
+            now = time.time()
+        self.last_call = now
+
+    def __exit__(self, *args):
+        self.lock.release()

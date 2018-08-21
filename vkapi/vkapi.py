@@ -43,11 +43,10 @@ class VkApi(VkMethodDispatcher):
         if self.log_file:
             logger.info('Logging enabled')
             open(self.log_file, 'w').close()
-        self.last_call = 0
+        self.limiter = RateLimiter(CALL_INTERVAL)
         self.ignored_errors = ignored_errors or {}
         self.timeout = timeout
         self.longpoll = {'server': '', 'key': '', 'ts': 0}
-        self.api_lock = threading.RLock()
         self.ch = captcha_handler
         self.token = None
         self.login_params = None
@@ -78,11 +77,8 @@ class VkApi(VkMethodDispatcher):
             post_params = encoded.encode()
         else:
             url = 'https://api.vk.com/method/' + method + '?' + encoded + '&access_token=' + (params.get('_token') or self.getToken())
-        with self.api_lock:
+        with self.limiter:
             now = time.time()
-            if now - self.last_call < CALL_INTERVAL:
-                time.sleep(CALL_INTERVAL - now + self.last_call)
-            self.last_call = now
             try:
                 json_string = urllib.request.urlopen(url, data=post_params, timeout=self.timeout).read()
             except OSError as e:
