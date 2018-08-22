@@ -128,8 +128,8 @@ def reply(message):
         vk.banned_list.append(getSender(message))
         return None
     uid = message['user_id']
-    if 'chat_id' in message and not vk.no_leave_conf and storage.contains('bots', uid):
-        logging.info('A bot detected')
+    if 'chat_id' in message and not vk.no_leave_conf and (uid < 0 or storage.contains('bots', uid)):
+        logging.info('A bot detected' + (' (group)' if uid < 0 else ''))
         log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot found)')
         vk.leaveConf(message['chat_id'])
         return (None, False)
