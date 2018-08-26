@@ -198,7 +198,7 @@ class VkBot:
         if message['user_id'] == self.self_id:  # chat with myself
             return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
-            self.replyMessage(message, None, False)
+            self.replyMessage(message, None)
             return
         try:
             if self.tm.isBusy(getSender(message)) and not self.tm.get(getSender(message)).attr['unimportant']:
@@ -215,7 +215,7 @@ class VkBot:
             logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
             time.sleep(1)
         if ans:
-            self.replyMessage(message, ans[0], ans[1])
+            self.replyMessage(message, ans[0])
 
     def replyAll(self, gen_reply):
         self.tm.gc()
@@ -285,7 +285,7 @@ class VkBot:
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
-    def replyMessage(self, message, answer, skip_mark_as_read):
+    def replyMessage(self, message, answer):
         sender = getSender(message)
         sender_msg = self.last_message.bySender(sender)
         if 'id' in message and message['id'] <= sender_msg.get('id', 0):
@@ -362,13 +362,11 @@ class VkBot:
         if 'chat_id' in message:
             tl.attr['user_id'] = message['user_id']
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
-            if not skip_mark_as_read:
-                tl.sleep(self.delay_on_first_reply)
-                tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
+            tl.sleep(self.delay_on_first_reply)
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
         else:
             tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
-            if not skip_mark_as_read:
-                tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
 
         tl.sleep(cur_delay)
         if message.get('_onsend_actions'):
@@ -413,13 +411,12 @@ class VkBot:
         self.good_conf[cid + CONF_START] = False
         return self.api.messages.removeChatUser(chat_id=cid, user_id=self.self_id)
 
-    def addFriends(self, gen_reply, is_good):
+    def addFriends(self, is_good):
         data = self.api.friends.getRequests(extended=1)
         if data is None:
             logging.info('Failed to add friends')
             return
         self.loadUsers(data['items'], lambda x: x['user_id'], True)
-        to_rep = []
         with self.api.delayed() as dm:
             for i in data['items']:
                 if self.users[i['user_id']].get('blacklisted'):
@@ -429,14 +426,9 @@ class VkBot:
                 if res is None:
                     dm.friends.add(user_id=i['user_id'])
                     self.logSender('Adding %sender%', i)
-                    if 'message' in i:
-                        ans = gen_reply(i)
-                        to_rep.append((i, ans))
                 else:
                     dm.friends.delete(user_id=i['user_id'])
                     self.logSender('Not adding %sender% ({})'.format(res), i)
-        for i in to_rep:
-            self.replyMessage(i[0], i[1][0], i[1][1])
 
     def unfollow(self):
         result = []

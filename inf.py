@@ -145,11 +145,6 @@ def reply(message):
     if message['body'] is None:
         return (None, False)
 
-    if 'id' not in message:  # friendship request
-        message['body'] = escape(message['message'])
-        message['_method'] = 'friendship request'
-        return (getBotReply(message), True)
-
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(escape(message['body'])), message)
         if 'chat_id' in message and not vk.no_leave_conf:
@@ -491,7 +486,7 @@ def main_loop():
         if timeto('unfollow', unfollow_interval):
             noaddUsers(vk.unfollow(), reason='deleted me')
         if timeto('addfriends', addfriends_interval):
-            vk.addFriends(reply, testFriend)
+            vk.addFriends(testFriend)
         if includeread_interval >= 0:
             vk.replyAll(reply)
         else:
