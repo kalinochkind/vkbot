@@ -224,7 +224,8 @@ def preprocessMessage(message):
     att = []
     for a in message.get('attachments', []):
         if a['type'] == 'audio':
-            att.append(a['audio']['title'])
+            if not config.get('vkbot.ignore_audio', 'b'):
+                att.append(a['audio']['title'])
         elif a['type'] == 'video':
             att.append(a['video']['title'])
         elif a['type'] == 'wall':

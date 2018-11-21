@@ -18,6 +18,7 @@ no_ignore = yes
 no_leave_conf = yes
 ignore_stickers = no
 ignore_caps = yes
+ignore_audio = no
 suppress_chat_stderr = no
 unfriend_on_invite = no
 unfriend_on_create = no
