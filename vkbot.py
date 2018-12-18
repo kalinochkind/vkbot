@@ -474,6 +474,8 @@ class VkBot:
             domain = domain.split('=')[-1]
         if '/' in domain:
             domain = domain.split('/')[-1]
+        if domain.startswith('-') and domain[1:].isdigit():
+            return int(domain)
         data = self.api.users.get(user_ids=domain)
         if not data:
             return None

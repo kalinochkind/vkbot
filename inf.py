@@ -118,6 +118,7 @@ bot_users = {}
 limiter_cache = LimiterCache('data/limiters.txt')
 
 ref_re = re.compile(r'\[id(\d+)\|.*\]')
+club_ref_re = re.compile(r'\[club\d+\|.*\]')
 
 # returns (text, is_friendship_request)
 # for friendship requests we do not call markAsRead
@@ -128,6 +129,8 @@ def reply(message):
         vk.banned_list.append(getSender(message))
         return None
     uid = message['user_id']
+    if uid < 0 and storage.contains('banned', uid):
+        return (None, False)
     if 'chat_id' in message and not vk.no_leave_conf and (uid < 0 or storage.contains('bots', uid)):
         logging.info('A bot detected' + (' (group)' if uid < 0 else ''))
         log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot found)')
@@ -175,7 +178,7 @@ def reply(message):
         if len(message['body']) > config.get('vkbot.max_message_length', 'i'):
             vk.logSender('(%sender%) {}... - too long message'.format(message['body'][:50]), message)
             return ('', False)
-        if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}):
+        if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}) or club_ref_re.findall(message['body']):
             vk.logSender('(%sender%) {} - ignored (mention)'.format(message['body']), message)
             return ('', False)
         user_msg = vk.last_message.byUser(uid)
