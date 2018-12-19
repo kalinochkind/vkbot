@@ -178,8 +178,10 @@ def reply(message):
         if len(message['body']) > config.get('vkbot.max_message_length', 'i'):
             vk.logSender('(%sender%) {}... - too long message'.format(message['body'][:50]), message)
             return ('', False)
-        if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}) or club_ref_re.findall(message['body']):
+        if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}):
             vk.logSender('(%sender%) {} - ignored (mention)'.format(message['body']), message)
+            return ('', False)
+        if club_ref_re.findall(message['body']):
             return ('', False)
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
