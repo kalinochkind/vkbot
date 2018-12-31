@@ -42,17 +42,16 @@ def timeto(name, interval, d={}):
 def renderSmile(s, regex=re.compile(r'&#(\d+);')):
     return regex.sub(lambda x: chr(int(x.group(1))), s)
 
-escape = CppBot.escape
 
 last_reply_lower = set()
 _sticker_re = re.compile(r'^\\sticker\[(\d+)\]$')
 _cmd_re = re.compile(r'\\([a-zA-Z]+)((?:\[[^\]]+\])*)')
 
 def getBotReplyComment(message):
-    return bot.interact('comm ' + escape(message)) == '$blacklisted'
+    return bot.interact('comm ' + CppBot.escape(message)) == '$blacklisted'
 
 def getBotReplyFlat(message):
-    return bot.interact('flat 0 ' + escape(message)) == '$blacklisted'
+    return bot.interact('flat 0 ' + CppBot.escape(message)) == '$blacklisted'
 
 STARTS_WITH_URL_RE = re.compile('(https?://)?[a-z0-9\-]+\.[a-z0-9\-]+')
 
@@ -136,7 +135,6 @@ club_ref_re = re.compile(r'\[club\d+\|.*\]')
 # (None, False): immediate MarkAsRead
 def reply(message):
     if getSender(message) < 0 or storage.contains('banned', getSender(message)):
-        vk.banned_list.append(getSender(message))
         return BotResponse(message, ResponseType.NO_READ)
     uid = message['user_id']
     if uid < 0 and storage.contains('banned', uid):
@@ -159,7 +157,7 @@ def reply(message):
         return BotResponse(message, ResponseType.IGNORE)
 
     if isBotMessage(message['body']):
-        vk.logSender('(%sender%) {} - ignored (bot message)'.format(escape(message['body'])), message)
+        vk.logSender('(%sender%) {} - ignored (bot message)'.format(CppBot.escape(message['body'])), message)
         if 'chat_id' in message and not vk.no_leave_conf:
             bot_users[uid] = bot_users.get(uid, 0) + 1
             if bot_users[uid] >= 3:
@@ -176,7 +174,7 @@ def reply(message):
         return BotResponse(message, ResponseType.NO_RESPONSE)
 
     if message['body']:
-        message['body'] = escape(message['body'])
+        message['body'] = CppBot.escape(message['body'])
         if message.get('_is_sticker') and 'chat_id' in message:
             return BotResponse(message, ResponseType.NO_RESPONSE)
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers', 'b'):
@@ -293,9 +291,6 @@ def preprocessReply(s, params, uid, onsend_actions):
         return vk.users[uid]['last_name']
     if s == 'curtime':
         return time.strftime("%k:%M", time.localtime()).lstrip()
-    if s == 'likeava':
-        onsend_actions.append(lambda: vk.likeAva(uid))
-        return ''
     if s == 'gosp':
         onsend_actions.append(lambda: vk.setRelation(uid))
         return ''
@@ -397,12 +392,6 @@ def onExit(num, frame):
     logging.shutdown()
     sys.exit()
 
-def getNameIndex(name):
-    names = open('data/names.txt', encoding='utf-8').readlines()
-    for i, n in enumerate(names):
-        if name.upper() in n.upper().split():
-            return i
-    return -1
 
 signal.signal(signal.SIGTERM, onExit)
 signal.signal(signal.SIGINT, onExit)
@@ -413,16 +402,12 @@ bot = CppBot(vk.vars['name'][0], config.get('vkbot.max_smiles', 'i'), accounts.g
 vk.bad_conf_title = lambda s: getBotReplyFlat(' ' + s)
 
 logging.info('I am {}, {}'.format(vk.vars['name'][0], vk.self_id))
-if args['whitelist']:
-    vk.whitelist = [vk.getUserId(i) or i for i in args['whitelist'].split(',')]
-    logging.info('Whitelist: ' + ', '.join(map(lambda x: x if isinstance(x, str) else vk.printableName(x, user_fmt='{name}'), vk.whitelist)))
 
 addfriends_interval = config.get('intervals.addfriends', 'i')
 setonline_interval = config.get('intervals.setonline', 'i')
 unfollow_interval = config.get('intervals.unfollow', 'i')
 filtercomments_interval = config.get('intervals.filtercomments', 'i')
 stats_interval = config.get('intervals.stats', 'i')
-groupinvites_interval = config.get('intervals.groupinvites', 'i')
 
 def listHandler(data):
     data = json.loads(data)
@@ -522,8 +507,6 @@ def main_loop():
                 stats.update('phone', vk.vars['phone'])
                 stats.update('bf', vk.printableSender({'user_id': vk.vars['bf']['id']}, True))
                 stats.update('overload', vk.tracker.overload())
-        if timeto('groupinvites', groupinvites_interval):
-            vk.acceptGroupInvites()
         bot.reloadIfChanged()
     except Exception as e:
         logging.exception('global {}: {}'.format(e.__class__.__name__, str(e)))

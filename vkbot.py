@@ -134,17 +134,8 @@ class VkBot:
         else:
             logging.info('Message dump does not exist')
         self.bad_conf_title = lambda s: False
-        self.banned_list = []
         self.message_lock = threading.Lock()
         self.ignore_proc = lambda user, reson: None
-
-    @property
-    def whitelist(self):
-        return self.receiver.whitelist
-
-    @whitelist.setter
-    def whitelist(self, new):
-        self.receiver.whitelist = new
 
     def initSelf(self, sync=False):
 
@@ -191,11 +182,6 @@ class VkBot:
         self.confs.load(confs, clean)
 
     def replyOne(self, message, gen_reply):
-        if self.whitelist and getSender(message) not in self.whitelist:
-            if getSender(message) > CONF_START or getSender(message) < 0:
-                return
-            if self.users[message['user_id']]['first_name'] + ' ' + self.users[message['user_id']]['last_name'] not in self.whitelist:
-                return
         if message['user_id'] == self.self_id:  # chat with myself
             return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
@@ -219,14 +205,11 @@ class VkBot:
 
     def replyAll(self, gen_reply):
         self.tm.gc()
-        self.banned_list = []
         messages = self.receiver.getMessages()
         self.loadUsers(messages, lambda x: x['user_id'])
         self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
         for cur in messages:
             self.replyOne(cur, gen_reply)
-        if self.receiver.used_get_dialogs:
-            stats.update('banned_messages', ' '.join(map(str, sorted(self.banned_list))))
 
     def longpollCallback(self, msg):
         if msg.opt == {'source_mid': str(self.self_id), 'source_act': 'chat_kick_user', 'from': str(self.self_id)}:
@@ -414,9 +397,6 @@ class VkBot:
 
     def addFriends(self, is_good):
         data = self.api.friends.getRequests(extended=1)
-        if data is None:
-            logging.info('Failed to add friends')
-            return
         self.loadUsers(data['items'], lambda x: x['user_id'], True)
         with self.api.delayed() as dm:
             for i in data['items']:
@@ -433,12 +413,8 @@ class VkBot:
 
     def unfollow(self):
         result = []
-        try:
-            requests = self.api.friends.getRequests(out=1)['items']
-            suggested = self.api.friends.getRequests(suggested=1)['items']
-        except TypeError:
-            logging.info('Failed to unfollow')
-            return []
+        requests = self.api.friends.getRequests(out=1)['items']
+        suggested = self.api.friends.getRequests(suggested=1)['items']
 
         for i in requests:
             if not storage.contains('banned', i):
@@ -541,14 +517,6 @@ class VkBot:
             self.blacklist(i)
         return to_del
 
-    def likeAva(self, uid):
-        del self.users[uid]
-        if 'crop_photo' not in self.users[uid]:
-            return
-        photo = self.users[uid]['crop_photo']['photo']
-        self.api.likes.add(type='photo', owner_id=photo['owner_id'], item_id=photo['id'])
-        self.logSender('Liked %sender%', {'user_id': uid})
-
     def setRelation(self, uid, set_by=None):
         if uid:
             log.write('relation', self.loggableName(uid))
@@ -645,13 +613,6 @@ class VkBot:
             logging.warning('Unable to fetch dialogs')
             return (None, None, None, None)
         return (dialogs['count'], d, confs, invited)
-
-    def acceptGroupInvites(self):
-        for i in self.api.groups.getInvites()['items']:
-            logging.info('Joining group "{}"'.format(i['name']))
-            self.api.groups.join(group_id=i['id'])
-            log.write('groups', '{}: {}{}'.format(
-                self.loggableName(i['invited_by']), self.loggableGroup(i['id'], i['name']), ['', ' (closed)', ' (private)'][i['is_closed']]))
 
     def clearCache(self):
         self.users.clear()

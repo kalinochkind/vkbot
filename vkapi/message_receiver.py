@@ -16,12 +16,9 @@ class MessageReceiver:
         self.longpoll_thread = threading.Thread(target=self.monitor, daemon=True)
         self.longpoll_thread.start()
         self.longpoll_callback = None
-        self.whitelist = []
-        self.whitelist_includeread = True
         self.last_message_id = 0
         self.last_get_dialogs = 0
         self.longpolled_messages = set()
-        self.used_get_dialogs = False
         self.terminate_monitor = False
 
 
@@ -39,14 +36,9 @@ class MessageReceiver:
         if not self.last_get_dialogs:
             self.last_get_dialogs = ctime - self.get_dialogs_interval + 1
         if (self.get_dialogs_interval >=0 and ctime - self.last_get_dialogs > self.get_dialogs_interval) or get_dialogs:
-            self.used_get_dialogs = True
             self.last_get_dialogs = ctime
             res = []
-            if self.whitelist:
-                messages = self.api.messages.getDialogs(unread=(0 if self.whitelist_includeread else 1), count=20)
-                self.whitelist_includeread = False
-            else:
-                messages = self.api.messages.getDialogs(unread=1, count=200)
+            messages = self.api.messages.getDialogs(unread=1, count=200)
             try:
                 messages = messages['items'][::-1]
             except TypeError:
@@ -62,7 +54,6 @@ class MessageReceiver:
                 res.append(cur)
             self.longpolled_messages.clear()
         else:
-            self.used_get_dialogs = False
             res = []
             while not self.longpoll_queue.empty():
                 res.append(self.longpoll_queue.get())
