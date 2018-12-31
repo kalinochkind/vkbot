@@ -464,8 +464,8 @@ def runScriptHandler(msg):
 
 if config.get('server.port', 'i') > 0:
     srv = MessageServer(config.get('server.port', 'i'))
-    srv.addHandler('reply', lambda x: bot.interact('flat ' + escape(x), False))
-    srv.addHandler('stem', lambda x: bot.interact('stem ' + escape(x), False))
+    srv.addHandler('reply', lambda x: bot.interact('flat ' + CppBot.escape(x), False))
+    srv.addHandler('stem', lambda x: bot.interact('stem ' + CppBot.escape(x), False))
     srv.addHandler('list', listHandler)
     srv.addHandler('reload', reloadHandler)
     srv.addHandler('isignored', isignoredHandler)
