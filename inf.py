@@ -16,6 +16,7 @@ import stats
 import vkbot
 import storage
 from args import args
+from bot_response import BotResponse, ResponseType
 from cache import LimiterCache
 from calc import evalExpression
 from cppbot import CppBot
@@ -80,15 +81,17 @@ def getBotReply(message):
         answer, gender = applyGender(answer, message['user_id'])
         console_message += ' (' + gender + ')'
 
+    sticker_id = None
+    onsend_actions = []
     while '\\' in answer:
         sticker = _sticker_re.match(answer)
         if sticker:
             console_message += ' (' + answer + ')'
             answer = ''
-            message['_sticker_id'] = int(sticker.group(1))
+            sticker_id = int(sticker.group(1))
             break
         res = _cmd_re.sub(lambda m: preprocessReply(m.group(1), m.group(2).strip('][').split(']['),
-                          message['user_id'], message.setdefault('_onsend_actions', [])), answer)
+                          message['user_id'], onsend_actions), answer)
         console_message += ' (' + answer + ')'
         answer = res
 
@@ -111,7 +114,14 @@ def getBotReply(message):
     html_msg = '({}) {} : {}{}'.format(vk.printableSender(message, True), html.escape(message['body']), renderSmile(answer).replace('&', '&amp;'),
                                        console_message)
     logging.info(text_msg, extra={'db': html_msg})
-    return answer
+
+    if sticker_id is not None:
+        return BotResponse(message, ResponseType.STICKER, sticker_id, onsend_actions=onsend_actions)
+    elif answer:
+        return BotResponse(message, ResponseType.TEXT, answer, onsend_actions=onsend_actions)
+    else:
+        return BotResponse(message, ResponseType.NO_RESPONSE, onsend_actions=onsend_actions)
+
 
 bot_users = {}
 
@@ -127,26 +137,26 @@ club_ref_re = re.compile(r'\[club\d+\|.*\]')
 def reply(message):
     if getSender(message) < 0 or storage.contains('banned', getSender(message)):
         vk.banned_list.append(getSender(message))
-        return None
+        return BotResponse(message, ResponseType.NO_READ)
     uid = message['user_id']
     if uid < 0 and storage.contains('banned', uid):
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
     if 'chat_id' in message and not vk.no_leave_conf and (uid < 0 or storage.contains('bots', uid)):
         logging.info('A bot detected' + (' (group)' if uid < 0 else ''))
         log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot found)')
         vk.leaveConf(message['chat_id'])
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
     if storage.contains('ignored', getSender(message)) or storage.contains('ignored', uid):
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
     if uid < 0:
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
     if 'deactivated' in vk.users[uid] or vk.users[uid]['blacklisted'] or vk.users[uid]['blacklisted_by_me']:
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
 
     if 'body' not in message:
         message['body'] = ''
     if message['body'] is None:
-        return (None, False)
+        return BotResponse(message, ResponseType.IGNORE)
 
     if isBotMessage(message['body']):
         vk.logSender('(%sender%) {} - ignored (bot message)'.format(escape(message['body'])), message)
@@ -156,66 +166,66 @@ def reply(message):
                 logging.info('Too many bot messages')
                 log.write('conf', vk.loggableConf(message['chat_id']) + ' (bot messages)')
                 vk.leaveConf(message['chat_id'])
-        return ('', False)
+                return BotResponse(message, ResponseType.NO_RESPONSE)
     elif uid in bot_users:
         del bot_users[uid]
 
     message['body'] = preprocessMessage(message)
 
     if message['body'] is None:
-        return ('', False)
+        return BotResponse(message, ResponseType.NO_RESPONSE)
 
     if message['body']:
         message['body'] = escape(message['body'])
         if message.get('_is_sticker') and 'chat_id' in message:
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         if message.get('_is_sticker') and config.get('vkbot.ignore_stickers', 'b'):
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         if message.get('_is_voice') and 'chat_id' in message:
             vk.logSender('(%sender%) {} - ignored'.format(message['body']), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         if len(message['body']) > config.get('vkbot.max_message_length', 'i'):
             vk.logSender('(%sender%) {}... - too long message'.format(message['body'][:50]), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         if not (set(ref_re.findall(message['body'])) <= {str(vk.self_id)}):
             vk.logSender('(%sender%) {} - ignored (mention)'.format(message['body']), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         if club_ref_re.findall(message['body']):
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         user_msg = vk.last_message.byUser(uid)
         if message['body'] == user_msg.get('text') and message['body'] != '..':
             user_msg['count'] = user_msg.get('count', 0) + 1  # this modifies the cache entry too
             if message.get('_is_voice') and user_msg == vk.last_message.bySender(getSender(message)) and not user_msg.get('resent'):
                 vk.logSender('(%sender%) {} - voice again'.format(message['body']), message)
-                return (user_msg.get('reply'), False)
+                return BotResponse(message, ResponseType.TEXT, user_msg.get('reply'))
             if message.get('_is_sticker'):
-                return ('', False)
+                return BotResponse(message, ResponseType.NO_RESPONSE)
             if user_msg['count'] == 5:
                 noaddUsers([uid], reason='flood')
             elif user_msg['count'] < 5:
                 vk.logSender('(%sender%) {} - ignored (repeated)'.format(message['body']), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
 
         if 'reply' in user_msg and message['body'].upper() == user_msg['reply'].upper() and len(message['body'].split()) > 1:
             vk.logSender('(%sender%) {} - ignored (my reply)'.format(message['body']), message)
             user_msg['text'] = user_msg['reply']  # this modifies the cache entry too
             # user_msg['count'] = 1  # do we need it?
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
 
         t = evalExpression(message['body'])
         if t:
             if getBotReplyFlat(message['body']):
-                return ('', False)
+                return BotResponse(message, ResponseType.NO_RESPONSE)
             vk.logSender('(%sender%) {} = {} (calculated)'.format(message['body'], t), message)
             log.write('calc', '{}: "{}" = {}'.format(vk.loggableName(uid), message['body'], t))
-            return (t, False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
         tbody = message['body'].replace('<br>', '')
         if tbody.upper() == tbody and sum(i.isalpha() for i in tbody) > 1 and config.get('vkbot.ignore_caps', 'b'):
             vk.logSender('(%sender%) {} - ignored (caps)'.format(message['body']), message)
-            return ('', False)
+            return BotResponse(message, ResponseType.NO_RESPONSE)
 
-    return (getBotReply(message), False)
+    return getBotReply(message)
 
 def preprocessMessage(message):
     message['_old_body'] = message.get('body')

@@ -17,6 +17,7 @@ import log
 import stats
 import vkapi
 import storage
+from bot_response import ResponseType, BotResponse
 from cache import UserCache, ConfCache, MessageCache
 from check_friend import FriendController
 from thread_manager import ThreadManager, Timeline
@@ -198,7 +199,7 @@ class VkBot:
         if message['user_id'] == self.self_id:  # chat with myself
             return
         if 'chat_id' in message and not self.checkConf(message['chat_id']):
-            self.replyMessage(message, None)
+            self.replyMessage(BotResponse(message, ResponseType.IGNORE))
             return
         try:
             if self.tm.isBusy(getSender(message)) and not self.tm.get(getSender(message)).attr['unimportant']:
@@ -211,11 +212,10 @@ class VkBot:
         try:
             ans = gen_reply(message)
         except Exception as e:
-            ans = None
             logging.exception('local {}: {}'.format(e.__class__.__name__, str(e)))
             time.sleep(1)
-        if ans:
-            self.replyMessage(message, ans[0])
+            return
+        self.replyMessage(ans)
 
     def replyAll(self, gen_reply):
         self.tm.gc()
@@ -285,65 +285,66 @@ class VkBot:
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
-    def replyMessage(self, message, answer):
-        sender = getSender(message)
-        sender_msg = self.last_message.bySender(sender)
-        if 'id' in message and message['id'] <= sender_msg.get('id', 0):
+    def replyMessage(self, answer: BotResponse):
+        if answer.type == ResponseType.NO_READ:
+            return
+        sender_msg = self.last_message.bySender(answer.sender_id)
+        if answer.message_id <= sender_msg.get('id', 0):
             return
 
-        if not answer and not message.get('_sticker_id'):
-            if self.tm.isBusy(sender):
+        if answer.type in (ResponseType.NO_RESPONSE, ResponseType.IGNORE):
+            if self.tm.isBusy(answer.sender_id):
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
-                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
                 tl.attr['unimportant'] = True
-                self.tm.run(sender, tl)
-            elif answer is None:  # ignored
-                self.api.messages.markAsRead(peer_id=sender)
+                self.tm.run(answer.sender_id, tl)
+            elif answer.type == ResponseType.IGNORE:
+                self.api.messages.markAsRead(peer_id=answer.sender_id)
             else:
-                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=sender))
+                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
                 tl.attr['unimportant'] = True
-                self.tm.run(sender, tl)
-            if answer is not None:
-                self.last_message.byUser(message['user_id'])['text'] = message['body']
-            self.last_message.updateTime(sender)
-            if sender > CONF_START and 'action' not in message:
-                sender_msg.setdefault('ignored', {})[message['user_id']] = time.time()
+                self.tm.run(answer.sender_id, tl)
+            if answer.type == ResponseType.NO_RESPONSE:
+                self.last_message.byUser(answer.user_id)['text'] = answer.message_body
+            self.last_message.updateTime(answer.sender_id)
+            if answer.sender_id > CONF_START and not answer.message_has_action:
+                sender_msg.setdefault('ignored', {})[answer.user_id] = time.time()
             return
 
         typing_time = 0
-        if not answer.startswith('&#'):
-            typing_time = len(answer) / self.chars_per_second
-
         resend = False
-        # answer is not empty
-        if not message.get('_sticker_id') and sender_msg.get('reply', '').upper() == answer.upper() and sender_msg['user_id'] == message['user_id']:
-            logging.info('Resending')
-            typing_time = 0
-            resend = True
+
+        if answer.type == ResponseType.TEXT:
+            if not answer.text.startswith('&#'):
+                typing_time = len(answer.text) / self.chars_per_second
+            if sender_msg.get('reply', '').upper() == answer.text.upper() and sender_msg['user_id'] == answer.user_id:
+                logging.info('Resending')
+                typing_time = 0
+                resend = True
 
         def _send(attr):
-            if not set(sender_msg.get('ignored', [])) <= {message['user_id']}:
+            if not set(sender_msg.get('ignored', [])) <= {answer.user_id}:
                 ctime = time.time()
                 for uid, ts in sender_msg['ignored'].items():
-                    if uid != message['user_id'] and ctime - ts < self.same_conf_interval * 3:
+                    if uid != answer.user_id and ctime - ts < self.same_conf_interval * 3:
                         attr['reply'] = True
             try:
-                if message.get('_sticker_id'):
-                    res = self.sendMessage(sender, '', sticker_id=message['_sticker_id'])
+                if answer.type == ResponseType.STICKER:
+                    res = self.sendMessage(answer.sender_id, '', sticker_id=answer.data)
                 elif resend:
-                    res = self.sendMessage(sender, '', sender_msg['id'])
+                    res = self.sendMessage(answer.sender_id, '', sender_msg['id'])
                 elif attr.get('reply'):
-                    res = self.sendMessage(sender, answer, message['id'])
+                    res = self.sendMessage(answer.sender_id, answer.text, answer.message_id)
                 else:
-                    res = self.sendMessage(sender, answer)
+                    res = self.sendMessage(answer.sender_id, answer.text)
                 if res is None:
-                    del self.users[sender]
-                    self.logSender('Failed to send a message to %sender%', message, short=True)
-                    if sender < CONF_START and self.users[sender].get('blacklisted'):
-                        self.ignore_proc(sender, 'blacklisted me')
+                    del self.users[answer.sender_id]
+                    self.logSender('Failed to send a message to %sender%', answer.fake_message(), short=True)
+                    if not answer.is_chat and self.users[answer.user_id].get('blacklisted'):
+                        self.ignore_proc(answer.user_id, 'blacklisted me')
                     return
-                msg = self.last_message.add(sender, message, res, answer)
+                msg = self.last_message.add(answer.sender_id, answer.message_body, answer.user_id, res, answer.text)
                 if resend:
                     msg['resent'] = True
             except Exception as e:
@@ -353,30 +354,30 @@ class VkBot:
         send_time = cur_delay + typing_time
         user_delay = 0
         if sender_msg:
-            same_interval = self.same_user_interval if sender < CONF_START else self.same_conf_interval
+            same_interval = self.same_user_interval if answer.sender_id < CONF_START else self.same_conf_interval
             if self.tracker.overload():
                 same_interval *= self.tracker_multiplier
             user_delay = sender_msg['time'] - time.time() + same_interval
             # can be negative
         tl = Timeline(max(send_time, user_delay))
-        if 'chat_id' in message:
-            tl.attr['user_id'] = message['user_id']
+        if answer.is_chat:
+            tl.attr['user_id'] = answer.user_id
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             tl.sleep(self.delay_on_first_reply)
-            tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
         else:
             tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
-            tl.do(lambda: self.api.messages.markAsRead(peer_id=sender))
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
 
         tl.sleep(cur_delay)
-        if message.get('_onsend_actions'):
-            for i in message['_onsend_actions']:
-                tl.do(i)
-                tl.sleep(cur_delay)
+        for action in answer.onsend_actions:
+            tl.do(action)
+            tl.sleep(cur_delay)
         if typing_time:
-            tl.doEveryFor(vkapi.utils.TYPING_INTERVAL, lambda: self.api.messages.setActivity(type='typing', user_id=sender), typing_time)
+            tl.doEveryFor(vkapi.utils.TYPING_INTERVAL,
+                          lambda: self.api.messages.setActivity(type='typing', peer_id=answer.sender_id), typing_time)
         tl.do(_send, True)
-        self.tm.run(sender, tl)
+        self.tm.run(answer.sender_id, tl)
 
     def checkConf(self, cid):
         if cid + CONF_START in self.good_conf:
