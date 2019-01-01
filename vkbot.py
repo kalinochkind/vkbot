@@ -22,13 +22,13 @@ from cache import UserCache, ConfCache, MessageCache
 from check_friend import FriendController
 from thread_manager import ThreadManager, Timeline
 from vkapi import MessageReceiver, CONF_START
-from vkapi.utils import getSender
+from vkbot_message import VkbotMessage, PeerInfo
 
 ignored_errors = {
     # (code, method): (message, can_retry)
     (900, 'messages.send'): ('Blacklisted', False),
     (902, 'messages.send'): ('Unable to reply', False),
-    (7, 'messages.send'): ('Banned', True),
+    (7, 'messages.send'): ('Banned', False),
     (10, 'messages.send'): ('Unable to reply', True),
     (15, 'friends.delete'): None,
     (15, 'messages.setActivity'): None,
@@ -118,7 +118,9 @@ class VkBot:
         self.last_message = MessageCache()
         self.tracker = TimeTracker(config.get('vkbot.tracker_message_count', 'i'), config.get('vkbot.tracker_interval', 'i'))
         self.tracker_multiplier = config.get('vkbot.tracker_multiplier', 'f')
-        self.receiver = MessageReceiver(self.api, get_dialogs_interval)
+        self.receiver = MessageReceiver(self.api, get_dialogs_interval,
+                                        message_class=lambda *args, **kwargs: VkbotMessage(*args, self_id=self.self_id,
+                                                                                           **kwargs))
         self.receiver.longpoll_callback = self.longpollCallback
         if os.path.isfile(accounts.getFile('msgdump.json')):
             try:
@@ -181,18 +183,18 @@ class VkBot:
         self.users.load(users, clean)
         self.confs.load(confs, clean)
 
-    def replyOne(self, message, gen_reply):
-        if message['user_id'] == self.self_id:  # chat with myself
+    def replyOne(self, message: VkbotMessage, gen_reply):
+        if message.is_my_message:
             return
-        if 'chat_id' in message and not self.checkConf(message['chat_id']):
+        if message.is_chat and not self.checkConf(message.chat_id):
             self.replyMessage(BotResponse(message, ResponseType.IGNORE))
             return
         try:
-            if self.tm.isBusy(getSender(message)) and not self.tm.get(getSender(message)).attr['unimportant']:
+            if self.tm.isBusy(message.peer_id) and not self.tm.get(message.peer_id).attr['unimportant']:
                 return
         except Exception:
             return
-        if message['id'] < self.last_message.bySender(getSender(message)).get('id', 0):
+        if message.id < self.last_message.bySender(message.peer_id).get('id', 0):
             return
 
         try:
@@ -206,8 +208,8 @@ class VkBot:
     def replyAll(self, gen_reply):
         self.tm.gc()
         messages = self.receiver.getMessages()
-        self.loadUsers(messages, lambda x: x['user_id'])
-        self.loadUsers(messages, lambda x: x['chat_id'] + CONF_START)
+        self.loadUsers(messages, lambda x: x.user_id)
+        self.loadUsers(messages, lambda x: x.peer_id)
         for cur in messages:
             self.replyOne(cur, gen_reply)
 
@@ -231,12 +233,12 @@ class VkBot:
                 return True
         if msg.opt.get('source_act') == 'chat_invite_user' and msg.opt['source_mid'] == str(self.self_id) and msg.opt['from'] != str(self.self_id):
             self.logSender('%sender% added me to conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
-                           {'user_id': int(msg.opt['from'])})
+                           PeerInfo(int(msg.opt['from'])))
             if self.unfriend_on_invite and not storage.contains('banned', msg.opt['from']):
                 self.deleteFriend(int(msg.opt['from']))
         if msg.opt.get('source_act') == 'chat_create' and msg.opt['from'] != str(self.self_id):
             self.logSender('%sender% created conf "{}" ({})'.format(self.confs[msg.sender - CONF_START]['title'], msg.sender - CONF_START),
-                           {'user_id': int(msg.opt['from'])})
+                           PeerInfo(int(msg.opt['from'])))
             is_banned = storage.contains('banned', msg.opt['from'])
             if self.unfriend_on_create and not is_banned:
                 self.deleteFriend(int(msg.opt['from']))
@@ -271,27 +273,27 @@ class VkBot:
     def replyMessage(self, answer: BotResponse):
         if answer.type == ResponseType.NO_READ:
             return
-        sender_msg = self.last_message.bySender(answer.sender_id)
+        sender_msg = self.last_message.bySender(answer.peer_id)
         if answer.message_id <= sender_msg.get('id', 0):
             return
 
         if answer.type in (ResponseType.NO_RESPONSE, ResponseType.IGNORE):
-            if self.tm.isBusy(answer.sender_id):
+            if self.tm.isBusy(answer.peer_id):
                 return
             if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
-                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
+                tl = Timeline().sleep(self.delay_on_first_reply).do(lambda: self.api.messages.markAsRead(peer_id=answer.peer_id))
                 tl.attr['unimportant'] = True
-                self.tm.run(answer.sender_id, tl)
+                self.tm.run(answer.peer_id, tl)
             elif answer.type == ResponseType.IGNORE:
-                self.api.messages.markAsRead(peer_id=answer.sender_id)
+                self.api.messages.markAsRead(peer_id=answer.peer_id)
             else:
-                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
+                tl = Timeline().sleep((self.delay_on_reply - 1) * random.random() + 1).do(lambda: self.api.messages.markAsRead(peer_id=answer.peer_id))
                 tl.attr['unimportant'] = True
-                self.tm.run(answer.sender_id, tl)
+                self.tm.run(answer.peer_id, tl)
             if answer.type == ResponseType.NO_RESPONSE:
                 self.last_message.byUser(answer.user_id)['text'] = answer.message_body
-            self.last_message.updateTime(answer.sender_id)
-            if answer.sender_id > CONF_START and not answer.message_has_action:
+            self.last_message.updateTime(answer.peer_id)
+            if answer.peer_id > CONF_START and not answer.message_has_action:
                 sender_msg.setdefault('ignored', {})[answer.user_id] = time.time()
             return
 
@@ -314,20 +316,20 @@ class VkBot:
                         attr['reply'] = True
             try:
                 if answer.type == ResponseType.STICKER:
-                    res = self.sendMessage(answer.sender_id, '', sticker_id=answer.data)
+                    res = self.sendMessage(answer.peer_id, '', sticker_id=answer.data)
                 elif resend:
-                    res = self.sendMessage(answer.sender_id, '', sender_msg['id'])
+                    res = self.sendMessage(answer.peer_id, '', sender_msg['id'])
                 elif attr.get('reply'):
-                    res = self.sendMessage(answer.sender_id, answer.text, answer.message_id)
+                    res = self.sendMessage(answer.peer_id, answer.text, answer.message_id)
                 else:
-                    res = self.sendMessage(answer.sender_id, answer.text)
+                    res = self.sendMessage(answer.peer_id, answer.text)
                 if res is None:
-                    del self.users[answer.sender_id]
-                    self.logSender('Failed to send a message to %sender%', answer.fake_message(), short=True)
+                    del self.users[answer.peer_id]
+                    self.logSender('Failed to send a message to %sender%', answer.get_peer_info(), short=True)
                     if not answer.is_chat and self.users[answer.user_id].get('blacklisted'):
                         self.ignore_proc(answer.user_id, 'blacklisted me')
                     return
-                msg = self.last_message.add(answer.sender_id, answer.message_body, answer.user_id, res, answer.text)
+                msg = self.last_message.add(answer.peer_id, answer.message_body, answer.user_id, res, answer.text)
                 if resend:
                     msg['resent'] = True
             except Exception as e:
@@ -337,7 +339,7 @@ class VkBot:
         send_time = cur_delay + typing_time
         user_delay = 0
         if sender_msg:
-            same_interval = self.same_user_interval if answer.sender_id < CONF_START else self.same_conf_interval
+            same_interval = self.same_user_interval if answer.peer_id < CONF_START else self.same_conf_interval
             if self.tracker.overload():
                 same_interval *= self.tracker_multiplier
             user_delay = sender_msg['time'] - time.time() + same_interval
@@ -347,10 +349,10 @@ class VkBot:
             tl.attr['user_id'] = answer.user_id
         if not sender_msg or time.time() - sender_msg['time'] > self.forget_interval:
             tl.sleep(self.delay_on_first_reply)
-            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.peer_id))
         else:
             tl.sleepUntil(send_time, (self.delay_on_reply - 1) * random.random() + 1)
-            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.sender_id))
+            tl.do(lambda: self.api.messages.markAsRead(peer_id=answer.peer_id))
 
         tl.sleep(cur_delay)
         for action in answer.onsend_actions:
@@ -358,9 +360,9 @@ class VkBot:
             tl.sleep(cur_delay)
         if typing_time:
             tl.doEveryFor(vkapi.utils.TYPING_INTERVAL,
-                          lambda: self.api.messages.setActivity(type='typing', peer_id=answer.sender_id), typing_time)
+                          lambda: self.api.messages.setActivity(type='typing', peer_id=answer.peer_id), typing_time)
         tl.do(_send, True)
-        self.tm.run(answer.sender_id, tl)
+        self.tm.run(answer.peer_id, tl)
 
     def checkConf(self, cid):
         if cid + CONF_START in self.good_conf:
@@ -406,10 +408,10 @@ class VkBot:
                 res = is_good(i['user_id'], True)
                 if res is None:
                     dm.friends.add(user_id=i['user_id'])
-                    self.logSender('Adding %sender%', i)
+                    self.logSender('Adding %sender%', PeerInfo(i['user_id']))
                 else:
                     dm.friends.delete(user_id=i['user_id'])
-                    self.logSender('Not adding %sender% ({})'.format(res), i)
+                    self.logSender('Not adding %sender% ({})'.format(res), PeerInfo(i['user_id']))
 
     def unfollow(self):
         result = []
@@ -511,7 +513,7 @@ class VkBot:
                     res = 'attachment'
                     log.write('comments', self.loggableName(frid) + ' (attachment)')
                     self.deleteComment(rep)
-                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), {'user_id': frid})
+                self.logSender('Comment {} (by %sender%) - {}'.format(txt, res), PeerInfo(frid))
         stats.update('last_comment', self.last_viewed_comment)
         for i in to_bl:
             self.blacklist(i)
@@ -525,7 +527,7 @@ class VkBot:
             uid = self.vars['default_bf']
         self.api.account.saveProfileInfo(relation_partner_id=uid)
         self.vars['bf'] = self.users[uid]
-        self.logSender('Set relationship with %sender%', {'user_id': uid})
+        self.logSender('Set relationship with %sender%', PeerInfo(uid))
 
     def waitAllThreads(self, loop_thread, reply):
         lp = self.api.longpoll.copy()
@@ -547,26 +549,30 @@ class VkBot:
         else:
             return 'Group ' + str(-pid)
 
-    def logSender(self, text, message, short=False):
+    def logSender(self, text, message: PeerInfo, short=False):
         text_msg = text.replace('%sender%', self.printableSender(message, False, short=short))
         html_msg = html.escape(text).replace('%sender%', self.printableSender(message, True, short=short))
         logging.info(text_msg, extra={'db': html_msg})
 
-    def printableSender(self, message, need_html, short=False):
-        if message.get('chat_id', 0) > 0:
+    def printableSender(self, peer: PeerInfo, need_html, short=False):
+        if peer.is_chat:
             if short:
-                return self.printableName(message['chat_id'] + CONF_START, '', 'conf "{name}" ({id})')
+                return self.printableName(peer.peer_id, '', 'conf "{name}" ({id})')
             if need_html:
-                res = self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" target="_blank">{name}</a>')
-                return res.replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                res = self.printableName(peer.user_id, user_fmt='Conf "%c" (%i), <a href="https://vk.com/id{id}" '
+                                                                   'target="_blank">{name}</a>')
+                return res.replace('%i', str(peer.chat_id)).replace('%c', html.escape(
+                    self.confs[peer.chat_id]['title']))
             else:
-                res = self.printableName(message['user_id'], user_fmt='Conf "%c" (%i), {name}')
-                return res.replace('%i', str(message['chat_id'])).replace('%c', html.escape(self.confs[message['chat_id']]['title']))
+                res = self.printableName(peer.user_id, user_fmt='Conf "%c" (%i), {name}')
+                return res.replace('%i', str(peer.chat_id)).replace('%c', html.escape(
+                    self.confs[peer.chat_id]['title']))
         else:
             if need_html:
-                return self.printableName(message['user_id'], user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
+                return self.printableName(peer.user_id,
+                                          user_fmt='<a href="https://vk.com/id{id}" target="_blank">{name}</a>')
             else:
-                return self.printableName(message['user_id'], user_fmt='{name}')
+                return self.printableName(peer.user_id, user_fmt='{name}')
 
     def loggableName(self, uid):
         return self.printableName(uid, '{id} ({name})')
@@ -596,11 +602,12 @@ class VkBot:
             items = list(dialogs['items'])
             with self.api.delayed() as dm:
                 for dialog in items:
-                    if storage.contains('banned', getSender(dialog['message'])):
+                    message = VkbotMessage(dialog['message'])
+                    if storage.contains('banned', message.peer_id):
                         continue
-                    dm.messages.getHistory(peer_id=getSender(dialog['message']), count=0).set_callback(cb)
+                    dm.messages.getHistory(peer_id=message.peer_id, count=0).set_callback(cb)
                     if 'title' in dialog['message']:
-                        confs[getSender(dialog['message'])] = dialog['message']['title']
+                        confs[message.peer_id] = dialog['message']['title']
             self.confs.load([i - CONF_START for i in confs])
             invited = {}
             for i in confs:

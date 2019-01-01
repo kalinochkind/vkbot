@@ -4,12 +4,13 @@ import queue
 import threading
 import time
 
+from .incoming_message import IncomingMessage
 from .utils import CONF_START, LongpollMessage
 
 logger = logging.getLogger('vkapi.receiver')
 
 class MessageReceiver:
-    def __init__(self, api, get_dialogs_interval=-1):
+    def __init__(self, api, get_dialogs_interval=-1, message_class=IncomingMessage):
         self.api = api
         self.get_dialogs_interval = get_dialogs_interval
         self.longpoll_queue = queue.Queue()
@@ -20,6 +21,7 @@ class MessageReceiver:
         self.last_get_dialogs = 0
         self.longpolled_messages = set()
         self.terminate_monitor = False
+        self.message_class = message_class
 
 
     def monitor(self):
@@ -50,17 +52,16 @@ class MessageReceiver:
                     continue
                 if self.last_message_id and cur['id'] > self.last_message_id:
                     continue  # wtf?
-                cur['_method'] = 'getDialogs'
-                res.append(cur)
+                res.append(self.message_class(cur, method='getDialogs'))
             self.longpolled_messages.clear()
         else:
             res = []
             while not self.longpoll_queue.empty():
                 res.append(self.longpoll_queue.get())
-            res.sort(key=lambda x: x['id'])
-            self.longpolled_messages.update(i['id'] for i in res)
+            res.sort(key=lambda x: x.id)
+            self.longpolled_messages.update(i.id for i in res)
             if res:
-                self.last_message_id = max(self.last_message_id, res[-1]['id'])
+                self.last_message_id = max(self.last_message_id, res[-1].id)
         return res
 
     def _getLongpoll(self):
@@ -117,11 +118,10 @@ class MessageReceiver:
                 if not set(lm.extra) <= {'emoji'} and not lm.extra.get('source_act'):
                     need_extra.append(str(lm.mid))
                     continue
-                result.append(msg)
+                result.append(self.message_class(msg, method='longpoll'))
 
         if need_extra:
             need_extra = ','.join(need_extra)
             for i in self.api.messages.getById(message_ids=need_extra)['items']:
-                i['_method'] = 'getById'
-                result.append(i)
+                result.append(self.message_class(i, method='getById'))
         return result

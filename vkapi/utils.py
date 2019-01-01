@@ -1,3 +1,4 @@
+import functools
 import logging
 import threading
 import time
@@ -146,11 +147,6 @@ class LongpollMessage:
 class VkError(Exception):
     pass
 
-def getSender(message):
-    if 'chat_id' in message:
-        return CONF_START + message['chat_id']
-    return message['user_id']
-
 
 class RateLimiter:
 
@@ -169,3 +165,28 @@ class RateLimiter:
 
     def __exit__(self, *args):
         self.lock.release()
+
+
+class doc_types:
+    TEXT_DOC = 1
+    ARCHIVE = 2
+    GIF = 3
+    IMAGE = 4
+    AUDIO = 5
+    VIDEO = 6
+    EBOOK = 7
+    UNKNOWN = 8
+
+
+class cached_property:
+
+    def __init__(self, fun):
+        self.fun = fun
+        functools.update_wrapper(self, fun)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        value = self.fun(instance)
+        setattr(instance, self.fun.__name__, value)
+        return value

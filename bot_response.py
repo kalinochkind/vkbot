@@ -1,6 +1,7 @@
 import enum
 
-from vkapi.utils import getSender, CONF_START
+from vkapi.utils import CONF_START
+from vkbot_message import PeerInfo
 
 
 class ResponseType(enum.Enum):
@@ -14,21 +15,29 @@ class ResponseType(enum.Enum):
 class BotResponse:
     def __init__(self, message, type, data=None, onsend_actions=()):
         self.type = type
-        self.user_id = message['user_id']
-        self.sender_id = getSender(message)
-        self.message_body = message.get('body')
-        self.message_id = message['id']
-        self.message_has_action = 'action' in message
+        self.user_id = message.user_id
+        self.peer_id = message.peer_id
+        self.message_body = message.body
+        self.message_id = message.id
+        self.message_has_action = bool(message.action)
         self.data = data
         self.onsend_actions = list(onsend_actions)
-        self.text = self.data if self.type == ResponseType.TEXT else ''
 
     def fake_message(self):
-        if self.sender_id == self.user_id:
+        if self.peer_id == self.user_id:
             return {'user_id': self.user_id}
         else:
-            return {'user_id': self.user_id, 'chat_id': self.sender_id - CONF_START}
+            return {'user_id': self.user_id, 'chat_id': self.peer_id - CONF_START}
 
     @property
     def is_chat(self):
-        return self.sender_id > CONF_START
+        return self.peer_id > CONF_START
+
+    @property
+    def text(self):
+        return self.data if self.type == ResponseType.TEXT else ''
+
+    def get_peer_info(self):
+        if self.peer_id == self.user_id:
+            return PeerInfo(self.user_id)
+        return PeerInfo(self.user_id, self.peer_id - CONF_START)
