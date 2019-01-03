@@ -40,12 +40,9 @@ class VkbotMessage(IncomingMessage):
                 if not a['wall']['text'] and 'copy_history' in a['wall']:
                     att[-1] = a['wall']['copy_history'][0]['text']
             elif a['type'] == 'doc':
-                if a['doc']['type'] == doc_types.AUDIO:
-                    att.append('voice')
-                elif 'graffiti' in a['doc']:
-                    result += ' ..'
-                else:
-                    att.append(a['doc']['title'])
+                att.append(a['doc']['title'])
+            elif a['type'] == 'audio_message':
+                att.append('voice')
             elif a['type'] == 'gift':
                 att.append('vkgift')
             elif a['type'] == 'link':
@@ -54,7 +51,7 @@ class VkbotMessage(IncomingMessage):
                 att.append(a['market']['description'])
             elif a['type'] == 'sticker':
                 att.append('sticker')
-            elif a['type'] == 'photo':
+            elif a['type'] == 'photo' or a['type'] == 'graffiti':
                 result += ' ..'
             elif a['type'] == 'call':
                 return None

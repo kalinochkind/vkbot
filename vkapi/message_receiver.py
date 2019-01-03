@@ -40,19 +40,19 @@ class MessageReceiver:
         if (self.get_dialogs_interval >=0 and ctime - self.last_get_dialogs > self.get_dialogs_interval) or get_dialogs:
             self.last_get_dialogs = ctime
             res = []
-            messages = self.api.messages.getDialogs(unread=1, count=200)
+            messages = self.api.messages.getConversations(count=200, filter='unread')
             try:
                 messages = messages['items'][::-1]
             except TypeError:
                 logger.warning('Unable to fetch messages')
                 return []
-            for msg in sorted(messages, key=lambda m: m['message']['id']):
-                cur = msg['message']
+            for msg in sorted(messages, key=lambda m: m['last_message']['id']):
+                cur = msg['last_message']
                 if cur['out'] or cur['id'] in self.longpolled_messages:
                     continue
                 if self.last_message_id and cur['id'] > self.last_message_id:
                     continue  # wtf?
-                res.append(self.message_class(cur, method='getDialogs'))
+                res.append(self.message_class(cur, method='getConversations'))
             self.longpolled_messages.clear()
         else:
             res = []
@@ -78,15 +78,15 @@ class MessageReceiver:
 
                 if lm.flags & 2:
                     continue
-                msg = {'id': lm.mid, 'date': lm.ts, 'body': html.unescape(lm.text).replace('<br>', '\n'), 'out': 0, '_method': ''}
+                msg = {'id': lm.mid, 'date': lm.ts, 'text': html.unescape(lm.text).replace('<br>', '\n'), 'out': 0, '_method': ''}
                 if lm.opt.get('source_act'):
                     msg['body'] = None
                     msg['action'] = lm.opt['source_act']
+                msg['peer_id'] = lm.sender
                 if 'from' in lm.opt:
-                    msg['chat_id'] = lm.sender - CONF_START
-                    msg['user_id'] = int(lm.opt['from'])
+                    msg['from_id'] = int(lm.opt['from'])
                 else:
-                    msg['user_id'] = lm.sender
+                    msg['from_id'] = lm.sender
 
                 attachments = []
                 for number in range(1, 11):
@@ -99,9 +99,9 @@ class MessageReceiver:
                     elif kind == 'sticker':
                         attachments.append({'type': 'sticker'})
                     elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'audiomsg':
-                        attachments.append({'type': 'doc', 'doc': {'type': 5}})
+                        attachments.append({'type': 'audio_message'})
                     elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'graffiti':
-                        attachments.append({'type': 'doc', 'doc': {'type': 4, 'graffiti': None}})
+                        attachments.append({'type': 'graffiti'})
                     elif kind == 'call':
                         attachments.append({'type': 'call'})
                     else:  # something hard

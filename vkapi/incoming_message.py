@@ -6,12 +6,17 @@ class IncomingMessage:
     def __init__(self, data, method=''):
         self.id = data.get('id')
         self.date = data['date']
-        self.body = data.get('body', '')
-        self.user_id = data['user_id']
-        self.chat_id = data.get('chat_id')
+        self.body = data.get('text', '')
+        self.user_id = data['from_id']
+        self.chat_id = data['peer_id'] - CONF_START if data['peer_id'] > CONF_START else None
         self.action = data.get('action')
         self.attachments = data.get('attachments', [])
         self._fwd_messages_raw = data.get('fwd_messages', [])
+        if 'reply_message' in data:
+            self._fwd_messages_raw.append(data['reply_message'])
+        for msg in self._fwd_messages_raw:
+            if 'peer_id' not in msg:
+                msg['peer_id'] = data['peer_id']
         self.method = method
 
         self.is_sticker = False

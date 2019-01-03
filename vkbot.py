@@ -86,7 +86,7 @@ class TimeTracker:
         return time.time() - self.times[0] < self.delay
 
 class VkBot:
-    fields = 'sex,crop_photo,blacklisted,blacklisted_by_me'
+    fields = 'sex,blacklisted,blacklisted_by_me'
 
     def __init__(self, username='', password='', get_dialogs_interval=60):
 
@@ -595,19 +595,21 @@ class VkBot:
             if resp:
                 d.append((req['peer_id'], resp['count']))
 
-        dialogs = self.api.messages.getDialogs(count=self.stats_dialog_count, preview_length=1)
+        dialogs = self.api.messages.getConversations(count=self.stats_dialog_count)
         d = []
         confs = {}
         try:
             items = list(dialogs['items'])
             with self.api.delayed() as dm:
                 for dialog in items:
-                    message = VkbotMessage(dialog['message'])
-                    if storage.contains('banned', message.peer_id):
+                    peer = dialog['conversation']['peer']['id']
+                    if storage.contains('banned', peer):
                         continue
-                    dm.messages.getHistory(peer_id=message.peer_id, count=0).set_callback(cb)
-                    if 'title' in dialog['message']:
-                        confs[message.peer_id] = dialog['message']['title']
+                    dm.messages.getHistory(peer_id=peer, count=0).set_callback(cb)
+                    if 'chat_settings' in dialog['conversation']:
+                        confs[peer] = dialog['conversation']['chat_settings']['title']
+                    else:
+                        confs[peer] = ''
             self.confs.load([i - CONF_START for i in confs])
             invited = {}
             for i in confs:
