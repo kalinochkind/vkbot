@@ -43,6 +43,11 @@ class Checks:
     def equalnames(fc, guy, args):
         return guy['first_name'] != guy['last_name']
 
+    @check('Closed profile', 'is_closed')
+    def closed(fc, guy, args):
+        return not guy['is_closed']
+
+
 class FriendController:
     def __init__(self, params, allowed_names_filename):
         self.allowed_filename = allowed_names_filename
