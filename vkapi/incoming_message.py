@@ -14,9 +14,6 @@ class IncomingMessage:
         self._fwd_messages_raw = data.get('fwd_messages', [])
         if 'reply_message' in data:
             self._fwd_messages_raw.append(data['reply_message'])
-        for msg in self._fwd_messages_raw:
-            if 'peer_id' not in msg:
-                msg['peer_id'] = data['peer_id']
         self.method = method
 
         self.is_sticker = False

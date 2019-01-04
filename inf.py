@@ -108,9 +108,9 @@ def getBotReply(message: VkbotMessage):
     if message.method != 'longpoll':
         console_message += ' (' + message.method + ')'
     text_msg = '({}) {} : {}{}'.format(vk.printableSender(message.get_peer_info(), False),
-                                       message.body, renderSmile(answer), console_message)
+                                       message.processed_body, renderSmile(answer), console_message)
     html_msg = '({}) {} : {}{}'.format(vk.printableSender(message.get_peer_info(), True),
-                                       html.escape(message.body), renderSmile(answer).replace('&', '&amp;'),
+                                       html.escape(message.processed_body), renderSmile(answer).replace('&', '&amp;'),
                                        console_message)
     logging.info(text_msg, extra={'db': html_msg})
 

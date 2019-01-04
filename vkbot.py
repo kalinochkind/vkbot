@@ -256,7 +256,7 @@ class VkBot:
         except Exception:
             pass
 
-    def sendMessage(self, to, msg, forward=None, sticker_id=None):
+    def sendMessage(self, to, msg, forward=None, sticker_id=None, reply=None):
         if not self.good_conf.get(to, 1):
             return
         with self.message_lock:
@@ -267,6 +267,8 @@ class VkBot:
                 return self.api.messages.send(peer_id=to, sticker_id=sticker_id, random_id=self.guid)
             elif forward:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid, forward_messages=forward)
+            elif reply:
+                return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid, reply_to=reply)
             else:
                 return self.api.messages.send(peer_id=to, message=msg, random_id=self.guid)
 
@@ -320,7 +322,7 @@ class VkBot:
                 elif resend:
                     res = self.sendMessage(answer.peer_id, '', sender_msg['id'])
                 elif attr.get('reply'):
-                    res = self.sendMessage(answer.peer_id, answer.text, answer.message_id)
+                    res = self.sendMessage(answer.peer_id, answer.text, reply=answer.message_id)
                 else:
                     res = self.sendMessage(answer.peer_id, answer.text)
                 if res is None:
