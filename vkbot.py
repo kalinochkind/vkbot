@@ -23,6 +23,7 @@ from check_friend import FriendController
 from thread_manager import ThreadManager, Timeline
 from vkapi import MessageReceiver, CONF_START
 from vkbot_message import VkbotMessage, PeerInfo
+from voice import VoiceRecognizer
 
 ignored_errors = {
     # (code, method): (message, can_retry)
@@ -118,9 +119,16 @@ class VkBot:
         self.last_message = MessageCache()
         self.tracker = TimeTracker(config.get('vkbot.tracker_message_count', 'i'), config.get('vkbot.tracker_interval', 'i'))
         self.tracker_multiplier = config.get('vkbot.tracker_multiplier', 'f')
+        if config.get('wit.enabled', 'b'):
+            self.voice_recognizer = VoiceRecognizer(config.get('wit.token'))
+        else:
+            self.voice_recognizer = None
+
         self.receiver = MessageReceiver(self.api, get_dialogs_interval,
-                                        message_class=lambda *args, **kwargs: VkbotMessage(*args, self_id=self.self_id,
-                                                                                           **kwargs))
+                                        message_class=lambda *args, **kwargs:
+                                            VkbotMessage(*args, self_id=self.self_id,
+                                                         voice_recognizer=self.voice_recognizer, **kwargs))
+
         self.receiver.longpoll_callback = self.longpollCallback
         if os.path.isfile(accounts.getFile('msgdump.json')):
             try:
@@ -138,6 +146,7 @@ class VkBot:
         self.bad_conf_title = lambda s: False
         self.message_lock = threading.Lock()
         self.ignore_proc = lambda user, reson: None
+
 
     def initSelf(self, sync=False):
 

@@ -98,8 +98,6 @@ class MessageReceiver:
                         attachments.append({'type': 'photo'})
                     elif kind == 'sticker':
                         attachments.append({'type': 'sticker'})
-                    elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'audiomsg':
-                        attachments.append({'type': 'audio_message'})
                     elif kind == 'doc' and lm.extra.get(prefix + '_kind') == 'graffiti':
                         attachments.append({'type': 'graffiti'})
                     elif kind == 'call':

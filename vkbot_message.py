@@ -9,19 +9,22 @@ STARTS_WITH_URL_RE = re.compile('(https?://)?[a-z0-9\-]+\.[a-z0-9\-]+')
 
 class VkbotMessage(IncomingMessage):
 
-    def __init__(self, *args, self_id=None, **kwargs):
+    VOICE_FALLBACK = 'voice'
+
+    def __init__(self, *args, self_id=None, voice_recognizer=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.self_id = self_id
+        self.voice_recognizer = voice_recognizer
 
     def _construct_forwarded_message(self, data):
         return self.__class__(data, self_id=self.self_id)
 
-    @property
-    def is_my_message(self):
-        return self.user_id == self.self_id
+    def _get_voice_content(self, voice):
+        if self.voice_recognizer is None or 'link_mp3' not in voice:
+            return self.VOICE_FALLBACK
+        return self.voice_recognizer.get_text(voice['link_mp3'])
 
-    @cached_property
-    def processed_body(self):
+    def _process_body(self, toplevel=False):
         if self.is_my_message:
             return ''
         if self.action:
@@ -42,7 +45,10 @@ class VkbotMessage(IncomingMessage):
             elif a['type'] == 'doc':
                 att.append(a['doc']['title'])
             elif a['type'] == 'audio_message':
-                att.append('voice')
+                if toplevel:
+                    att.append(self._get_voice_content(a['audio_message']))
+                else:
+                    att.append(self.VOICE_FALLBACK)
             elif a['type'] == 'gift':
                 att.append('vkgift')
             elif a['type'] == 'link':
@@ -64,7 +70,7 @@ class VkbotMessage(IncomingMessage):
                 return result.strip() + ' ' + '{}' * len(self.fwd_messages)
             elif fwd_users == {self.user_id}:
                 for fwd in self.fwd_messages:
-                    r = fwd.processed_body
+                    r = fwd._process_body()
                     if r is None:
                         return None
                     result += ' {' + r.strip() + '}'
@@ -72,6 +78,14 @@ class VkbotMessage(IncomingMessage):
                 return None
 
         return result.strip()
+
+    @property
+    def is_my_message(self):
+        return self.user_id == self.self_id
+
+    @cached_property
+    def processed_body(self):
+        return self._process_body(True)
 
     def get_answer_case(self):
         text = self.body

@@ -58,3 +58,7 @@ database =
 
 [vkapi]
 client_id = 6347828
+
+[wit]
+enabled = no
+token =
