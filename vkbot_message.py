@@ -22,7 +22,8 @@ class VkbotMessage(IncomingMessage):
     def _get_voice_content(self, voice):
         if self.voice_recognizer is None or 'link_mp3' not in voice:
             return self.VOICE_FALLBACK
-        return self.voice_recognizer.get_text(voice['link_mp3'])
+        text = self.voice_recognizer.get_text(voice['link_mp3'])
+        return text if text is not None else self.VOICE_FALLBACK
 
     def _process_body(self, toplevel=False):
         if self.is_my_message:
