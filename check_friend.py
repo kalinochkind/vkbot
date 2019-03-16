@@ -45,7 +45,7 @@ class Checks:
 
     @check('Closed profile', 'is_closed')
     def closed(fc, guy, args):
-        return not guy['is_closed']
+        return not guy.get('is_closed')
 
 
 class FriendController:
