@@ -8,7 +8,10 @@ class IncomingMessage:
         self.date = data['date']
         self.body = data.get('text', '')
         self.user_id = data['from_id']
-        self.chat_id = data['peer_id'] - CONF_START if data['peer_id'] > CONF_START else None
+        if 'peer_id' in data:
+            self.chat_id = data['peer_id'] - CONF_START if data['peer_id'] > CONF_START else None
+        else:
+            self.chat_id = None
         self.action = data.get('action')
         self.attachments = data.get('attachments', [])
         self._fwd_messages_raw = data.get('fwd_messages', [])

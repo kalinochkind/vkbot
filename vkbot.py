@@ -434,7 +434,7 @@ class VkBot:
                 result.append(i)
         with self.api.delayed() as dm:
             for i in suggested:
-                dm.friends.delete.delayed(user_id=i)
+                dm.friends.delete(user_id=i)
         self.deleteFriend(result)
         return result
 
